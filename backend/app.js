@@ -6,6 +6,7 @@ const route = require("./src/routes/route");
 const registerRoute = require("./src/routes/register.route");
 const planoRoute = require("./src/routes/route.plano");
 const dependentesRoute = require("./src/routes/route.dependentes");
+const consultaRoute = require("./src/routes/route.consulta");
 
 
 
@@ -52,4 +53,7 @@ app.use('/plano', planoRoute);
 
 // Rotas de dependentes
 app.use('/dependentes', dependentesRoute);
+
+// Rotas de consultas
+app.use('/consultas', consultaRoute);
 
