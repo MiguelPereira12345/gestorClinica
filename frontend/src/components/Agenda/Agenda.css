@@ -1,5 +1,5 @@
 .wc-root {
-  font-family: Inter, system-ui, Arial, sans-serif;
+  font-family: inherit;
 }
 .wc-header { display:flex; }
 .wc-time-col { width:80px; flex:0 0 80px; }
@@ -23,13 +23,78 @@
 .wc-appointment-title { font-weight:600; font-size:13px }
 .wc-appointment-meta { font-size:11px; color:rgba(0,0,0,0.6) }
 
-.mc-root { font-family: Inter, system-ui, Arial, sans-serif }
+.mc-root { font-family: inherit }
 .mc-header { display:flex; justify-content:space-between; align-items:center }
 .mc-title { font-weight:600 }
+.mc-nav {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  border: 1px solid rgba(30, 42, 53, 0.18);
+  background: rgba(255, 255, 255, 0.92);
+  cursor: pointer;
+  font-weight: 800;
+  color: #2f2f2f;
+}
+
+.mc-nav:hover {
+  background: rgba(30, 42, 53, 0.03);
+}
+
+.mc-nav:focus-visible {
+  outline: 2px solid rgba(184, 148, 49, 0.45);
+  outline-offset: 2px;
+}
 .mc-grid { display:grid; grid-template-columns:repeat(7, 1fr); gap:6px; margin-top:8px }
 .mc-cell { padding:6px; text-align:center; border-radius:4px }
+.mc-cell:hover { background: rgba(30, 42, 53, 0.04); cursor: pointer }
 .mc-cell.today { background:#f0f8ff }
 .mc-weekday { font-size:12px; color:#777; text-align:center }
+
+/* MiniCalendar day meta (open/closed/holiday + occupancy) */
+
+.mc-closed {
+  background: rgba(122, 130, 138, 0.10);
+  color: rgba(80, 88, 96, 0.95);
+}
+
+.mc-holiday {
+  background: rgba(220, 38, 38, 0.12);
+  color: rgba(153, 27, 27, 0.95);
+}
+
+.mc-noslots {
+  background: rgba(122, 130, 138, 0.06);
+  color: rgba(80, 88, 96, 0.70);
+  box-shadow: inset 0 0 0 1px rgba(30, 42, 53, 0.08);
+}
+
+.mc-occ-0 { box-shadow: inset 0 0 0 1px rgba(30, 42, 53, 0.10); }
+.mc-occ-1 { box-shadow: inset 0 0 0 2px rgba(46, 139, 87, 0.22); }
+.mc-occ-2 { box-shadow: inset 0 0 0 2px rgba(184, 148, 49, 0.26); }
+.mc-occ-3 { box-shadow: inset 0 0 0 2px rgba(184, 148, 49, 0.40); }
+.mc-occ-4 { box-shadow: inset 0 0 0 2px rgba(220, 38, 38, 0.30); }
+
+/* Week navigation buttons (Agenda) */
+
+.agenda-nav-btn {
+  border: 1px solid rgba(30, 42, 53, 0.16);
+  background: rgba(255, 255, 255, 0.92);
+  color: #2f2f2f;
+  padding: 8px 12px;
+  border-radius: 10px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.agenda-nav-btn:hover {
+  background: rgba(30, 42, 53, 0.03);
+}
+
+.agenda-nav-btn:focus-visible {
+  outline: 2px solid rgba(184, 148, 49, 0.45);
+  outline-offset: 2px;
+}
 
 /* page container tweaks */
 .app-container .page-layout { background:#f6f6f7 }
@@ -44,3 +109,132 @@
 }
 
 .calendar-panel .wc-body { background: transparent }
+
+/* Resource (doctor) day calendar ------------------------------------------------ */
+
+.rc-root {
+  width: 100%;
+}
+
+.rc-header {
+  display: flex;
+  border-bottom: 1px solid #eee;
+  background: #fafafa;
+  border-radius: 10px 10px 0 0;
+}
+
+.rc-time-col {
+  width: 80px;
+  flex: 0 0 80px;
+  background: #ffffff;
+}
+
+.rc-resources {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+}
+
+.rc-resource-col-header {
+  flex: 1;
+  padding: 10px 12px;
+  text-align: left;
+  font-weight: 700;
+  border-left: 1px solid #f0f0f0;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.rc-resource-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  flex: 0 0 auto;
+}
+
+.rc-body {
+  display: flex;
+  background: #ffffff;
+  border-radius: 0 0 10px 10px;
+  overflow: hidden;
+}
+
+.rc-time-cell {
+  height: 40px;
+  border-bottom: 1px solid #eee;
+  padding: 4px 8px;
+  color: #666;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+}
+
+.rc-resource-col {
+  flex: 1;
+  border-left: 1px solid #f0f0f0;
+  position: relative;
+  min-width: 0;
+  background: #ffffff;
+}
+
+.rc-grid {
+  position: relative;
+  background-image: linear-gradient(to bottom, rgba(0,0,0,0.04) 1px, transparent 1px);
+  background-size: 100% 40px;
+}
+
+.rc-appointment {
+  position: absolute;
+  border-radius: 10px;
+  color: #053;
+  padding: 8px 10px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+  overflow: hidden;
+  font-size: 13px;
+  border: 1px solid rgba(0,0,0,0.06);
+}
+
+.rc-appointment-title {
+  font-weight: 800;
+  font-size: 13px;
+}
+
+.rc-appointment-meta {
+  font-size: 11px;
+  color: rgba(0, 0, 0, 0.6);
+  margin-top: 2px;
+}
+
+/* Day tabs (Mon-Sat) */
+
+.agenda-daytabs {
+  display: flex;
+  gap: 8px;
+  padding: 10px 6px 12px;
+  border-bottom: 1px solid rgba(0,0,0,0.06);
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.agenda-daytab {
+  border: 1px solid rgba(30, 42, 53, 0.12);
+  background: #ffffff;
+  padding: 8px 10px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 13px;
+  color: #2f2f2f;
+  text-transform: capitalize;
+}
+
+.agenda-daytab.is-active {
+  border-color: rgba(184, 148, 49, 0.35);
+  background: rgba(184, 148, 49, 0.12);
+  color: #6b4d00;
+}

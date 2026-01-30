@@ -1,7 +1,13 @@
 import React from 'react'
 import './Agenda.css'
 
-export default function MiniCalendar({ currentDate, onSelectDate, onPrevMonth, onNextMonth }) {
+export default function MiniCalendar({
+  currentDate,
+  onSelectDate,
+  onPrevMonth,
+  onNextMonth,
+  getDayMeta,
+}) {
   const year = currentDate.getFullYear()
   const month = currentDate.getMonth()
 
@@ -22,11 +28,41 @@ export default function MiniCalendar({ currentDate, onSelectDate, onPrevMonth, o
       </div>
       <div className="mc-grid">
         {['S','T','Q','Q','S','S','D'].map((h) => <div key={h} className="mc-weekday">{h}</div>)}
-        {cells.map((c, i) => (
-          <div key={i} className={`mc-cell ${c && c.toDateString() === new Date().toDateString() ? 'today' : ''}`} onClick={() => c && onSelectDate(c)}>
-            {c ? c.getDate() : ''}
-          </div>
-        ))}
+      {cells.map((c, i) => (
+        (() => {
+          const meta = c && typeof getDayMeta === 'function' ? getDayMeta(c) : null
+          const status = meta?.status || ''
+          const occ = typeof meta?.occupancy === 'number' ? meta.occupancy : null
+          const occBucket =
+            occ == null
+              ? ''
+              : occ >= 0.8
+                ? 'occ-4'
+                : occ >= 0.6
+                  ? 'occ-3'
+                  : occ >= 0.35
+                    ? 'occ-2'
+                    : occ > 0
+                      ? 'occ-1'
+                      : 'occ-0'
+          const isToday = c && c.toDateString() === new Date().toDateString()
+
+          return (
+            <div
+              key={i}
+              className={`mc-cell ${isToday ? 'today' : ''} ${status ? `mc-${status}` : ''} ${occBucket ? `mc-${occBucket}` : ''}`}
+              onClick={() => c && onSelectDate(c)}
+              title={
+                meta
+                  ? `${status === 'holiday' ? 'Feriado' : status === 'closed' ? 'Fechado' : 'Aberto'}${occ == null ? '' : ` • Ocupação: ${Math.round(occ * 100)}%`}`
+                  : undefined
+              }
+            >
+              {c ? c.getDate() : ''}
+            </div>
+          )
+        })()
+      ))}
       </div>
     </div>
   )

@@ -1,7 +1,7 @@
-import React, { useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import './App.css'
 import { useNavigate } from 'react-router-dom'
-import Sidebar from './components/Sidebar/Sidebar'
+import AppLayout from './components/Layout/AppLayout'
 import {
 	Calendar,
 	ClipboardList,
@@ -16,11 +16,21 @@ import {
 	UserRound,
 } from 'lucide-react'
 
+import {
+	buildPatientRecordFromForm,
+	createEmptyPatientForm,
+	loadPatients,
+	removePatient,
+	upsertPatient,
+} from './utils/patientStorage'
+
 import logoClinimolelos from './assets/Logo-CliniMolelos.png'
 
 export default function Pacientes() {
 	const navigate = useNavigate()
 	const [query, setQuery] = useState('')
+	const [storedRows, setStoredRows] = useState([])
+	const [storedIds, setStoredIds] = useState(() => new Set())
 
 	const rows = useMemo(
 		() => [
@@ -52,50 +62,104 @@ export default function Pacientes() {
 		[],
 	)
 
+	useEffect(() => {
+		const parsed = loadPatients()
+		setStoredRows(
+			parsed.map((p) => ({
+				id: p.id,
+				nome: p.nome,
+				email: p.email || '',
+				estado: p.estado || 'Ativo',
+			})),
+		)
+		setStoredIds(new Set(parsed.map((p) => p.id)))
+	}, [])
+
+	function refreshStored() {
+		const parsed = loadPatients()
+		setStoredRows(
+			parsed.map((p) => ({
+				id: p.id,
+				nome: p.nome,
+				email: p.email || '',
+				estado: p.estado || 'Ativo',
+			})),
+		)
+		setStoredIds(new Set(parsed.map((p) => p.id)))
+	}
+
+	function canOpenDetails(patientId) {
+		return storedIds.has(patientId)
+	}
+
+	function ensurePatientExists(row) {
+		if (canOpenDetails(row.id)) return true
+		const ok = window.confirm(
+			'Este paciente é um exemplo. Queres criar a ficha dele agora para poderes ver/editar?'
+		)
+		if (!ok) return false
+
+		const form = createEmptyPatientForm()
+		form.nomeCompleto = row.nome
+		form.contactoEmail = row.email
+
+		const patient = buildPatientRecordFromForm({
+			id: row.id,
+			estado: row.estado || 'Ativo',
+			form,
+			anexosClinicos: [],
+		})
+		upsertPatient(patient)
+		refreshStored()
+		return true
+	}
+
+	const allRows = useMemo(() => {
+		// coloca os criados recentemente no topo
+		return [...storedRows, ...rows]
+	}, [storedRows, rows])
+
 	const filtered = useMemo(() => {
 		const q = query.trim().toLowerCase()
-		if (!q) return rows
-		return rows.filter((r) => {
+		if (!q) return allRows
+		return allRows.filter((r) => {
 			return (
 				r.nome.toLowerCase().includes(q) ||
 				r.email.toLowerCase().includes(q) ||
 				r.id.toLowerCase().includes(q)
 			)
 		})
-	}, [query, rows])
+	}, [query, allRows])
 
 	return (
-		<div className="patients-shell">
-			<Sidebar />
-
-			<div className="patients-main">
-				<header className="patients-header" aria-label="Topo">
-					<div className="patients-breadcrumb">Pacientes </div>
-					<div className="patients-profile">
-						<div className="patients-profile-img" aria-hidden="true">
-							<UserRound className="patients-profile-icon" />
-						</div>
-						<div className="patients-profile-name">Dra. Sofia Lima</div>
-					</div>
-				</header>
-
-				<main className="patients-content" aria-label="Conteúdo">
+		<AppLayout breadcrumb="Pacientes" userName="Dra. Sofia Lima">
+			<main className="patients-content" aria-label="Conteúdo">
 					<div className="patients-title-row">
 						<div className="patients-title">
 							<Users className="patients-title-icon" aria-hidden="true" />
 							<h1>Pacientes</h1>
 						</div>
 
-						<div className="patients-search">
-							<Search className="patients-search-icon" aria-hidden="true" />
-							<input
-								type="text"
-								className="patients-search-input"
-								placeholder="Pesquisar por nome, email ou ID"
-								value={query}
-								onChange={(e) => setQuery(e.target.value)}
-								aria-label="Pesquisar pacientes"
-							/>
+						<div className="patients-title-actions">
+							<div className="patients-search">
+								<Search className="patients-search-icon" aria-hidden="true" />
+								<input
+									type="text"
+									className="patients-search-input"
+									placeholder="Pesquisar por nome, email ou ID"
+									value={query}
+									onChange={(e) => setQuery(e.target.value)}
+									aria-label="Pesquisar pacientes"
+								/>
+							</div>
+
+							<button
+								type="button"
+								className="patient-btn-primary"
+								onClick={() => navigate('/pacientes/novo')}
+							>
+								Adicionar paciente
+							</button>
 						</div>
 					</div>
 
@@ -127,19 +191,39 @@ export default function Pacientes() {
 												</span>
 											</td>
 											<td className="patients-actions">
-												<button className="patients-action" type="button">
+												<button
+													className="patients-action"
+													type="button"
+													onClick={() => {
+														if (!ensurePatientExists(r)) return
+														navigate(`/pacientes/${r.id}`)
+													}}
+												>
 													<Eye className="patients-action-icon" aria-hidden="true" />
 													Ver
 												</button>
 												<button 
 													className="patients-action" 
 													type="button"
-													onClick={() => navigate('/editar-detalhes')}
+													onClick={() => {
+														if (!ensurePatientExists(r)) return
+														navigate(`/pacientes/${r.id}/editar`)
+													}}
 												>
 													<Pencil className="patients-action-icon" aria-hidden="true" />
 													Editar
 												</button>
-												<button className="patients-action" type="button">
+												<button
+													className="patients-action"
+													type="button"
+													onClick={() => {
+														if (!ensurePatientExists(r)) return
+														const ok = window.confirm('Eliminar este paciente?')
+														if (!ok) return
+														removePatient(r.id)
+														refreshStored()
+													}}
+												>
 													<Trash2 className="patients-action-icon" aria-hidden="true" />
 													Eliminar
 												</button>
@@ -155,7 +239,7 @@ export default function Pacientes() {
 						className="patients-fab" 
 						type="button" 
 						aria-label="Novo paciente"
-						onClick={() => navigate('/registar')}
+						onClick={() => navigate('/pacientes/novo')}
 					>
 						<span className="patients-fab-plus" aria-hidden="true">
 							+
@@ -163,7 +247,6 @@ export default function Pacientes() {
 						Novo Paciente
 					</button>
 				</main>
-			</div>
-		</div>
+		</AppLayout>
 	)
 }

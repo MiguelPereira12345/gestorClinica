@@ -16,6 +16,7 @@ export const menuItems = [
   },
   {
     label: 'Consultas',
+    path: '/pagina-inicial',
     icon: (
       <svg className="sidebar-icon" width="20" height="20" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
         <rect x="7" y="3" width="10" height="2" rx="0.8" fill="currentColor" />
@@ -26,12 +27,14 @@ export const menuItems = [
   },
   {
     label: 'Pacientes',
+    path: '/pacientes',
     icon: (
       <svg className="sidebar-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><circle cx="8.5" cy="8" r="2.2" fill="currentColor"/><path d="M3 20c0-2.2 2.7-4 5.5-4s5.5 1.8 5.5 4" stroke="currentColor" strokeWidth="1.2" fill="none"/><circle cx="17" cy="9" r="1.8" fill="currentColor"/><path d="M13.5 20c0-1.6 1.8-3 4-3s4 1.4 4 3" stroke="currentColor" strokeWidth="1.2" fill="none"/></svg>
     )
   },
   {
     label: 'Colaboradores',
+    path: '/pagina-inicial',
     icon: (
       <svg className="sidebar-icon" width="20" height="20" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="3" y="7" width="18" height="13" rx="1" stroke="currentColor" strokeWidth="1.2" fill="none"/><path d="M7 7V5h2v2" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/><path d="M17 7V5h2v2" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/><rect x="6" y="11" width="4" height="4" fill="currentColor"/></svg>
     )

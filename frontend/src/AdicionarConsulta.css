@@ -1,0 +1,349 @@
+/* Marcar Consulta (backoffice) — UX rápida em 2 colunas */
+
+.mcx-page {
+  display: grid;
+  grid-template-columns: minmax(320px, 420px) 1fr;
+  gap: 16px;
+  align-items: start;
+}
+
+@media (max-width: 980px) {
+  .mcx-page {
+    grid-template-columns: 1fr;
+  }
+}
+
+.mcx-top-btn {
+  border: 1px solid rgba(30, 42, 53, 0.16);
+  background: rgba(255, 255, 255, 0.92);
+  color: #2f2f2f;
+  padding: 8px 12px;
+  border-radius: 10px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.mcx-top-btn:hover { background: rgba(30, 42, 53, 0.03); }
+
+.mcx-left {
+  position: sticky;
+  top: 12px;
+}
+
+@media (max-width: 980px) {
+  .mcx-left { position: static; }
+}
+
+.mcx-card {
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid rgba(30, 42, 53, 0.08);
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.03);
+  padding: 14px;
+}
+
+.mcx-card + .mcx-card { margin-top: 12px; }
+
+.mcx-card-title {
+  font-weight: 900;
+  letter-spacing: 0.2px;
+  margin-bottom: 12px;
+}
+
+.mcx-field { margin-bottom: 12px; }
+
+.mcx-label {
+  display: block;
+  font-weight: 800;
+  font-size: 13px;
+  color: rgba(0, 0, 0, 0.75);
+  margin-bottom: 6px;
+}
+
+.mcx-select,
+.mcx-textarea {
+  width: 100%;
+  border: 1px solid rgba(30, 42, 53, 0.16);
+  background: rgba(255, 255, 255, 0.96);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font: inherit;
+}
+
+.mcx-textarea { resize: vertical; }
+
+.mcx-patient-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px;
+  align-items: start;
+}
+
+.mcx-patient-search { position: relative; }
+
+.mcx-patient-search input {
+  width: 100%;
+  border: 1px solid rgba(30, 42, 53, 0.16);
+  background: rgba(255, 255, 255, 0.96);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font: inherit;
+}
+
+.mcx-popover {
+  position: absolute;
+  z-index: 10;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  border-radius: 12px;
+  border: 1px solid rgba(30, 42, 53, 0.10);
+  background: #fff;
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.10);
+  overflow: hidden;
+}
+
+.mcx-popover-item {
+  width: 100%;
+  text-align: left;
+  padding: 10px 12px;
+  border: 0;
+  border-bottom: 1px solid rgba(0,0,0,0.06);
+  background: #fff;
+  cursor: pointer;
+}
+
+.mcx-popover-item:hover { background: rgba(30, 42, 53, 0.03); }
+
+.mcx-popover-main { font-weight: 850; }
+.mcx-popover-sub { font-size: 12px; color: rgba(0,0,0,0.55); margin-top: 2px; }
+
+.mcx-btn {
+  border: 1px solid rgba(30, 42, 53, 0.16);
+  background: rgba(255, 255, 255, 0.92);
+  color: #2f2f2f;
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.mcx-btn:hover { background: rgba(30, 42, 53, 0.03); }
+
+.mcx-selected {
+  margin-top: 8px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: rgba(46, 139, 87, 0.08);
+  border: 1px solid rgba(46, 139, 87, 0.16);
+}
+
+.mcx-muted {
+  color: rgba(0, 0, 0, 0.55);
+  font-size: 13px;
+}
+
+.mcx-seg {
+  display: inline-flex;
+  border-radius: 12px;
+  border: 1px solid rgba(30, 42, 53, 0.14);
+  overflow: hidden;
+}
+
+.mcx-seg-btn {
+  border: 0;
+  background: #fff;
+  padding: 10px 12px;
+  font-weight: 800;
+  cursor: pointer;
+  color: rgba(0, 0, 0, 0.75);
+}
+
+.mcx-seg-btn.is-active {
+  background: rgba(184, 148, 49, 0.16);
+  color: rgba(0, 0, 0, 0.85);
+}
+
+.mcx-notes-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.mcx-link {
+  border: 0;
+  background: transparent;
+  color: rgba(0, 0, 0, 0.68);
+  cursor: pointer;
+  font-weight: 800;
+  padding: 6px 0;
+}
+
+.mcx-link:hover { text-decoration: underline; }
+
+.mcx-summary {
+  margin-top: 6px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(30, 42, 53, 0.10);
+  background: rgba(30, 42, 53, 0.03);
+}
+
+.mcx-summary-title { font-weight: 900; margin-bottom: 4px; }
+.mcx-summary-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: baseline; }
+
+.mcx-error {
+  margin-top: 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(220, 38, 38, 0.10);
+  border: 1px solid rgba(220, 38, 38, 0.20);
+  color: rgba(153, 27, 27, 0.95);
+  font-weight: 750;
+}
+
+.mcx-sticky {
+  margin-top: 10px;
+  position: sticky;
+  bottom: 12px;
+  display: grid;
+  gap: 10px;
+}
+
+.mcx-primary {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(184, 148, 49, 0.35);
+  background: linear-gradient(180deg, rgba(252, 246, 231, 1), rgba(248, 238, 214, 1));
+  color: rgba(0, 0, 0, 0.84);
+  font-weight: 950;
+  cursor: pointer;
+}
+
+.mcx-primary:hover { filter: brightness(0.99); }
+
+.mcx-hints {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  color: rgba(0,0,0,0.52);
+  font-size: 12px;
+}
+
+/* Right column */
+
+.mcx-right .mcx-card { padding: 14px; }
+
+.mcx-right-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.mcx-tabs {
+  display: inline-flex;
+  gap: 8px;
+}
+
+.mcx-tab {
+  border: 1px solid rgba(30, 42, 53, 0.14);
+  background: #fff;
+  color: rgba(0,0,0,0.74);
+  padding: 8px 10px;
+  border-radius: 12px;
+  font-weight: 850;
+  cursor: pointer;
+}
+
+.mcx-tab.is-active {
+  background: rgba(30, 42, 53, 0.04);
+}
+
+.mcx-right-grid {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: 12px;
+  align-items: start;
+}
+
+@media (max-width: 1100px) {
+  .mcx-right-grid { grid-template-columns: 1fr; }
+}
+
+.mcx-mini-legend { margin-top: 10px; }
+
+.mcx-section-title {
+  font-weight: 950;
+  margin-bottom: 10px;
+}
+
+.mcx-slot-list {
+  display: grid;
+  gap: 10px;
+}
+
+.mcx-slot-btn {
+  width: 100%;
+  text-align: left;
+  border-radius: 14px;
+  border: 1px solid rgba(30, 42, 53, 0.12);
+  background: #fff;
+  padding: 10px 12px;
+  cursor: pointer;
+}
+
+.mcx-slot-btn:hover { background: rgba(30, 42, 53, 0.03); }
+
+.mcx-slot-btn.is-selected {
+  border-color: rgba(46, 139, 87, 0.35);
+  background: rgba(46, 139, 87, 0.08);
+}
+
+.mcx-slot-main { font-weight: 950; }
+.mcx-slot-sub { font-size: 12px; color: rgba(0,0,0,0.55); margin-top: 2px; }
+
+.mcx-pro-tabs {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+.mcx-pro-tab {
+  border: 1px solid rgba(30, 42, 53, 0.14);
+  background: #fff;
+  padding: 8px 10px;
+  border-radius: 12px;
+  font-weight: 850;
+  cursor: pointer;
+}
+
+.mcx-pro-tab.is-active {
+  background: rgba(30, 42, 53, 0.04);
+}
+
+.mcx-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.mcx-chip {
+  border: 1px solid rgba(30, 42, 53, 0.12);
+  background: #fff;
+  border-radius: 999px;
+  padding: 10px 14px;
+  font-weight: 950;
+  cursor: pointer;
+}
+
+.mcx-chip:hover { background: rgba(30, 42, 53, 0.03); }
+
+.mcx-chip.is-selected {
+  border-color: rgba(46, 139, 87, 0.35);
+  background: rgba(46, 139, 87, 0.08);
+}

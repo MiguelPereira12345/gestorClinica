@@ -1,9 +1,11 @@
 import React, { useState, useMemo } from 'react'
-import Sidebar from './components/Sidebar/Sidebar'
-import WeeklyCalendar from './components/Agenda/WeeklyCalendar'
+import AppLayout from './components/Layout/AppLayout'
+import ResourceDayCalendar from './components/Agenda/ResourceDayCalendar'
 import MiniCalendar from './components/Agenda/MiniCalendar'
 import './components/Agenda/Agenda.css'
 import './App.css'
+import { useNavigate } from 'react-router-dom'
+import { computeOccupancyForDay, loadAppointments } from './utils/appointmentStorage'
 
 function startOfWeek(date) {
   const d = new Date(date)
@@ -15,9 +17,17 @@ function startOfWeek(date) {
 }
 
 export default function Agenda() {
+  const navigate = useNavigate()
   const [cursorDate, setCursorDate] = useState(new Date())
+  const [selectedDayIndex, setSelectedDayIndex] = useState(0)
 
   const weekStart = useMemo(() => startOfWeek(cursorDate), [cursorDate])
+
+  const selectedDate = useMemo(() => {
+    const d = new Date(weekStart)
+    d.setDate(d.getDate() + selectedDayIndex)
+    return d
+  }, [selectedDayIndex, weekStart])
 
   // constants must match WeeklyCalendar settings
   const HOUR_START = 8
@@ -27,21 +37,66 @@ export default function Agenda() {
   // header for wc (day labels) approx 40px + section paddings (12*2)
   const panelHeight = totalHours * HOUR_HEIGHT + 40 + 24
 
+  const resources = useMemo(
+    () => [
+      { id: 1, name: 'Dra. Sofia Lima', color: '#C6E9FF' },
+      { id: 2, name: 'Dr. Marco Sousa', color: '#7EE7A7' },
+      { id: 3, name: 'Dr. Alex Morgan', color: '#89CFFF' },
+    ],
+    [],
+  )
+
   const appointments = useMemo(() => {
-    const mapToWeek = (idx, hourStart, durationMin, color, name) => {
+    const stored = loadAppointments()
+
+    const rangeStart = new Date(weekStart)
+    rangeStart.setHours(0, 0, 0, 0)
+    const rangeEnd = new Date(weekStart)
+    rangeEnd.setDate(rangeEnd.getDate() + 5) // seg-sáb
+    rangeEnd.setHours(23, 59, 59, 999)
+
+    const toCalendar = (a) => ({
+      id: a.id,
+      paciente_nome: a.patientName || a.patientId || 'Paciente',
+      medico_id: Number(a.medicoId),
+      data_inicio: a.startISO,
+      data_fim: a.endISO,
+      tipo_consulta: a.specialty || a.bookingType || 'Consulta',
+    })
+
+    const storedForWeek = stored
+      .filter((a) => a?.startISO && a?.endISO)
+      .filter((a) => {
+        const s = new Date(a.startISO)
+        return s >= rangeStart && s <= rangeEnd
+      })
+      .map(toCalendar)
+
+    if (storedForWeek.length > 0) return storedForWeek
+
+    // fallback demo
+    const mapToWeek = (idx, hourStart, durationMin, medicoId, name) => {
       const day = new Date(weekStart)
       day.setDate(day.getDate() + idx)
       const start = new Date(day)
       start.setHours(hourStart, 0, 0, 0)
       const end = new Date(start.getTime() + durationMin * 60000)
-      return { id: Math.random(), paciente_nome: name, medico_id: 1, data_inicio: start.toISOString(), data_fim: end.toISOString(), tipo_consulta: 'Consulta', color }
+      return {
+        id: `demo-${idx}-${hourStart}-${medicoId}`,
+        paciente_nome: name,
+        medico_id: medicoId,
+        data_inicio: start.toISOString(),
+        data_fim: end.toISOString(),
+        tipo_consulta: 'Consulta',
+      }
     }
 
     return [
-      mapToWeek(0, 11, 60, '#89CFFF', 'João Silva'),
-      mapToWeek(2, 10, 30, '#C6E9FF', 'Maria Ferreira'),
-      mapToWeek(0, 14, 60, '#7EE7A7', 'Joana Oliveira'),
-      mapToWeek(4, 15, 45, '#C6E9FF', 'Paciente X')
+      mapToWeek(0, 11, 60, 3, 'João Silva'),
+      mapToWeek(0, 11, 45, 1, 'Maria Ferreira'),
+      mapToWeek(0, 14, 60, 2, 'Joana Oliveira'),
+      mapToWeek(2, 10, 30, 1, 'Paciente X'),
+      mapToWeek(4, 15, 45, 2, 'Paciente Y'),
     ]
   }, [weekStart])
 
@@ -61,61 +116,81 @@ export default function Agenda() {
     setCursorDate(d)
   }
 
-  return (
-    <div className="app-container" style={{ display: 'flex' }}>
-      <Sidebar />
+  function getDayMeta(date) {
+    return computeOccupancyForDay({ date, medicoId: null })
+  }
 
-      <main className="page-layout" style={{ flex: 1, padding: 18 }}>
-        <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:12}}>
-          <div style={{fontSize:14, color:'#666'}}>Pacientes &gt; João Silva &gt; Agenda</div>
-          <div style={{display:'flex', gap:12, alignItems:'center'}}>
-            <button onClick={() => {}} className="login-btn" style={{background:'#caa86a', color:'#fff', padding:'8px 12px'}}>＋  Adicionar Consulta</button>
-            <div style={{display:'flex', alignItems:'center', gap:8}}>
-              <div style={{width:40,height:40,borderRadius:20,background:'#eee'}} aria-hidden="true" />
-              <div>Dra. Sofia Lima</div>
+  return (
+    <AppLayout
+      breadcrumb="Pacientes > João Silva > Agenda"
+      userName="Dra. Sofia Lima"
+      actions={
+        <button type="button" className="app-action-primary" onClick={() => navigate('/agenda/consultas/novo')}>
+          ＋ Adicionar Consulta
+        </button>
+      }
+    >
+      <div className="agenda-grid">
+        <section className="calendar-panel" style={{ minHeight: panelHeight }}>
+          <div className="agenda-panel-header">
+            <div className="agenda-panel-title">
+              Agenda por Médico • {weekStart.toLocaleDateString()} - {(new Date(weekStart.getFullYear(), weekStart.getMonth(), weekStart.getDate()+5)).toLocaleDateString()}
+            </div>
+            <div className="agenda-panel-actions">
+              <button className="agenda-nav-btn" onClick={goPrevWeek}>&lt; Semana Anterior</button>
+              <button className="agenda-nav-btn" onClick={goNextWeek}>Semana Seguinte &gt;</button>
             </div>
           </div>
-        </div>
 
-        <div style={{display:'grid', gridTemplateColumns:'1fr 300px', gap:18}}>
-          <section className="calendar-panel" style={{ minHeight: panelHeight }}>
-            <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:12}}>
-              <div style={{fontWeight:600}}>Agenda Semanal • {weekStart.toLocaleDateString()} - {(new Date(weekStart.getFullYear(), weekStart.getMonth(), weekStart.getDate()+5)).toLocaleDateString()}</div>
-              <div style={{display:'flex', gap:8}}>
-                <button className="login-btn" onClick={goPrevWeek}>&lt; Semana Anterior</button>
-                <button className="login-btn" onClick={goNextWeek}>Semana Seguinte &gt;</button>
-              </div>
+          <div className="agenda-daytabs" aria-label="Dias da semana">
+            {Array.from({ length: 6 }).map((_, i) => {
+              const d = new Date(weekStart)
+              d.setDate(d.getDate() + i)
+              const active = i === selectedDayIndex
+              return (
+                <button
+                  key={i}
+                  type="button"
+                  className={`agenda-daytab${active ? ' is-active' : ''}`}
+                  onClick={() => setSelectedDayIndex(i)}
+                >
+                  {d.toLocaleDateString(undefined, { weekday: 'short', day: '2-digit' })}
+                </button>
+              )
+            })}
+          </div>
+
+          <ResourceDayCalendar date={selectedDate} resources={resources} appointments={appointments} />
+        </section>
+
+        <aside className="agenda-aside">
+          <div className="agenda-card">
+            <MiniCalendar
+              currentDate={cursorDate}
+              onSelectDate={handleSelectDate}
+              onPrevMonth={() => { const d = new Date(cursorDate); d.setMonth(d.getMonth() - 1); setCursorDate(d)}}
+              onNextMonth={() => { const d = new Date(cursorDate); d.setMonth(d.getMonth() + 1); setCursorDate(d)}}
+              getDayMeta={getDayMeta}
+            />
+          </div>
+
+          <div className="agenda-card">
+            <div className="agenda-card-title">Legenda de Médicos</div>
+            <div className="agenda-legend">
+              {resources.map((r) => (
+                <div key={r.id} className="agenda-legend-row">
+                  <span className="agenda-dot" style={{ background: r.color }} /> {r.name}
+                </div>
+              ))}
             </div>
+          </div>
 
-            <WeeklyCalendar weekStart={weekStart} appointments={appointments} />
-          </section>
-
-          <aside style={{display:'flex', flexDirection:'column', gap:12}}>
-            <div style={{background:'#fff', padding:12, borderRadius:6}}>
-              <MiniCalendar
-                currentDate={cursorDate}
-                onSelectDate={handleSelectDate}
-                onPrevMonth={() => { const d = new Date(cursorDate); d.setMonth(d.getMonth() - 1); setCursorDate(d)}}
-                onNextMonth={() => { const d = new Date(cursorDate); d.setMonth(d.getMonth() + 1); setCursorDate(d)}}
-              />
-            </div>
-
-            <div style={{background:'#fff', padding:12, borderRadius:6}}>
-              <div style={{fontWeight:600, marginBottom:8}}>Legenda de Médicos</div>
-              <div style={{display:'flex', flexDirection:'column', gap:8}}>
-                <div style={{display:'flex', gap:8, alignItems:'center'}}><div style={{width:12,height:12,background:'#C6E9FF',borderRadius:4}}/> Dra. Sofia — Lilás</div>
-                <div style={{display:'flex', gap:8, alignItems:'center'}}><div style={{width:12,height:12,background:'#7EE7A7',borderRadius:4}}/> Dr. Marco — Verde Água</div>
-                <div style={{display:'flex', gap:8, alignItems:'center'}}><div style={{width:12,height:12,background:'#89CFFF',borderRadius:4}}/> Dr. Alex — Azul Claro</div>
-              </div>
-            </div>
-
-            <div style={{background:'#fff', padding:12, borderRadius:6}}>
-              <div style={{fontWeight:600}}>Dica</div>
-              <div style={{marginTop:8, color:'#666'}}>Passe o rato sobre um bloco para ver paciente, tempo de consulta, tipo e estado.</div>
-            </div>
-          </aside>
-        </div>
-      </main>
-    </div>
+          <div className="agenda-card">
+            <div className="agenda-card-title">Dica</div>
+            <div className="agenda-card-muted">Passe o rato sobre um bloco para ver paciente, tempo de consulta, tipo e estado.</div>
+          </div>
+        </aside>
+      </div>
+    </AppLayout>
   )
 }

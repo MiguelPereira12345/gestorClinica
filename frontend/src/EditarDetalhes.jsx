@@ -1,6 +1,5 @@
 import React, { useState } from 'react'
-import Header from './components/header'
-import Sidebar from './components/Sidebar/Sidebar'
+import AppLayout from './components/Layout/AppLayout'
 import Informacao from './components/Detalhes/Informacao'
 import Exames from './components/Detalhes/Exames'
 import AnexosClinicos from './components/Detalhes/AnexosClinicos'
@@ -42,13 +41,8 @@ export default function EditarDetalhes(){
   }
 
   return (
-    <div className="app-container app-container-flex">
-      <Sidebar />
-
-      <main className="page-layout page-layout-flex">
-        <Header userName="Ficha do Paciente" actionText="" />
-
-        <div className="patient-page">
+    <AppLayout breadcrumb="Pacientes > João Pedro da Silva > Detalhes" userName="Dra. Sofia Lima">
+      <div className="patient-page">
 
 
           {/* RGPD / Consentimentos */}
@@ -151,8 +145,7 @@ export default function EditarDetalhes(){
               </div>
             </div>
           </div>
-        </div>
-      </main>
-    </div>
+      </div>
+    </AppLayout>
   )
 }

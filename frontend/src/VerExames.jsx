@@ -1,6 +1,6 @@
 ﻿import React from 'react'
 import './App.css'
-import Header from './components/VerExames/HeaderExames'
+import AppLayout from './components/Layout/AppLayout'
 import CardExames from './components/VerExames/CardExames'
 
 const sampleMedical = [
@@ -19,30 +19,30 @@ const sampleDental = [
 
 export default function VerExames() {
   return (
-    <div className="ver-exames-page">
-      <Header userName="Joana Oliveira" actionText="Ver Exames" />
+    <AppLayout breadcrumb="Pacientes > Joana Oliveira > Exames" userName="Dra. Sofia Lima">
+      <div className="ver-exames-page">
+        <main className="ve-main">
+          <div className="user-row">
+            <div className="user-name">Joana Oliveira</div>
+          </div>
 
-      <main className="ve-main">
-        <div className="user-row">
-          <div className="user-name">Joana Oliveira</div>
-        </div>
+          <div className="columns">
+            <section className="column">
+              <h2>Exames médicos:</h2>
+              {sampleMedical.map((e) => (
+                <CardExames key={e.id} exam={e} />
+              ))}
+            </section>
 
-        <div className="columns">
-          <section className="column">
-            <h2>Exames médicos:</h2>
-            {sampleMedical.map((e) => (
-              <CardExames key={e.id} exam={e} />
-            ))}
-          </section>
-
-          <section className="column">
-            <h2>Exames dentários:</h2>
-            {sampleDental.map((e) => (
-              <CardExames key={e.id} exam={e} />
-            ))}
-          </section>
-        </div>
-      </main>
-    </div>
+            <section className="column">
+              <h2>Exames dentários:</h2>
+              {sampleDental.map((e) => (
+                <CardExames key={e.id} exam={e} />
+              ))}
+            </section>
+          </div>
+        </main>
+      </div>
+    </AppLayout>
   )
 }
