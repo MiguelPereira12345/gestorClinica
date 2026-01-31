@@ -5,6 +5,7 @@ import AppLayout from './components/Layout/AppLayout'
 import {
 	Eye,
 	Pencil,
+	Plus,
 	Search,
 	Trash2,
 } from 'lucide-react'
@@ -146,7 +147,11 @@ export default function Pacientes() {
 									onChange={(e) => setQuery(e.target.value)}
 								/>
 							</div>
-							<Button variant="primary" onClick={() => navigate('/pacientes/novo')}>
+							<Button
+								variant="primary"
+								leftIcon={<Plus size={16} aria-hidden="true" />}
+								onClick={() => navigate('/pacientes/novo')}
+							>
 								Adicionar paciente
 							</Button>
 						</>

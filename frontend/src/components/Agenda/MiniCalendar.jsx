@@ -31,7 +31,9 @@ export default function MiniCalendar({
         >
           &lt;
         </button>
-        <div className="fw-semibold">{currentDate.toLocaleString(undefined, { month: 'long' })} {year}</div>
+        <div className="fw-semibold text-capitalize" style={{ fontSize: 13 }}>
+          {currentDate.toLocaleString('pt-PT', { month: 'long' })} {year}
+        </div>
         <button
           type="button"
           onClick={onNextMonth}
@@ -46,12 +48,12 @@ export default function MiniCalendar({
         style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(7, 1fr)',
-          gap: 6,
-          marginTop: 8,
+          gap: 4,
+          marginTop: 6,
         }}
       >
         {['S', 'T', 'Q', 'Q', 'S', 'S', 'D'].map((h) => (
-          <div key={h} className="text-center text-muted small">
+          <div key={h} className="text-center text-muted" style={{ fontSize: 11 }}>
             {h}
           </div>
         ))}

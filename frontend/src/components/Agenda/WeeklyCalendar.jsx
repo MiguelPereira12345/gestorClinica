@@ -23,19 +23,20 @@ export default function WeeklyCalendar({ weekStart, appointments = [] }) {
 
   return (
     <div className="w-100">
-      <div className="d-flex">
-        <div className="flex-shrink-0" style={{ width: timeColWidth }} />
+      <div className="d-flex border-bottom bg-light rounded-top-3">
+        <div className="flex-shrink-0 bg-white" style={{ width: timeColWidth }} />
         {days.map((d) => (
           <div
             key={d.toDateString()}
-            className="flex-grow-1 py-2 text-center border-bottom bg-light small fw-semibold"
+            className="flex-grow-1 py-2 text-center small fw-semibold"
+            style={{ minWidth: 0 }}
           >
-            {d.toLocaleDateString(undefined, { weekday: 'short', day: 'numeric' })}
+            {d.toLocaleDateString('pt-PT', { weekday: 'short', day: '2-digit' }).replace(',', '')}
           </div>
         ))}
       </div>
 
-      <div className="d-flex" style={{ height: gridHeight }}>
+      <div className="d-flex bg-white rounded-bottom-3 overflow-hidden" style={{ height: gridHeight }}>
         <div className="flex-shrink-0 bg-white" style={{ width: timeColWidth }}>
           {Array.from({ length: totalHours }).map((_, i) => (
             <div
@@ -48,11 +49,12 @@ export default function WeeklyCalendar({ weekStart, appointments = [] }) {
           ))}
         </div>
 
-        <div className="d-flex flex-grow-1" style={{ position: 'relative' }}>
+        <div className="d-flex flex-grow-1" style={{ position: 'relative', minWidth: 0 }}>
           {days.map((day, dayIndex) => (
             <div
               key={dayIndex}
               className={dayIndex === 0 ? 'flex-grow-1 position-relative' : 'flex-grow-1 position-relative border-start'}
+              style={{ minWidth: 0 }}
             >
               <div className="position-relative" style={{ height: gridHeight }}>
                 {/* place appointments for this day */}
@@ -73,13 +75,14 @@ export default function WeeklyCalendar({ weekStart, appointments = [] }) {
                     return (
                       <div
                         key={a.id}
-                        className="position-absolute start-0 end-0 mx-2 rounded-2 shadow-sm p-2 overflow-hidden"
+                        className="position-absolute start-0 end-0 mx-1 rounded-3 shadow-sm p-2 overflow-hidden border"
                         title={`${a.paciente_nome} — ${a.tipo_consulta}`}
                         style={{
                           top: `${top}px`,
                           height: `${Math.max(28, height)}px`,
                           background: color,
-                          color: '#033',
+                          color: '#1e2a35',
+                          borderColor: 'rgba(30, 42, 53, 0.18)',
                         }}
                       >
                         <div className="fw-semibold" style={{ fontSize: 13 }}>

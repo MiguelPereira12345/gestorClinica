@@ -182,6 +182,17 @@ export default function Agenda() {
     return computeOccupancyForDay({ date, medicoId: null })
   }
 
+  function formatWeekdayChip(d) {
+    const weekday = d
+      .toLocaleDateString('pt-PT', { weekday: 'short' })
+      .replace('.', '')
+      .replace(',', '')
+      .trim()
+    const day = String(d.getDate()).padStart(2, '0')
+    const label = `${weekday} ${day}`
+    return label.charAt(0).toUpperCase() + label.slice(1)
+  }
+
   return (
     <AppLayout breadcrumb="Agenda" userName="Dra. Sofia Lima">
       <div className="ui-page">
@@ -288,7 +299,7 @@ export default function Agenda() {
                       className={`btn btn-sm ${active ? 'btn-primary' : 'btn-light'}`}
                       onClick={() => setSelectedDayIndex(i)}
                     >
-                      {d.toLocaleDateString(undefined, { weekday: 'short', day: '2-digit' })}
+                      {formatWeekdayChip(d)}
                     </button>
                   )
                 })}

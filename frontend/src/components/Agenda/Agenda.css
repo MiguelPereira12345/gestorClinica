@@ -1,5 +1,11 @@
 
 
+.mc-cell {
+  font-size: 12px;
+  line-height: 1.1;
+  min-height: 24px;
+}
+
 .mc-cell:hover { background: rgba(30, 42, 53, 0.04); }
 .mc-cell.today { background:#f0f8ff }
 
@@ -40,11 +46,11 @@
 .moc-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 8px;
+  gap: 6px;
 }
 
 .moc-cell {
-  min-height: 54px;
+  min-height: 48px;
 }
 
 .moc-cell:hover {

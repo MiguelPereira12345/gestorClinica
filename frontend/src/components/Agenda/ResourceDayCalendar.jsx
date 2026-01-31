@@ -18,32 +18,88 @@ function isSameDay(a, b) {
 }
 
 function layoutOverlaps(items) {
-	const sorted = [...items].sort(
-		(a, b) => new Date(a.data_inicio).getTime() - new Date(b.data_inicio).getTime(),
-	)
+	const sorted = [...items]
+		.map((appt) => {
+			const s = new Date(appt.data_inicio)
+			const e = new Date(appt.data_fim)
+			return {
+				appt,
+				startMin: timeToMinutes(s),
+				endMin: timeToMinutes(e),
+			}
+		})
+		.sort((a, b) => new Date(a.appt.data_inicio).getTime() - new Date(b.appt.data_inicio).getTime())
 
-	const colEnd = [] // minutes
-	let maxCols = 1
+	// Partition into overlap clusters so width is computed per cluster,
+	// not globally for the whole day/resource.
+	const clusters = []
+	let current = []
+	let currentEnd = -Infinity
 
-	const placed = sorted.map((appt) => {
-		const s = new Date(appt.data_inicio)
-		const e = new Date(appt.data_fim)
-		const startMin = timeToMinutes(s)
-		const endMin = timeToMinutes(e)
-
-		let col = colEnd.findIndex((end) => end <= startMin)
-		if (col === -1) {
-			col = colEnd.length
-			colEnd.push(endMin)
-		} else {
-			colEnd[col] = endMin
+	for (const item of sorted) {
+		if (current.length === 0) {
+			current = [item]
+			currentEnd = item.endMin
+			continue
 		}
 
-		maxCols = Math.max(maxCols, colEnd.length)
-		return { appt, startMin, endMin, col }
-	})
+		if (item.startMin < currentEnd) {
+			current.push(item)
+			currentEnd = Math.max(currentEnd, item.endMin)
+		} else {
+			clusters.push(current)
+			current = [item]
+			currentEnd = item.endMin
+		}
+	}
+	if (current.length) clusters.push(current)
 
-	return { placed, maxCols }
+	const placed = []
+	for (const cluster of clusters) {
+		const colEnd = [] // minutes
+		let clusterCols = 1
+
+		const clusterPlaced = cluster.map(({ appt, startMin, endMin }) => {
+			let col = colEnd.findIndex((end) => end <= startMin)
+			if (col === -1) {
+				col = colEnd.length
+				colEnd.push(endMin)
+			} else {
+				colEnd[col] = endMin
+			}
+
+			clusterCols = Math.max(clusterCols, colEnd.length)
+			return { appt, startMin, endMin, col }
+		})
+
+		for (const p of clusterPlaced) {
+			placed.push({ ...p, clusterCols })
+		}
+	}
+
+	return { placed }
+}
+
+function hexToRgb(hex) {
+	const h = String(hex || '').trim().replace('#', '')
+	if (h.length !== 6) return null
+	const r = Number.parseInt(h.slice(0, 2), 16)
+	const g = Number.parseInt(h.slice(2, 4), 16)
+	const b = Number.parseInt(h.slice(4, 6), 16)
+	if ([r, g, b].some((x) => Number.isNaN(x))) return null
+	return { r, g, b }
+}
+
+function pickTextColor(bg) {
+	const rgb = hexToRgb(bg)
+	if (!rgb) return '#1e2a35'
+	// relative luminance (sRGB)
+	const toLin = (c) => {
+		const v = c / 255
+		return v <= 0.04045 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4)
+	}
+	const L = 0.2126 * toLin(rgb.r) + 0.7152 * toLin(rgb.g) + 0.0722 * toLin(rgb.b)
+	return L < 0.45 ? '#ffffff' : '#1e2a35'
 }
 
 export default function ResourceDayCalendar({ date, resources = [], appointments = [] }) {
@@ -102,14 +158,14 @@ export default function ResourceDayCalendar({ date, resources = [], appointments
 				</div>
 
 				<div className="d-flex flex-grow-1" style={{ minWidth: 0 }}>
-					{perResource.map(({ resource, placed, maxCols }) => (
+					{perResource.map(({ resource, placed }) => (
 						<div
 							key={resource.id}
 							className={(resources[0]?.id === resource.id ? '' : 'border-start ') + 'flex-grow-1 position-relative bg-white'}
 							style={{ minWidth: 0 }}
 						>
 							<div className="rc-grid" style={{ height: gridHeight }}>
-								{placed.map(({ appt, startMin, endMin, col }) => {
+								{placed.map(({ appt, startMin, endMin, col, clusterCols }) => {
 									const minutesFromDayStart = startMin - HOUR_START * 60
 									const durationMinutes = endMin - startMin
 									const top = (minutesFromDayStart / 60) * HOUR_HEIGHT
@@ -123,7 +179,7 @@ export default function ResourceDayCalendar({ date, resources = [], appointments
 										minute: '2-digit',
 									})
 
-									const colWidthPct = 100 / Math.max(1, maxCols)
+									const colWidthPct = 100 / Math.max(1, clusterCols)
 									const leftPct = col * colWidthPct
 
 									return (
@@ -133,19 +189,21 @@ export default function ResourceDayCalendar({ date, resources = [], appointments
 											title={`${appt.paciente_nome} — ${appt.tipo_consulta}`}
 											style={{
 												top: `${top}px`,
-												height: `${Math.max(28, height)}px`,
+												height: `${Math.max(34, height)}px`,
 												background: appt.color || resource.color,
-												left: `calc(${leftPct}% + 8px)`,
-												width: `calc(${colWidthPct}% - 16px)`,
+												left: `calc(${leftPct}% + 4px)`,
+												width: `calc(${colWidthPct}% - 8px)`,
 												padding: '8px 10px',
-												color: '#053',
+												color: pickTextColor(appt.color || resource.color),
+												borderColor: 'rgba(30, 42, 53, 0.18)',
 											}}
 										>
-											<div className="fw-bold" style={{ fontSize: 13 }}>
+											<div className="fw-bold" style={{ fontSize: 13, lineHeight: 1.15 }}>
 												{appt.paciente_nome}
 											</div>
-											<div className="text-muted" style={{ fontSize: 11, marginTop: 2 }}>
+											<div style={{ fontSize: 11, marginTop: 2, opacity: 0.85, lineHeight: 1.15 }}>
 												{startStr}–{endStr}
+												{appt.tipo_consulta ? ` • ${appt.tipo_consulta}` : ''}
 											</div>
 										</div>
 									)

@@ -1,28 +1,54 @@
 import React, { useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { Check, ChevronDown, Clock, Eye, Pencil, X } from 'lucide-react'
 import StatusBadge from './StatusBadge'
 import { formatDatePT, formatTimePT } from '../../utils/dateTime'
 
 export default function ConsultasTable({ rows, onView, onEdit, onSetStatus }) {
 	const [openId, setOpenId] = useState(null)
+	const [menuAnchorRect, setMenuAnchorRect] = useState(null)
+
+	function closeMenu() {
+		setOpenId(null)
+		setMenuAnchorRect(null)
+	}
 
 	useEffect(() => {
 		function onDocMouseDown(e) {
-			const isInside = e.target?.closest?.('.consultas-actions-dropdown')
-			if (!isInside) setOpenId(null)
+			const isInsideTrigger = e.target?.closest?.('.consultas-actions-dropdown')
+			const isInsideMenu = e.target?.closest?.('.consultas-actions-menu')
+			if (!isInsideTrigger && !isInsideMenu) closeMenu()
 		}
 
 		function onDocKeyDown(e) {
-			if (e.key === 'Escape') setOpenId(null)
+			if (e.key === 'Escape') closeMenu()
+		}
+
+		function onAnyScroll() {
+			// Keep it simple: if the user scrolls, close to avoid mis-position.
+			if (openId) closeMenu()
 		}
 
 		document.addEventListener('mousedown', onDocMouseDown)
 		document.addEventListener('keydown', onDocKeyDown)
+		window.addEventListener('scroll', onAnyScroll, true)
 		return () => {
 			document.removeEventListener('mousedown', onDocMouseDown)
 			document.removeEventListener('keydown', onDocKeyDown)
+			window.removeEventListener('scroll', onAnyScroll, true)
 		}
-	}, [])
+	}, [openId])
+
+	const MENU_WIDTH = 190
+	function getMenuStyle(rect) {
+		if (!rect) return null
+		const left = Math.min(
+			Math.max(8, rect.right - MENU_WIDTH),
+			window.innerWidth - 8 - MENU_WIDTH,
+		)
+		const top = Math.min(rect.bottom + 6, window.innerHeight - 8)
+		return { position: 'fixed', top, left, width: MENU_WIDTH, zIndex: 2000 }
+	}
 
 	return (
 		<section className="ui-card p-3" aria-label="Lista de Consultas">
@@ -79,54 +105,69 @@ export default function ConsultasTable({ rows, onView, onEdit, onSetStatus }) {
 													className="btn btn-light btn-sm"
 													aria-haspopup="menu"
 													aria-expanded={openId === c.id}
-													onClick={() => setOpenId((prev) => (prev === c.id ? null : c.id))}
+													onClick={(e) => {
+														const nextId = openId === c.id ? null : c.id
+														if (!nextId) {
+															closeMenu()
+															return
+														}
+														setOpenId(nextId)
+														setMenuAnchorRect(e.currentTarget.getBoundingClientRect())
+													}}
 												>
 													Estado
 													<ChevronDown size={14} aria-hidden="true" />
 												</button>
 
-												{openId === c.id ? (
-													<div className="dropdown-menu dropdown-menu-end show" role="menu">
-														<button
-															type="button"
-															className="dropdown-item"
-															role="menuitem"
-															onClick={() => {
-																setOpenId(null)
-																onSetStatus?.(c, 'confirmada')
-														}}
+												{openId === c.id && menuAnchorRect
+													? createPortal(
+														<div
+															className="dropdown-menu show consultas-actions-menu"
+															role="menu"
+															style={getMenuStyle(menuAnchorRect)}
 														>
-															<Check size={14} aria-hidden="true" />
-															Confirmar
-														</button>
+															<button
+																type="button"
+																className="dropdown-item"
+																role="menuitem"
+																onClick={() => {
+																	closeMenu()
+																	onSetStatus?.(c, 'confirmada')
+															}}
+															>
+																<Check size={14} aria-hidden="true" />
+																Confirmar
+															</button>
 
-														<button
-															type="button"
-															className="dropdown-item"
-															role="menuitem"
-															onClick={() => {
-																setOpenId(null)
-																onSetStatus?.(c, 'a_confirmar')
-														}}
-														>
-															<Clock size={14} aria-hidden="true" />
-															Pendente
-														</button>
+															<button
+																type="button"
+																className="dropdown-item"
+																role="menuitem"
+																onClick={() => {
+																	closeMenu()
+																	onSetStatus?.(c, 'a_confirmar')
+															}}
+															>
+																<Clock size={14} aria-hidden="true" />
+																Pendente
+															</button>
 
-														<button
-															type="button"
-															className="dropdown-item"
-															role="menuitem"
-															onClick={() => {
-																setOpenId(null)
-																onSetStatus?.(c, 'cancelada')
-														}}
-														>
-															<X size={14} aria-hidden="true" />
-															Cancelar
-														</button>
-													</div>
-												) : null}
+															<button
+																type="button"
+																className="dropdown-item"
+																role="menuitem"
+																onClick={() => {
+																	closeMenu()
+																	onSetStatus?.(c, 'cancelada')
+															}}
+															>
+																<X size={14} aria-hidden="true" />
+																Cancelar
+															</button>
+														</div>,
+														document.body,
+													)
+													: null}
 											</div>
 										</td>
 								</tr>

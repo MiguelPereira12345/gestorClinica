@@ -26,16 +26,16 @@ export default function ConsultasFilters({
 				</div>
 			</div>
 
-			<div className="row row-cols-1 row-cols-md-2 row-cols-lg-5 g-3">
+			<div className="row row-cols-1 row-cols-md-2 row-cols-lg-5 g-2">
 				<div className="col">
-					<label className="form-label">Paciente</label>
-					<div className="input-group">
+					<label className="form-label mb-1">Paciente</label>
+					<div className="input-group input-group-sm">
 						<span className="input-group-text" aria-hidden="true">
 							<Search size={16} aria-hidden="true" />
 						</span>
 						<input
 							type="text"
-							className="form-control"
+							className="form-control form-control-sm"
 							placeholder="Nome do paciente"
 							value={filters.patient}
 							onChange={(e) => onChange({ ...filters, patient: e.target.value })}
@@ -44,9 +44,9 @@ export default function ConsultasFilters({
 				</div>
 
 				<div className="col">
-					<label className="form-label">Profissional</label>
+					<label className="form-label mb-1">Profissional</label>
 					<select
-						className="form-select"
+						className="form-select form-select-sm"
 						value={filters.professional}
 						onChange={(e) => onChange({ ...filters, professional: e.target.value })}
 					>
@@ -60,19 +60,19 @@ export default function ConsultasFilters({
 				</div>
 
 				<div className="col">
-					<label className="form-label">Data</label>
+					<label className="form-label mb-1">Data</label>
 					<input
 						type="date"
-						className="form-control"
+						className="form-control form-control-sm"
 						value={filters.date}
 						onChange={(e) => onChange({ ...filters, date: e.target.value })}
 					/>
 				</div>
 
 				<div className="col">
-					<label className="form-label">Estado</label>
+					<label className="form-label mb-1">Estado</label>
 					<select
-						className="form-select"
+						className="form-select form-select-sm"
 						value={filters.status}
 						onChange={(e) => onChange({ ...filters, status: e.target.value })}
 					>
@@ -84,9 +84,9 @@ export default function ConsultasFilters({
 				</div>
 
 				<div className="col">
-					<label className="form-label">Tipo de marcação</label>
+					<label className="form-label mb-1">Tipo de marcação</label>
 					<select
-						className="form-select"
+						className="form-select form-select-sm"
 						value={filters.bookingType}
 						onChange={(e) => onChange({ ...filters, bookingType: e.target.value })}
 					>

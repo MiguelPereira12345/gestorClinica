@@ -21,10 +21,10 @@ export default function ColaboradoresFilters({ filters, onChange, onClear }) {
 				</div>
 			</div>
 
-			<div className="row g-3">
+			<div className="row g-2">
 				<div className="col-12 col-md-6 col-lg-5">
-					<label className="form-label">Nome</label>
-					<div className="input-group">
+					<label className="form-label mb-1">Nome</label>
+					<div className="input-group input-group-sm">
 						<span className="input-group-text">
 							<Search size={16} aria-hidden="true" />
 						</span>
@@ -33,17 +33,17 @@ export default function ColaboradoresFilters({ filters, onChange, onClear }) {
 							placeholder="Buscar por nome..."
 							value={filters.name}
 							onChange={(e) => handleChange('name', e.target.value)}
-							className="form-control"
+							className="form-control form-control-sm"
 						/>
 					</div>
 				</div>
 
 				<div className="col-12 col-md-6 col-lg-4">
-					<label className="form-label">Cargo</label>
+					<label className="form-label mb-1">Cargo</label>
 					<select
 						value={filters.specialty}
 						onChange={(e) => handleChange('specialty', e.target.value)}
-						className="form-select"
+						className="form-select form-select-sm"
 					>
 						<option value="">Todos</option>
 						<option value="admin">Admin</option>
@@ -53,11 +53,11 @@ export default function ColaboradoresFilters({ filters, onChange, onClear }) {
 				</div>
 
 				<div className="col-12 col-md-6 col-lg-3">
-					<label className="form-label">Estado</label>
+					<label className="form-label mb-1">Estado</label>
 					<select
 						value={filters.status}
 						onChange={(e) => handleChange('status', e.target.value)}
-						className="form-select"
+						className="form-select form-select-sm"
 					>
 						<option value="">Todos</option>
 						<option value="ativo">Ativo</option>
