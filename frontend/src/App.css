@@ -38,6 +38,291 @@ select {
   --ui-surface: #ffffff;
   --ui-border: rgba(30, 42, 53, 0.10);
   --ui-muted: #6b7280;
+  --ui-ink: #1e2a35;
+  --ui-radius-sm: 10px;
+  --ui-radius-md: 12px;
+  --ui-shadow-card: 0 14px 35px rgba(16, 24, 40, 0.10);
+}
+
+/* UI primitives ----------------------------------------------------------- */
+
+.ui-page {
+  max-width: 1160px;
+  margin: 0 auto;
+}
+
+.ui-page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  margin: 8px 0 16px;
+}
+
+.ui-page-title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--ui-ink);
+}
+
+.ui-page-subtitle {
+  margin-top: 4px;
+  color: var(--ui-muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.ui-page-actions {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.ui-btn {
+  border: 1px solid rgba(30, 42, 53, 0.12);
+  background: rgba(255, 255, 255, 0.85);
+  color: var(--ui-ink);
+  padding: 10px 12px;
+  border-radius: var(--ui-radius-sm);
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ui-btn:hover {
+  filter: brightness(0.99);
+}
+
+.ui-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.ui-btn--primary {
+  border: 1px solid rgba(184, 148, 49, 0.35);
+  background: var(--ui-gold);
+  color: #ffffff;
+}
+
+.ui-btn--secondary {
+  background: rgba(255, 255, 255, 0.78);
+}
+
+.ui-btn--danger {
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  background: rgba(239, 68, 68, 0.10);
+  color: #7f1d1d;
+}
+
+.ui-icon-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--ui-radius-sm);
+  border: 1px solid rgba(30, 42, 53, 0.12);
+  background: rgba(255, 255, 255, 0.85);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.ui-icon-btn:hover {
+  filter: brightness(0.99);
+}
+
+.ui-icon {
+  width: 18px;
+  height: 18px;
+  color: rgba(30, 42, 53, 0.75);
+}
+
+.ui-card {
+  background: rgba(255, 255, 255, 0.90);
+  border: 1px solid rgba(30, 42, 53, 0.10);
+  border-radius: var(--ui-radius-md);
+  box-shadow: var(--ui-shadow-card);
+}
+
+.ui-table-wrap {
+  overflow-x: auto;
+  overflow-y: visible;
+}
+
+.ui-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 860px;
+}
+
+.ui-table th {
+  text-align: left;
+  padding: 12px 10px;
+  font-size: 12px;
+  font-weight: 800;
+  color: rgba(30, 42, 53, 0.65);
+  border-bottom: 1px solid rgba(30, 42, 53, 0.10);
+}
+
+.ui-table td {
+  padding: 12px 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ui-ink);
+  border-bottom: 1px solid rgba(30, 42, 53, 0.08);
+  vertical-align: middle;
+}
+
+.ui-table .ui-actions-col {
+  text-align: right;
+  width: 1%;
+  white-space: nowrap;
+}
+
+.ui-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.ui-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+
+.ui-badge--confirmed {
+  background: rgba(34, 197, 94, 0.14);
+  border-color: rgba(34, 197, 94, 0.24);
+  color: #166534;
+}
+
+.ui-badge--pending {
+  background: rgba(245, 158, 11, 0.14);
+  border-color: rgba(245, 158, 11, 0.25);
+  color: #92400e;
+}
+
+.ui-badge--cancelled {
+  background: rgba(239, 68, 68, 0.12);
+  border-color: rgba(239, 68, 68, 0.22);
+  color: #991b1b;
+}
+
+.ui-badge--active {
+  background: rgba(34, 197, 94, 0.10);
+  border-color: rgba(34, 197, 94, 0.18);
+  color: #166534;
+}
+
+.ui-badge--inactive {
+  background: rgba(148, 163, 184, 0.18);
+  border-color: rgba(148, 163, 184, 0.30);
+  color: rgba(30, 42, 53, 0.70);
+}
+
+.ui-badge--neutral {
+  background: rgba(30, 42, 53, 0.06);
+  border-color: rgba(30, 42, 53, 0.10);
+  color: rgba(30, 42, 53, 0.78);
+}
+
+.ui-breadcrumbs {
+  display: flex;
+  align-items: center;
+}
+
+.ui-breadcrumbs-list {
+  list-style: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0;
+  margin: 0;
+}
+
+.ui-breadcrumbs-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ui-breadcrumbs-label {
+  color: var(--ui-muted);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.ui-breadcrumbs-label.is-current {
+  color: rgba(30, 42, 53, 0.78);
+}
+
+.ui-breadcrumbs-sep {
+  color: rgba(30, 42, 53, 0.35);
+  font-weight: 800;
+}
+
+.ui-actionmenu {
+  position: relative;
+  display: inline-flex;
+}
+
+.ui-actionmenu-menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 8px);
+  min-width: 190px;
+  background: rgba(255, 255, 255, 0.98);
+  border: 1px solid rgba(30, 42, 53, 0.12);
+  border-radius: 12px;
+  padding: 6px;
+  box-shadow: 0 14px 30px rgba(30, 42, 53, 0.12);
+  z-index: 200;
+}
+
+.ui-actionmenu-menu.is-left {
+  left: 0;
+  right: auto;
+}
+
+.ui-actionmenu-item {
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 10px;
+  border: 0;
+  background: transparent;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 700;
+  color: rgba(30, 42, 53, 0.85);
+  text-align: left;
+}
+
+.ui-actionmenu-item:hover {
+  background: rgba(30, 42, 53, 0.04);
+}
+
+.ui-actionmenu-item.is-danger {
+  color: #991b1b;
+}
+
+.ui-actionmenu-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
 }
 
 body {
@@ -1222,7 +1507,7 @@ body {
 
 .patients-table thead th {
   text-align: left;
-  padding: 14px 18px;
+  padding: 12px 10px;
   color: rgba(122, 130, 138, 0.95);
   font-weight: 800;
   border-bottom: 1px solid rgba(30, 42, 53, 0.08);
@@ -1234,7 +1519,7 @@ body {
 
 
 .patients-table tbody td {
-  padding: 16px 18px;
+  padding: 12px 10px;
   border-bottom: 1px solid rgba(30, 42, 53, 0.06);
   color: var(--patients-ink);
   vertical-align: middle;
@@ -1294,25 +1579,26 @@ body {
 }
 
 .patients-action {
+  border: 1px solid rgba(30, 42, 53, 0.12);
+  background: rgba(245, 245, 245, 0.65);
+  border-radius: 10px;
+  padding: 8px 10px;
+  font-weight: 700;
+  font-size: 12px;
+  cursor: pointer;
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 10px 14px;
-  background: rgba(255, 255, 255, 0.80);
-  border: 1px solid rgba(30, 42, 53, 0.12);
-  cursor: pointer;
-  font-weight: 700;
-  color: var(--patients-ink);
+  gap: 6px;
+  color: #1e2a35;
 }
 
 .patients-action:hover {
-  background: rgba(30, 42, 53, 0.03);
+  filter: brightness(0.99);
 }
 
 .patients-action-icon {
-  width: 16px;
-  height: 16px;
-  opacity: 0.8;
+  width: 14px;
+  height: 14px;
 }
 
 .patients-fab {

@@ -1,6 +1,7 @@
 import React from 'react'
 import { Search } from 'lucide-react'
-import { CONSULTA_STATUS, TIPO_MARCACAO } from '../../utils/consultasStorage'
+import { TIPO_MARCACAO } from '../../utils/consultasStorage'
+import Button from '../UI/Button'
 
 export default function ConsultasFilters({
 	filters,
@@ -17,12 +18,12 @@ export default function ConsultasFilters({
 					<div className="consultas-filters-subtitle">Refine por paciente, profissional, data, estado e tipo.</div>
 				</div>
 				<div className="consultas-filters-actions">
-					<button type="button" className="consultas-btn consultas-btn-light" onClick={onSaveView}>
+					<Button variant="secondary" className="consultas-btn-light" onClick={onSaveView}>
 						Guardar vista
-					</button>
-					<button type="button" className="consultas-btn consultas-btn-light" onClick={onClear}>
+					</Button>
+					<Button variant="secondary" className="consultas-btn-light" onClick={onClear}>
 						Limpar
-					</button>
+					</Button>
 				</div>
 			</div>
 
@@ -75,11 +76,9 @@ export default function ConsultasFilters({
 						onChange={(e) => onChange({ ...filters, status: e.target.value })}
 					>
 						<option value="">Todos</option>
-						{CONSULTA_STATUS.map((s) => (
-							<option key={s.id} value={s.id}>
-								{s.label}
-							</option>
-						))}
+						<option value="true">Confirmado</option>
+						<option value="false">Pendente</option>
+						<option value="cancelada">Cancelado</option>
 					</select>
 				</div>
 

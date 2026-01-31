@@ -12,7 +12,7 @@ export default function PaginaInicial() {
 	const [appointments, setAppointments] = useState(() => [
 		{
 			id: 'a1',
-			paciente: 'João Silva',
+				paciente: 'Paciente',
 			medico: 'Dra. Sofia Lima',
 			tipo: 'Check-up',
 			inicio: '09:30',
@@ -62,7 +62,7 @@ export default function PaginaInicial() {
 				tipo: 'alert',
 				severidade: 'danger',
 				titulo: '1 consentimento RGPD em falta',
-				detalhe: 'Paciente: João Silva',
+					detalhe: 'Paciente: —',
 			},
 			{
 				id: 't3',
@@ -94,7 +94,7 @@ export default function PaginaInicial() {
 		setAppointments((prev) => prev.map((a) => (a.id === id ? { ...a, estado } : a)))
 	}
 	return (
-		<AppLayout breadcrumb="Painel > João Silva" userName="Dra. Sofia Lima">
+		<AppLayout breadcrumb="Painel" userName="Dra. Sofia Lima">
 			<section className="dashboard-content">
 					<div className="dashboard-actions" aria-label="Ações">
 						<button type="button" className="dashboard-btn dashboard-btn-ghost">
