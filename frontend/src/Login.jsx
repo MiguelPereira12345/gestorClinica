@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import './App.css'
 import { useNavigate } from 'react-router-dom'
-import { LogIn, Lock, Mail, RefreshCcw, UserPlus } from 'lucide-react'
+import { Info, LogIn, Lock, Mail, RefreshCcw, UserPlus } from 'lucide-react'
 
 import logoClinimolelos from './assets/Logo-CliniMolelos.png'
 
@@ -9,11 +9,40 @@ export default function Login() {
 	const navigate = useNavigate()
 	const [email, setEmail] = useState('')
 	const [password, setPassword] = useState('')
+	const [isSubmitting, setIsSubmitting] = useState(false)
+	const [error, setError] = useState('')
 
-	const handleSubmit = (e) => {
+	const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001'
+
+	const handleSubmit = async (e) => {
 		e.preventDefault()
-		// TODO: integrar com backend (autenticação)
-		navigate('/pagina-inicial', { replace: true })
+		setError('')
+		setIsSubmitting(true)
+
+		try {
+			const response = await fetch(`${API_BASE_URL}/login`, {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({ email, senha: password }),
+			})
+
+			const data = await response.json().catch(() => null)
+			if (!response.ok) {
+				setError(data?.message || 'Não foi possível iniciar sessão.')
+				return
+			}
+
+			// Guarda sessão simples em localStorage (sem JWT por agora)
+			localStorage.setItem('auth_user', JSON.stringify(data))
+			navigate('/pagina-inicial', { replace: true })
+		} catch (err) {
+			console.error('Erro no login:', err)
+			setError('Erro de conexão. Verifique se o servidor está ativo.')
+		} finally {
+			setIsSubmitting(false)
+		}
 	}
 
 	return (
@@ -44,6 +73,13 @@ export default function Login() {
 					</div>
 
 					<form className="login-form" onSubmit={handleSubmit}>
+						{error ? (
+							<div className="recover-alert" role="alert" aria-live="assertive">
+								<Info className="recover-alert-icon" aria-hidden="true" />
+								<span>{error}</span>
+							</div>
+						) : null}
+
 						<label className="login-label" htmlFor="login-email">
 							E-mail
 						</label>
@@ -92,9 +128,9 @@ export default function Login() {
 								</span>
 							</button>
 
-							<button className="login-primary" type="submit">
+							<button className="login-primary" type="submit" disabled={isSubmitting}>
 								<LogIn className="login-primary-icon" aria-hidden="true" />
-								Entrar
+								{isSubmitting ? 'A entrar…' : 'Entrar'}
 							</button>
 						</div>
 

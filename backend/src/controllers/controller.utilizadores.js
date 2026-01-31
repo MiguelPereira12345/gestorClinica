@@ -1,4 +1,5 @@
 const bcrypt = require('bcryptjs');
+const crypto = require('crypto');
 const sequelize = require('../models/database');
 const { initModels } = require('../models/init-models');
 const { Op } = require('sequelize');
@@ -7,6 +8,75 @@ const models = initModels(sequelize);
 const { User } = models;
 
 const controller = {};
+
+const PASSWORD_RESET_TTL_MS = 30 * 60 * 1000;
+// In-memory store: email -> { code, expiresAt }
+// Nota: perde-se ao reiniciar o servidor (ok para dev).
+const passwordResetCodes = new Map();
+
+function generate6DigitCode() {
+  return String(Math.floor(100000 + Math.random() * 900000));
+}
+
+function nowMs() {
+  return Date.now();
+}
+
+function cleanupExpiredResetCodes() {
+  const now = nowMs();
+  for (const [emailKey, entry] of passwordResetCodes.entries()) {
+    if (!entry || !entry.expiresAt || entry.expiresAt <= now) {
+      passwordResetCodes.delete(emailKey);
+    }
+  }
+}
+
+// Pedir recuperação de password (link/código)
+controller.password_reset_request = async (req, res) => {
+  try {
+    const { email, via } = req.body || {};
+
+    if (!email || typeof email !== 'string') {
+      return res.status(400).json({ message: 'Email é obrigatório' });
+    }
+
+    const normalizedEmail = email.trim().toLowerCase();
+    const mode = via === 'code' ? 'code' : 'link';
+
+    cleanupExpiredResetCodes();
+
+    const user = await User.findOne({ where: { email: normalizedEmail } });
+
+    // Resposta genérica para não revelar se existe conta.
+    const response = {
+      message:
+        'Se existir uma conta com esse e-mail, serão enviadas instruções para recuperar a palavra-passe.',
+      expiresInMinutes: 30,
+    };
+
+    if (user && mode === 'code') {
+      // Gera código e guarda em memória
+      const code = generate6DigitCode();
+      passwordResetCodes.set(normalizedEmail, {
+        codeHash: crypto.createHash('sha256').update(code).digest('hex'),
+        expiresAt: nowMs() + PASSWORD_RESET_TTL_MS,
+      });
+
+      // Só devolve o código em dev para testes manuais
+      if (process.env.NODE_ENV !== 'production') {
+        response.debugCode = code;
+      }
+    }
+
+    return res.status(200).json(response);
+  } catch (error) {
+    console.error('Erro ao pedir recuperação de password:', error);
+    return res.status(500).json({
+      message: 'Erro do servidor',
+      error: error.message,
+    });
+  }
+};
 
 // Criar utilizador
 controller.criar_utilizador = async (req, res) => {

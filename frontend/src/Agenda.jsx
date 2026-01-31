@@ -2,10 +2,12 @@ import React, { useState, useMemo } from 'react'
 import AppLayout from './components/Layout/AppLayout'
 import ResourceDayCalendar from './components/Agenda/ResourceDayCalendar'
 import MiniCalendar from './components/Agenda/MiniCalendar'
+import WeeklyCalendar from './components/Agenda/WeeklyCalendar'
+import MonthCalendar from './components/Agenda/MonthCalendar'
 import './components/Agenda/Agenda.css'
 import './App.css'
 import { useNavigate } from 'react-router-dom'
-import { computeOccupancyForDay, loadAppointments } from './utils/appointmentStorage'
+import { computeOccupancyForDay, dateToISO, loadAppointments } from './utils/appointmentStorage'
 
 function startOfWeek(date) {
   const d = new Date(date)
@@ -16,8 +18,15 @@ function startOfWeek(date) {
   return d
 }
 
+function startOfDay(date) {
+  const d = new Date(date)
+  d.setHours(0, 0, 0, 0)
+  return d
+}
+
 export default function Agenda() {
   const navigate = useNavigate()
+  const [viewMode, setViewMode] = useState('day') // day | week | month
   const [cursorDate, setCursorDate] = useState(new Date())
   const [selectedDayIndex, setSelectedDayIndex] = useState(0)
 
@@ -45,6 +54,12 @@ export default function Agenda() {
     ],
     [],
   )
+
+  const resourceColorById = useMemo(() => {
+    const map = new Map()
+    for (const r of resources) map.set(r.id, r.color)
+    return map
+  }, [resources])
 
   const appointments = useMemo(() => {
     const stored = loadAppointments()
@@ -100,6 +115,33 @@ export default function Agenda() {
     ]
   }, [weekStart])
 
+  const appointmentsWithColor = useMemo(() => {
+    return (appointments || []).map((a) => ({
+      ...a,
+      color: a.color || resourceColorById.get(a.medico_id) || '#C6E9FF',
+    }))
+  }, [appointments, resourceColorById])
+
+  const monthCountByISO = useMemo(() => {
+    const stored = loadAppointments()
+    const year = cursorDate.getFullYear()
+    const month = cursorDate.getMonth()
+    const monthStart = new Date(year, month, 1)
+    monthStart.setHours(0, 0, 0, 0)
+    const monthEnd = new Date(year, month + 1, 0)
+    monthEnd.setHours(23, 59, 59, 999)
+
+    const map = new Map()
+    for (const a of stored) {
+      if (!a?.startISO) continue
+      const s = new Date(a.startISO)
+      if (s < monthStart || s > monthEnd) continue
+      const iso = String(a.startISO).slice(0, 10)
+      map.set(iso, (map.get(iso) || 0) + 1)
+    }
+    return map
+  }, [cursorDate])
+
   function goPrevWeek() {
     const d = new Date(weekStart)
     d.setDate(d.getDate() - 7)
@@ -113,7 +155,23 @@ export default function Agenda() {
   }
 
   function handleSelectDate(d) {
-    setCursorDate(d)
+    const picked = new Date(d)
+    setCursorDate(picked)
+
+    const ws = startOfWeek(picked)
+    const deltaDays = Math.floor((startOfDay(picked).getTime() - ws.getTime()) / (24 * 60 * 60 * 1000))
+    setSelectedDayIndex(Math.max(0, Math.min(5, deltaDays)))
+  }
+
+  function selectDateFromMonth(d) {
+    const picked = new Date(d)
+    setCursorDate(picked)
+
+    const ws = startOfWeek(picked)
+    const deltaDays = Math.floor((startOfDay(picked).getTime() - ws.getTime()) / (24 * 60 * 60 * 1000))
+    const idx = Math.max(0, Math.min(5, deltaDays))
+    setSelectedDayIndex(idx)
+    setViewMode('day')
   }
 
   function getDayMeta(date) {
@@ -133,34 +191,130 @@ export default function Agenda() {
       <div className="agenda-grid">
         <section className="calendar-panel" style={{ minHeight: panelHeight }}>
           <div className="agenda-panel-header">
-            <div className="agenda-panel-title">
-              Agenda por Médico • {weekStart.toLocaleDateString()} - {(new Date(weekStart.getFullYear(), weekStart.getMonth(), weekStart.getDate()+5)).toLocaleDateString()}
-            </div>
+            <div className="agenda-panel-left" />
+
+            <div className="agenda-panel-title">Agenda</div>
+
             <div className="agenda-panel-actions">
-              <button className="agenda-nav-btn" onClick={goPrevWeek}>&lt; Semana Anterior</button>
-              <button className="agenda-nav-btn" onClick={goNextWeek}>Semana Seguinte &gt;</button>
+              {/* actions moved to toolbar */}
             </div>
           </div>
 
-          <div className="agenda-daytabs" aria-label="Dias da semana">
-            {Array.from({ length: 6 }).map((_, i) => {
-              const d = new Date(weekStart)
-              d.setDate(d.getDate() + i)
-              const active = i === selectedDayIndex
-              return (
-                <button
-                  key={i}
-                  type="button"
-                  className={`agenda-daytab${active ? ' is-active' : ''}`}
-                  onClick={() => setSelectedDayIndex(i)}
-                >
-                  {d.toLocaleDateString(undefined, { weekday: 'short', day: '2-digit' })}
-                </button>
-              )
-            })}
+          <div className="agenda-toolbar">
+            <div className="agenda-viewtabs" role="tablist" aria-label="Vista de calendário">
+              <button
+                type="button"
+                role="tab"
+                aria-selected={viewMode === 'day'}
+                className={`agenda-viewtab${viewMode === 'day' ? ' is-active' : ''}`}
+                onClick={() => setViewMode('day')}
+              >
+                Dia
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={viewMode === 'week'}
+                className={`agenda-viewtab${viewMode === 'week' ? ' is-active' : ''}`}
+                onClick={() => setViewMode('week')}
+              >
+                Semana
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={viewMode === 'month'}
+                className={`agenda-viewtab${viewMode === 'month' ? ' is-active' : ''}`}
+                onClick={() => setViewMode('month')}
+              >
+                Mês
+              </button>
+            </div>
+
+            <div className="agenda-toolbar-actions">
+              {viewMode === 'month' ? (
+                <>
+                  <button
+                    className="agenda-nav-btn"
+                    onClick={() => {
+                      const d = new Date(cursorDate)
+                      d.setMonth(d.getMonth() - 1)
+                      setCursorDate(d)
+                    }}
+                  >
+                    &lt; Mês Anterior
+                  </button>
+                  <button
+                    className="agenda-nav-btn"
+                    onClick={() => {
+                      const d = new Date(cursorDate)
+                      d.setMonth(d.getMonth() + 1)
+                      setCursorDate(d)
+                    }}
+                  >
+                    Mês Seguinte &gt;
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button className="agenda-nav-btn" onClick={goPrevWeek}>
+                    &lt; Semana Anterior
+                  </button>
+                  <button className="agenda-nav-btn" onClick={goNextWeek}>
+                    Semana Seguinte &gt;
+                  </button>
+                </>
+              )}
+            </div>
           </div>
 
-          <ResourceDayCalendar date={selectedDate} resources={resources} appointments={appointments} />
+          {viewMode === 'day' ? (
+            <>
+              <div className="agenda-daytabs" aria-label="Dias da semana">
+                {Array.from({ length: 6 }).map((_, i) => {
+                  const d = new Date(weekStart)
+                  d.setDate(d.getDate() + i)
+                  const active = i === selectedDayIndex
+                  return (
+                    <button
+                      key={i}
+                      type="button"
+                      className={`agenda-daytab${active ? ' is-active' : ''}`}
+                      onClick={() => setSelectedDayIndex(i)}
+                    >
+                      {d.toLocaleDateString(undefined, { weekday: 'short', day: '2-digit' })}
+                    </button>
+                  )
+                })}
+              </div>
+
+              <ResourceDayCalendar date={selectedDate} resources={resources} appointments={appointmentsWithColor} />
+            </>
+          ) : null}
+
+          {viewMode === 'week' ? (
+            <WeeklyCalendar weekStart={weekStart} appointments={appointmentsWithColor} />
+          ) : null}
+
+          {viewMode === 'month' ? (
+            <MonthCalendar
+              currentDate={cursorDate}
+              selectedDate={selectedDate}
+              onSelectDate={selectDateFromMonth}
+              onPrevMonth={() => {
+                const d = new Date(cursorDate)
+                d.setMonth(d.getMonth() - 1)
+                setCursorDate(d)
+              }}
+              onNextMonth={() => {
+                const d = new Date(cursorDate)
+                d.setMonth(d.getMonth() + 1)
+                setCursorDate(d)
+              }}
+              getDayMeta={getDayMeta}
+              getDayCount={(d) => monthCountByISO.get(dateToISO(d)) || 0}
+            />
+          ) : null}
         </section>
 
         <aside className="agenda-aside">

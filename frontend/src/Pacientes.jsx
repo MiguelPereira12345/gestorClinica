@@ -171,7 +171,9 @@ export default function Pacientes() {
 										<th>Nome</th>
 										<th>Email</th>
 										<th>Estado</th>
-										<th className="patients-actions-col">Ações</th>
+										<th className="patients-actions-col">
+											<span className="patients-actions-header">Ações</span>
+										</th>
 									</tr>
 								</thead>
 								<tbody>
@@ -234,18 +236,6 @@ export default function Pacientes() {
 							</table>
 						</div>
 					</section>
-
-					<button 
-						className="patients-fab" 
-						type="button" 
-						aria-label="Novo paciente"
-						onClick={() => navigate('/pacientes/novo')}
-					>
-						<span className="patients-fab-plus" aria-hidden="true">
-							+
-						</span>
-						Novo Paciente
-					</button>
 				</main>
 		</AppLayout>
 	)

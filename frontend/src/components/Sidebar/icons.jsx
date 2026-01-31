@@ -16,7 +16,7 @@ export const menuItems = [
   },
   {
     label: 'Consultas',
-    path: '/pagina-inicial',
+    path: '/consultas',
     icon: (
       <svg className="sidebar-icon" width="20" height="20" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
         <rect x="7" y="3" width="10" height="2" rx="0.8" fill="currentColor" />

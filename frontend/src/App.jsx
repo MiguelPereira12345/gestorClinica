@@ -13,6 +13,10 @@ import VerExames from './VerExames'
 import AdicionarPaciente from './AdicionarPaciente'
 import VerPaciente from './VerPaciente'
 import EditarPaciente from './EditarPaciente'
+import ConsultasLista from './ConsultasLista'
+import VerConsulta from './VerConsulta'
+import EditarConsulta from './EditarConsulta'
+import NovaConsulta from './NovaConsulta'
 
 function App() {
   return (
@@ -30,6 +34,10 @@ function App() {
         <Route path="/pagina-inicial" element={<PaginaInicial />} />
         <Route path="/agenda" element={<Agenda />} />
         <Route path="/agenda/consultas/novo" element={<AdicionarConsulta />} />
+        <Route path="/consultas" element={<ConsultasLista />} />
+        <Route path="/consultas/nova" element={<NovaConsulta />} />
+        <Route path="/consultas/:id" element={<VerConsulta />} />
+        <Route path="/consultas/:id/editar" element={<EditarConsulta />} />
         <Route path="/ver-exames" element={<VerExames />} />
         <Route path="/editar-detalhes" element={<EditarDetalhes />} />
         <Route path="/" element={<Navigate to="/login" replace />} />

@@ -16,10 +16,59 @@ import logoClinimolelos from './assets/Logo-CliniMolelos.png'
 export default function Recuperarpass() {
 	const navigate = useNavigate()
 	const [email, setEmail] = useState('')
+	const [isSubmitting, setIsSubmitting] = useState(false)
+	const [feedback, setFeedback] = useState(null)
+	const [feedbackVariant, setFeedbackVariant] = useState('info') // info | success | error
+
+	const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001'
+
+	const requestPasswordReset = async (via) => {
+		if (!email) return
+		setIsSubmitting(true)
+		setFeedback(null)
+		setFeedbackVariant('info')
+
+		try {
+			const response = await fetch(
+				`${API_BASE_URL}/utilizadores/password-reset/request`,
+				{
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+					},
+					body: JSON.stringify({ email, via }),
+				}
+			)
+
+			const data = await response.json().catch(() => null)
+			if (!response.ok) {
+				const message =
+					data?.message || 'Não foi possível pedir a recuperação. Tente novamente.'
+				setFeedback(message)
+				setFeedbackVariant('error')
+				return
+			}
+
+			let message =
+				data?.message ||
+				'Se existir uma conta com esse e-mail, enviamos as instruções de recuperação.'
+			if (data?.debugCode) {
+				message += ` (Código de teste: ${data.debugCode})`
+			}
+
+			setFeedback(message)
+			setFeedbackVariant('success')
+		} catch (err) {
+			setFeedback('Erro de rede ao contactar o servidor.')
+			setFeedbackVariant('error')
+		} finally {
+			setIsSubmitting(false)
+		}
+	}
 
 	const handleSubmit = (e) => {
 		e.preventDefault()
-		// TODO: integrar com backend (enviar link de redefinição)
+		requestPasswordReset('link')
 	}
 
 	return (
@@ -57,6 +106,17 @@ export default function Recuperarpass() {
 					</div>
 
 					<form className="recover-form" onSubmit={handleSubmit}>
+						{feedback ? (
+							<div
+								className="recover-alert"
+								role={feedbackVariant === 'error' ? 'alert' : 'status'}
+								aria-live={feedbackVariant === 'error' ? 'assertive' : 'polite'}
+							>
+								<Info className="recover-alert-icon" aria-hidden="true" />
+								<span>{feedback}</span>
+							</div>
+						) : null}
+
 						<div className="recover-instruction">
 							<Info className="recover-instruction-icon" aria-hidden="true" />
 							<p className="recover-instruction-text">
@@ -99,20 +159,21 @@ export default function Recuperarpass() {
 							</button>
 
 							<div className="recover-buttons">
-								<button className="recover-send" type="submit">
+								<button className="recover-send" type="submit" disabled={isSubmitting}>
 									<Send className="recover-send-icon" aria-hidden="true" />
-									Enviar link
+									{isSubmitting ? 'A enviar…' : 'Enviar link'}
 								</button>
 
 								<button
 									type="button"
 									className="recover-code"
+									disabled={isSubmitting}
 									onClick={() => {
-										// TODO: integrar com backend (redefinir via código)
+										requestPasswordReset('code')
 									}}
 								>
 									<KeyRound className="recover-code-icon" aria-hidden="true" />
-									Redefinir via código
+									{isSubmitting ? 'A enviar…' : 'Redefinir via código'}
 								</button>
 							</div>
 						</div>

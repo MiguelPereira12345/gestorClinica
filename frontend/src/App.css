@@ -1202,6 +1202,9 @@ body {
   background: rgba(255, 255, 255, 0.92);
   border: 1px solid rgba(30, 42, 53, 0.10);
   box-shadow: 0 14px 35px rgba(16, 24, 40, 0.10);
+
+  border-radius: 12px;
+  overflow: hidden;
 }
 
 .patients-table-wrap {
@@ -1212,6 +1215,9 @@ body {
   width: 100%;
   border-collapse: collapse;
   font-size: 13px;
+
+  /* keep header label aligned with the 3 action buttons group */
+  --patients-actions-width: 300px;
 }
 
 .patients-table thead th {
@@ -1222,6 +1228,11 @@ body {
   border-bottom: 1px solid rgba(30, 42, 53, 0.08);
 }
 
+.patients-table thead th.patients-actions-col {
+  text-align: right;
+}
+
+
 .patients-table tbody td {
   padding: 16px 18px;
   border-bottom: 1px solid rgba(30, 42, 53, 0.06);
@@ -1230,7 +1241,20 @@ body {
 }
 
 .patients-actions-col {
+  width: var(--patients-actions-width);
+  max-width: 340px;
+  white-space: nowrap;
+}
+
+/* Header: align the block to the right, but keep the label left inside it */
+.patients-table thead th.patients-actions-col {
   text-align: right;
+}
+
+.patients-actions-header {
+  display: inline-block;
+  width: var(--patients-actions-width);
+  text-align: left;
 }
 
 .patients-actions {
@@ -1238,6 +1262,7 @@ body {
   display: flex;
   justify-content: flex-end;
   gap: 10px;
+  white-space: nowrap;
 }
 
 .patients-name {
@@ -1812,19 +1837,49 @@ body {
 }
 
 .agenda-panel-header {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  column-gap: 12px;
   align-items: center;
   margin-bottom: 12px;
 }
 
 .agenda-panel-title {
   font-weight: 700;
+  justify-self: center;
 }
 
 .agenda-panel-actions {
   display: inline-flex;
   gap: 8px;
+  justify-self: end;
+}
+
+/* Tabs + navigation aligned on same row */
+
+.agenda-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 6px 12px;
+  border-bottom: 1px solid rgba(0,0,0,0.06);
+  margin-bottom: 12px;
+  gap: 12px;
+}
+
+.agenda-toolbar-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* header actions currently unused */
+.agenda-panel-actions:empty {
+  display: none;
+}
+
+.agenda-panel-left {
+  justify-self: start;
 }
 
 .agenda-aside {

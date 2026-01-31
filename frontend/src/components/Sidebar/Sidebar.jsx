@@ -10,6 +10,7 @@ export default function Sidebar() {
   const isActive = (item, idx) => {
     if (idx === 0 && location.pathname === '/pagina-inicial') return true
     if (item.path && location.pathname === item.path) return true
+    if (item.path && location.pathname.startsWith(`${item.path}/`)) return true
     return false
   }
 
