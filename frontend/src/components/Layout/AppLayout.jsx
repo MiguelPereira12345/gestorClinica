@@ -1,6 +1,7 @@
 import React from 'react'
 import { UserRound } from 'lucide-react'
 import Sidebar from '../Sidebar/Sidebar'
+import Breadcrumbs from '../UI/Breadcrumbs'
 import '../../App.css'
 
 export default function AppLayout({
@@ -15,7 +16,9 @@ export default function AppLayout({
 
       <div className="app-main">
         <header className="app-topbar" aria-label="Topo">
-          <div className="app-breadcrumb">{breadcrumb}</div>
+          <div className="app-breadcrumb">
+            <Breadcrumbs breadcrumb={breadcrumb} />
+          </div>
 
           <div className="app-topbar-right">
             {actions ? <div className="app-topbar-actions">{actions}</div> : null}

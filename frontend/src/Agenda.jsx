@@ -9,6 +9,10 @@ import './App.css'
 import { useNavigate } from 'react-router-dom'
 import { computeOccupancyForDay, dateToISO, loadAppointments } from './utils/appointmentStorage'
 
+import Button from './components/UI/Button'
+import PageHeader from './components/UI/PageHeader'
+import { Plus } from 'lucide-react'
+
 function startOfWeek(date) {
   const d = new Date(date)
   const day = d.getDay() // 0 Sun .. 6 Sat
@@ -107,7 +111,7 @@ export default function Agenda() {
     }
 
     return [
-      mapToWeek(0, 11, 60, 3, 'João Silva'),
+      mapToWeek(0, 11, 60, 3, 'Paciente'),
       mapToWeek(0, 11, 45, 1, 'Maria Ferreira'),
       mapToWeek(0, 14, 60, 2, 'Joana Oliveira'),
       mapToWeek(2, 10, 30, 1, 'Paciente X'),
@@ -179,21 +183,28 @@ export default function Agenda() {
   }
 
   return (
-    <AppLayout
-      breadcrumb="Pacientes > João Silva > Agenda"
-      userName="Dra. Sofia Lima"
-      actions={
-        <button type="button" className="app-action-primary" onClick={() => navigate('/agenda/consultas/novo')}>
-          ＋ Adicionar Consulta
-        </button>
-      }
-    >
-      <div className="agenda-grid">
+    <AppLayout breadcrumb="Agenda" userName="Dra. Sofia Lima">
+      <div className="ui-page">
+        <PageHeader
+          title="Agenda"
+          subtitle={null}
+          actions={
+            <Button
+              variant="primary"
+              onClick={() => navigate('/agenda/consultas/novo')}
+              leftIcon={<Plus className="consultas-btn-icon" aria-hidden="true" />}
+            >
+              Adicionar Consulta
+            </Button>
+          }
+        />
+
+        <div className="agenda-grid">
         <section className="calendar-panel" style={{ minHeight: panelHeight }}>
           <div className="agenda-panel-header">
             <div className="agenda-panel-left" />
 
-            <div className="agenda-panel-title">Agenda</div>
+            <div className="agenda-panel-title">Calendário</div>
 
             <div className="agenda-panel-actions">
               {/* actions moved to toolbar */}
@@ -344,6 +355,7 @@ export default function Agenda() {
             <div className="agenda-card-muted">Passe o rato sobre um bloco para ver paciente, tempo de consulta, tipo e estado.</div>
           </div>
         </aside>
+        </div>
       </div>
     </AppLayout>
   )

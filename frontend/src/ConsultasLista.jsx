@@ -4,11 +4,14 @@ import { Download, Plus } from 'lucide-react'
 import AppLayout from './components/Layout/AppLayout'
 import './Consultas.css'
 
+import Button from './components/UI/Button'
+import PageHeader from './components/UI/PageHeader'
+
 import ConsultasFilters from './components/Consultas/ConsultasFilters'
 import ConsultasTable from './components/Consultas/ConsultasTable'
 import Pagination from './components/Consultas/Pagination'
 
-import { exportConsultasToCSV, listConsultas } from './utils/consultasStorage'
+import { exportConsultasToCSV, listConsultas, patchConsulta, appendHistory } from './utils/consultasStorage'
 import { PROFESSIONALS } from './utils/consultasLookups'
 
 const DEFAULT_PAGE_SIZE = 5
@@ -34,11 +37,24 @@ export default function ConsultasLista() {
 		bookingType: '',
 	})
 	const [page, setPage] = useState(1)
+	const [refreshToken, setRefreshToken] = useState(0)
 
 	const result = useMemo(
 		() => listConsultas({ filters, page, pageSize: DEFAULT_PAGE_SIZE }),
-		[filters, page],
+		[filters, page, refreshToken],
 	)
+
+	function onSetStatus(c, nextStatus) {
+		patchConsulta(c.id, { bookingStatus: nextStatus })
+		if (String(nextStatus) === 'confirmada') {
+			appendHistory(c.id, { action: 'Confirmada', note: 'Consulta confirmada.' })
+		} else if (String(nextStatus) === 'cancelada') {
+			appendHistory(c.id, { action: 'Cancelada', note: 'Consulta cancelada.' })
+		} else {
+			appendHistory(c.id, { action: 'Pendente', note: 'Consulta marcada como pendente.' })
+		}
+		setRefreshToken((t) => t + 1)
+	}
 
 	const startIdx = result.total === 0 ? 0 : (result.page - 1) * result.pageSize + 1
 	const endIdx = result.total === 0 ? 0 : startIdx + result.items.length - 1
@@ -67,24 +83,29 @@ export default function ConsultasLista() {
 
 	return (
 		<AppLayout breadcrumb="Consultas > Lista" userName="Dra. Sofia Lima">
-			<div className="consultas-page">
-				<div className="consultas-title-row">
-					<h1 className="consultas-title">Consultas Marcadas</h1>
-					<div className="consultas-title-actions">
-						<button type="button" className="consultas-btn" onClick={onExport}>
-							<Download className="consultas-btn-icon" aria-hidden="true" />
-							Exportar
-						</button>
-						<button
-							type="button"
-							className="consultas-btn consultas-btn-primary"
-							onClick={() => navigate('/consultas/nova')}
-						>
-							<Plus className="consultas-btn-icon" aria-hidden="true" />
-							Adicionar Consulta
-						</button>
-					</div>
-				</div>
+			<div className="consultas-page ui-page">
+				<PageHeader
+					title="Consultas"
+					subtitle="Lista de consultas marcadas com filtros, exportação e gestão de estado."
+					actions={
+						<>
+							<Button
+								variant="secondary"
+								onClick={onExport}
+								leftIcon={<Download className="consultas-btn-icon" aria-hidden="true" />}
+							>
+								Exportar
+							</Button>
+							<Button
+								variant="primary"
+								onClick={() => navigate('/consultas/nova')}
+								leftIcon={<Plus className="consultas-btn-icon" aria-hidden="true" />}
+							>
+								Adicionar Consulta
+							</Button>
+						</>
+					}
+				/>
 
 				<ConsultasFilters
 					filters={filters}
@@ -111,6 +132,7 @@ export default function ConsultasLista() {
 					rows={result.items}
 					onView={(c) => navigate(`/consultas/${c.id}`)}
 					onEdit={(c) => navigate(`/consultas/${c.id}/editar`)}
+					onSetStatus={onSetStatus}
 				/>
 			</div>
 		</AppLayout>

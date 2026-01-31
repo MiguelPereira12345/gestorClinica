@@ -1,20 +1,18 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useMemo, useState } from 'react'
 import './App.css'
 import { useNavigate } from 'react-router-dom'
 import AppLayout from './components/Layout/AppLayout'
 import {
-	Calendar,
-	ClipboardList,
 	Eye,
-	LayoutDashboard,
-	LogOut,
 	Pencil,
 	Search,
-	Stethoscope,
 	Trash2,
 	Users,
-	UserRound,
 } from 'lucide-react'
+
+import Button from './components/UI/Button'
+import PageHeader from './components/UI/PageHeader'
+import StatusBadge from './components/UI/StatusBadge'
 
 import {
 	buildPatientRecordFromForm,
@@ -24,13 +22,20 @@ import {
 	upsertPatient,
 } from './utils/patientStorage'
 
-import logoClinimolelos from './assets/Logo-CliniMolelos.png'
-
 export default function Pacientes() {
 	const navigate = useNavigate()
 	const [query, setQuery] = useState('')
-	const [storedRows, setStoredRows] = useState([])
-	const [storedIds, setStoredIds] = useState(() => new Set())
+	const [storedRows, setStoredRows] = useState(() => {
+		const parsed = loadPatients()
+		return parsed.map((p) => ({
+			id: p.id,
+			nome: p.nome,
+			email: p.email || '',
+			estado: p.estado || 'Ativo',
+		}))
+	})
+
+	const storedIds = useMemo(() => new Set(storedRows.map((r) => r.id)), [storedRows])
 
 	const rows = useMemo(
 		() => [
@@ -62,19 +67,6 @@ export default function Pacientes() {
 		[],
 	)
 
-	useEffect(() => {
-		const parsed = loadPatients()
-		setStoredRows(
-			parsed.map((p) => ({
-				id: p.id,
-				nome: p.nome,
-				email: p.email || '',
-				estado: p.estado || 'Ativo',
-			})),
-		)
-		setStoredIds(new Set(parsed.map((p) => p.id)))
-	}, [])
-
 	function refreshStored() {
 		const parsed = loadPatients()
 		setStoredRows(
@@ -85,7 +77,6 @@ export default function Pacientes() {
 				estado: p.estado || 'Ativo',
 			})),
 		)
-		setStoredIds(new Set(parsed.map((p) => p.id)))
 	}
 
 	function canOpenDetails(patientId) {
@@ -115,8 +106,13 @@ export default function Pacientes() {
 	}
 
 	const allRows = useMemo(() => {
-		// coloca os criados recentemente no topo
-		return [...storedRows, ...rows]
+		// coloca os criados recentemente no topo e evita duplicados por id
+		const map = new Map()
+		for (const r of storedRows) map.set(r.id, r)
+		for (const r of rows) {
+			if (!map.has(r.id)) map.set(r.id, r)
+		}
+		return Array.from(map.values())
 	}, [storedRows, rows])
 
 	const filtered = useMemo(() => {
@@ -134,44 +130,39 @@ export default function Pacientes() {
 	return (
 		<AppLayout breadcrumb="Pacientes" userName="Dra. Sofia Lima">
 			<main className="patients-content" aria-label="Conteúdo">
-					<div className="patients-title-row">
-						<div className="patients-title">
-							<Users className="patients-title-icon" aria-hidden="true" />
-							<h1>Pacientes</h1>
-						</div>
+				<div className="ui-page">
+					<PageHeader
+						title="Pacientes"
+						subtitle="Pesquisa rápida, estado e ações numa lista consistente."
+						actions={
+							<>
+								<div className="patients-search">
+									<Search className="patients-search-icon" aria-hidden="true" />
+									<input
+										type="text"
+										className="patients-search-input"
+										placeholder="Pesquisar por nome, email ou ID"
+										value={query}
+										onChange={(e) => setQuery(e.target.value)}
+										aria-label="Pesquisar pacientes"
+									/>
+								</div>
+								<Button variant="primary" onClick={() => navigate('/pacientes/novo')}>
+									Adicionar paciente
+								</Button>
+							</>
+						}
+					/>
 
-						<div className="patients-title-actions">
-							<div className="patients-search">
-								<Search className="patients-search-icon" aria-hidden="true" />
-								<input
-									type="text"
-									className="patients-search-input"
-									placeholder="Pesquisar por nome, email ou ID"
-									value={query}
-									onChange={(e) => setQuery(e.target.value)}
-									aria-label="Pesquisar pacientes"
-								/>
-							</div>
-
-							<button
-								type="button"
-								className="patient-btn-primary"
-								onClick={() => navigate('/pacientes/novo')}
-							>
-								Adicionar paciente
-							</button>
-						</div>
-					</div>
-
-					<section className="patients-card" aria-label="Lista de pacientes">
-						<div className="patients-table-wrap">
-							<table className="patients-table">
+					<section className="patients-card ui-card" aria-label="Lista de pacientes">
+						<div className="patients-table-wrap ui-table-wrap">
+							<table className="patients-table ui-table">
 								<thead>
 									<tr>
 										<th>Nome</th>
 										<th>Email</th>
 										<th>Estado</th>
-										<th className="patients-actions-col">
+										<th className="patients-actions-col ui-actions-col">
 											<span className="patients-actions-header">Ações</span>
 										</th>
 									</tr>
@@ -182,15 +173,7 @@ export default function Pacientes() {
 											<td className="patients-name">{r.nome}</td>
 											<td className="patients-email">{r.email}</td>
 											<td>
-												<span
-													className={
-														r.estado === 'Ativo'
-															? 'patients-badge is-active'
-															: 'patients-badge is-inactive'
-													}
-												>
-													{r.estado}
-												</span>
+												<StatusBadge status={r.estado} />
 											</td>
 											<td className="patients-actions">
 												<button
@@ -204,8 +187,8 @@ export default function Pacientes() {
 													<Eye className="patients-action-icon" aria-hidden="true" />
 													Ver
 												</button>
-												<button 
-													className="patients-action" 
+												<button
+													className="patients-action"
 													type="button"
 													onClick={() => {
 														if (!ensurePatientExists(r)) return
@@ -236,7 +219,8 @@ export default function Pacientes() {
 							</table>
 						</div>
 					</section>
-				</main>
+				</div>
+			</main>
 		</AppLayout>
 	)
 }

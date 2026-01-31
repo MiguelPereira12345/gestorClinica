@@ -183,7 +183,8 @@
 }
 
 .consultas-table-wrap {
-	overflow: auto;
+	overflow-x: auto;
+	overflow-y: visible;
 	margin-top: 10px;
 }
 
@@ -237,6 +238,50 @@
 	display: flex;
 	justify-content: flex-end;
 	gap: 10px;
+}
+
+.consultas-actions-dropdown {
+	position: relative;
+	display: inline-flex;
+}
+
+.consultas-dropdown-menu {
+	position: absolute;
+	right: 0;
+	top: calc(100% + 8px);
+	min-width: 180px;
+	background: rgba(255, 255, 255, 0.98);
+	border: 1px solid rgba(30, 42, 53, 0.12);
+	border-radius: 12px;
+	padding: 6px;
+	box-shadow: 0 14px 30px rgba(30, 42, 53, 0.12);
+	z-index: 50;
+}
+
+.consultas-dropdown-item {
+	width: 100%;
+	border: 0;
+	background: transparent;
+	border-radius: 10px;
+	padding: 9px 10px;
+	font-weight: 800;
+	font-size: 12px;
+	color: #1e2a35;
+	cursor: pointer;
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	text-align: left;
+}
+
+.consultas-dropdown-item:hover {
+	background: rgba(30, 42, 53, 0.06);
+}
+
+.consultas-dropdown-divider {
+	height: 1px;
+	margin: 6px 6px;
+	background: rgba(30, 42, 53, 0.10);
 }
 
 .consultas-action-btn {

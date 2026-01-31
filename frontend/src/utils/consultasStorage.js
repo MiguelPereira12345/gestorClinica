@@ -127,6 +127,24 @@ export function statusLabel(status) {
 	return CONSULTA_STATUS.find((x) => x.id === normalizeStatus(status))?.label || 'Em espera'
 }
 
+export function isConsultaConfirmada(status) {
+	return normalizeStatus(status) === 'confirmada'
+}
+
+export function isConsultaCancelada(status) {
+	return normalizeStatus(status) === 'cancelada'
+}
+
+export function confirmationLabel(confirmed) {
+	return confirmed ? 'Confirmado' : 'Pendente'
+}
+
+export function consultaEstadoLabel(status) {
+	if (typeof status === 'boolean') return status ? 'Confirmado' : 'Pendente'
+	if (isConsultaCancelada(status)) return 'Cancelado'
+	return isConsultaConfirmada(status) ? 'Confirmado' : 'Pendente'
+}
+
 export function getStoredConsultas() {
 	return loadAppointments()
 }
@@ -167,7 +185,16 @@ export function listConsultas({
 				if (iso !== qDate) return false
 			}
 			if (qStatus) {
-				if (normalizeStatus(c.bookingStatus) !== normalizeStatus(qStatus)) return false
+				// Suporta filtro booleano (Confirmado/Pendente) e compatibilidade com estados antigos.
+				if (qStatus === 'true' || qStatus === 'false') {
+					const confirmed = isConsultaConfirmada(c.bookingStatus)
+					if (qStatus === 'true' && !confirmed) return false
+					if (qStatus === 'false' && confirmed) return false
+				} else if (qStatus === 'cancelada') {
+					if (normalizeStatus(c.bookingStatus) !== 'cancelada') return false
+				} else {
+					if (normalizeStatus(c.bookingStatus) !== normalizeStatus(qStatus)) return false
+				}
 			}
 			if (qBookingType) {
 				if (String(c.bookingType || '').toLowerCase() !== qBookingType) return false
