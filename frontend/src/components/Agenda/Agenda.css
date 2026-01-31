@@ -41,6 +41,21 @@
   background-size: 100% 40px;
 }
 
+.agenda-appt {
+  cursor: pointer;
+  transition: transform 80ms ease, box-shadow 80ms ease;
+}
+
+.agenda-appt:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 .3rem .8rem rgba(0,0,0,.10);
+}
+
+.agenda-appt:focus-visible {
+  outline: 2px solid rgba(184, 148, 49, 0.55);
+  outline-offset: 2px;
+}
+
 /* MonthCalendar (full month view) */
 
 .moc-grid {

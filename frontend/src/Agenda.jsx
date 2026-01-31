@@ -182,6 +182,11 @@ export default function Agenda() {
     return computeOccupancyForDay({ date, medicoId: null })
   }
 
+  function openAppointment(appt) {
+    if (!appt?.id) return
+    navigate(`/consultas/${appt.id}`)
+  }
+
   function formatWeekdayChip(d) {
     const weekday = d
       .toLocaleDateString('pt-PT', { weekday: 'short' })
@@ -305,12 +310,22 @@ export default function Agenda() {
                 })}
               </div>
 
-              <ResourceDayCalendar date={selectedDate} resources={resources} appointments={appointmentsWithColor} />
+              <ResourceDayCalendar
+                date={selectedDate}
+                resources={resources}
+                appointments={appointmentsWithColor}
+                onSelectAppointment={openAppointment}
+              />
             </>
           ) : null}
 
           {viewMode === 'week' ? (
-            <WeeklyCalendar weekStart={weekStart} appointments={appointmentsWithColor} />
+            <WeeklyCalendar
+              weekStart={weekStart}
+              appointments={appointmentsWithColor}
+              resources={resources}
+              onSelectAppointment={openAppointment}
+            />
           ) : null}
 
           {viewMode === 'month' ? (

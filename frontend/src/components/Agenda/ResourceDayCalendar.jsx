@@ -102,7 +102,7 @@ function pickTextColor(bg) {
 	return L < 0.45 ? '#ffffff' : '#1e2a35'
 }
 
-export default function ResourceDayCalendar({ date, resources = [], appointments = [] }) {
+export default function ResourceDayCalendar({ date, resources = [], appointments = [], onSelectAppointment }) {
 	const totalHours = HOUR_END - HOUR_START + 1
 	const gridHeight = totalHours * HOUR_HEIGHT
 	const timeColWidth = 80
@@ -182,14 +182,31 @@ export default function ResourceDayCalendar({ date, resources = [], appointments
 									const colWidthPct = 100 / Math.max(1, clusterCols)
 									const leftPct = col * colWidthPct
 
+									const handleOpen = () => {
+										if (typeof onSelectAppointment === 'function') onSelectAppointment(appt)
+									}
+
 									return (
 										<div
 											key={appt.id}
-											className="position-absolute rounded-3 shadow-sm overflow-hidden border"
-											title={`${appt.paciente_nome} — ${appt.tipo_consulta}`}
+											className="agenda-appt position-absolute rounded-3 shadow-sm overflow-hidden border"
+											role={typeof onSelectAppointment === 'function' ? 'button' : undefined}
+											tabIndex={typeof onSelectAppointment === 'function' ? 0 : undefined}
+											onClick={typeof onSelectAppointment === 'function' ? handleOpen : undefined}
+											onKeyDown={
+											typeof onSelectAppointment === 'function'
+												? (e) => {
+													if (e.key === 'Enter' || e.key === ' ') {
+														e.preventDefault()
+														handleOpen()
+													}
+												}
+												: undefined
+										}
+											title={`${appt.paciente_nome} — ${startStr}–${endStr}${appt.tipo_consulta ? ` • ${appt.tipo_consulta}` : ''}`}
 											style={{
 												top: `${top}px`,
-												height: `${Math.max(34, height)}px`,
+												height: `${Math.max(42, height)}px`,
 												background: appt.color || resource.color,
 												left: `calc(${leftPct}% + 4px)`,
 												width: `calc(${colWidthPct}% - 8px)`,
@@ -198,10 +215,10 @@ export default function ResourceDayCalendar({ date, resources = [], appointments
 												borderColor: 'rgba(30, 42, 53, 0.18)',
 											}}
 										>
-											<div className="fw-bold" style={{ fontSize: 13, lineHeight: 1.15 }}>
+											<div className="fw-bold text-truncate" style={{ fontSize: 13, lineHeight: 1.15 }}>
 												{appt.paciente_nome}
 											</div>
-											<div style={{ fontSize: 11, marginTop: 2, opacity: 0.85, lineHeight: 1.15 }}>
+											<div className="text-truncate" style={{ fontSize: 11, marginTop: 2, opacity: 0.9, lineHeight: 1.15 }}>
 												{startStr}–{endStr}
 												{appt.tipo_consulta ? ` • ${appt.tipo_consulta}` : ''}
 											</div>
