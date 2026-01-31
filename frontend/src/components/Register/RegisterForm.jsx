@@ -72,32 +72,26 @@ export default function RegisterForm() {
   }
 
   return (
-    <form className="register-form" onSubmit={handleSubmit}>
-      {error && (
-        <div style={{ 
-          padding: '12px', 
-          marginBottom: '16px', 
-          backgroundColor: '#fee', 
-          border: '1px solid #fcc',
-          borderRadius: '6px',
-          color: '#c33',
-          fontSize: '14px'
-        }}>
+    <form className="px-3 px-lg-4 py-3" onSubmit={handleSubmit}>
+      {error ? (
+        <div className="alert alert-danger" role="alert" aria-live="assertive">
           {error}
         </div>
-      )}
+      ) : null}
 
-      <div className="register-grid-2">
-        <div className="register-field">
-          <label className="register-label" htmlFor="register-name">
+      <div className="row g-3">
+        <div className="col-12 col-md-6">
+          <label className="form-label fw-bold" htmlFor="register-name">
             Nome
           </label>
-          <div className="register-input-wrap">
-            <User className="register-input-icon" aria-hidden="true" />
+          <div className="input-group">
+            <span className="input-group-text bg-white">
+              <User style={{ width: 18, height: 18, opacity: 0.85 }} aria-hidden="true" />
+            </span>
             <input
               id="register-name"
               type="text"
-              className="register-input"
+              className="form-control"
               placeholder="O seu nome completo"
               value={name}
               onChange={(e) => setName(e.target.value)}
@@ -107,17 +101,19 @@ export default function RegisterForm() {
           </div>
         </div>
 
-        <div className="register-field">
-          <label className="register-label" htmlFor="register-phone">
+        <div className="col-12 col-md-6">
+          <label className="form-label fw-bold" htmlFor="register-phone">
             Telefone
           </label>
-          <div className="register-input-wrap">
-            <Phone className="register-input-icon" aria-hidden="true" />
+          <div className="input-group">
+            <span className="input-group-text bg-white">
+              <Phone style={{ width: 18, height: 18, opacity: 0.85 }} aria-hidden="true" />
+            </span>
             <input
               id="register-phone"
               type="tel"
-              className="register-input"
-              placeholder="+351 "
+              className="form-control"
+              placeholder="+351"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
               autoComplete="tel"
@@ -125,38 +121,40 @@ export default function RegisterForm() {
             />
           </div>
         </div>
-      </div>
 
-      <div className="register-field register-span-2">
-        <label className="register-label" htmlFor="register-email">
-          E-mail
-        </label>
-        <div className="register-input-wrap">
-          <Mail className="register-input-icon" aria-hidden="true" />
-          <input
-            id="register-email"
-            type="email"
-            className="register-input"
-            placeholder="nome@exemplo.com"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            autoComplete="email"
-            required
-          />
+        <div className="col-12">
+          <label className="form-label fw-bold" htmlFor="register-email">
+            E-mail
+          </label>
+          <div className="input-group">
+            <span className="input-group-text bg-white">
+              <Mail style={{ width: 18, height: 18, opacity: 0.85 }} aria-hidden="true" />
+            </span>
+            <input
+              id="register-email"
+              type="email"
+              className="form-control"
+              placeholder="nome@exemplo.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              autoComplete="email"
+              required
+            />
+          </div>
         </div>
-      </div>
 
-      <div className="register-grid-2 register-mt">
-        <div className="register-field">
-          <label className="register-label" htmlFor="register-password">
+        <div className="col-12 col-md-6">
+          <label className="form-label fw-bold" htmlFor="register-password">
             Palavra-passe
           </label>
-          <div className="register-input-wrap">
-            <Lock className="register-input-icon" aria-hidden="true" />
+          <div className="input-group">
+            <span className="input-group-text bg-white">
+              <Lock style={{ width: 18, height: 18, opacity: 0.85 }} aria-hidden="true" />
+            </span>
             <input
               id="register-password"
               type="password"
-              className="register-input"
+              className="form-control"
               placeholder="••••••••"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -166,16 +164,18 @@ export default function RegisterForm() {
           </div>
         </div>
 
-        <div className="register-field">
-          <label className="register-label" htmlFor="register-confirm-password">
+        <div className="col-12 col-md-6">
+          <label className="form-label fw-bold" htmlFor="register-confirm-password">
             Confirmar Palavra-passe
           </label>
-          <div className="register-input-wrap">
-            <Lock className="register-input-icon" aria-hidden="true" />
+          <div className="input-group">
+            <span className="input-group-text bg-white">
+              <Lock style={{ width: 18, height: 18, opacity: 0.85 }} aria-hidden="true" />
+            </span>
             <input
               id="register-confirm-password"
               type="password"
-              className="register-input"
+              className="form-control"
               placeholder="••••••••"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
@@ -186,41 +186,35 @@ export default function RegisterForm() {
         </div>
       </div>
 
-      <label className="register-terms" htmlFor="register-terms">
+      <div className="form-check mt-3">
         <input
           id="register-terms"
           type="checkbox"
-          className="register-terms-input"
+          className="form-check-input"
           checked={accepted}
           onChange={(e) => setAccepted(e.target.checked)}
           required
         />
-        <span className="register-terms-box" aria-hidden="true">
-          <Check className="register-terms-check" />
-        </span>
-        <span className="register-terms-text">Aceito os Termos e Política</span>
-      </label>
+        <label className="form-check-label fw-semibold" htmlFor="register-terms">
+          Aceito os Termos e Política
+        </label>
+      </div>
 
-      <div className="register-divider" role="separator" />
+      <hr className="my-3" />
 
-      <div className="register-actions">
-        <button
-          className="register-secondary"
-          type="button"
-          onClick={() => navigate('/login')}
-          disabled={loading}
-        >
-          <ArrowLeft className="register-secondary-icon" aria-hidden="true" />
+      <div className="d-flex align-items-center justify-content-between gap-3 flex-wrap">
+        <button className="btn btn-secondary" type="button" onClick={() => navigate('/login')} disabled={loading}>
+          <ArrowLeft style={{ width: 16, height: 16 }} aria-hidden="true" />
           Voltar para Entrar
         </button>
 
-        <button className="register-primary" type="submit" disabled={loading || !accepted}>
-          <Check className="register-primary-icon" aria-hidden="true" />
+        <button className="btn btn-primary" type="submit" disabled={loading || !accepted}>
+          <Check style={{ width: 16, height: 16 }} aria-hidden="true" />
           {loading ? 'A criar conta...' : 'Criar Conta'}
         </button>
       </div>
 
-      <p className="register-helper">
+      <p className="mt-2 mb-0 small text-muted">
         Ao criar a conta, concorda com os Termos de Serviço e Política de Privacidade.
       </p>
     </form>

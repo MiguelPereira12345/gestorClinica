@@ -192,96 +192,91 @@ export default function Agenda() {
             <Button
               variant="primary"
               onClick={() => navigate('/agenda/consultas/novo')}
-              leftIcon={<Plus className="consultas-btn-icon" aria-hidden="true" />}
+              leftIcon={<Plus size={16} aria-hidden="true" />}
             >
               Adicionar Consulta
             </Button>
           }
         />
 
-        <div className="agenda-grid">
-        <section className="calendar-panel" style={{ minHeight: panelHeight }}>
-          <div className="agenda-panel-header">
-            <div className="agenda-panel-left" />
+        <div className="d-flex flex-column flex-lg-row gap-3">
+          <section className="flex-grow-1">
+            <div className="ui-card p-3" style={{ minHeight: panelHeight }}>
+              <div className="fw-bold mb-2">Calendário</div>
 
-            <div className="agenda-panel-title">Calendário</div>
-
-            <div className="agenda-panel-actions">
-              {/* actions moved to toolbar */}
-            </div>
-          </div>
-
-          <div className="agenda-toolbar">
-            <div className="agenda-viewtabs" role="tablist" aria-label="Vista de calendário">
-              <button
-                type="button"
-                role="tab"
-                aria-selected={viewMode === 'day'}
-                className={`agenda-viewtab${viewMode === 'day' ? ' is-active' : ''}`}
-                onClick={() => setViewMode('day')}
-              >
-                Dia
-              </button>
-              <button
-                type="button"
-                role="tab"
-                aria-selected={viewMode === 'week'}
-                className={`agenda-viewtab${viewMode === 'week' ? ' is-active' : ''}`}
-                onClick={() => setViewMode('week')}
-              >
-                Semana
-              </button>
-              <button
-                type="button"
-                role="tab"
-                aria-selected={viewMode === 'month'}
-                className={`agenda-viewtab${viewMode === 'month' ? ' is-active' : ''}`}
-                onClick={() => setViewMode('month')}
-              >
-                Mês
-              </button>
-            </div>
-
-            <div className="agenda-toolbar-actions">
-              {viewMode === 'month' ? (
-                <>
+              <div className="d-flex flex-wrap justify-content-between align-items-center gap-2 border-bottom pb-2 mb-3">
+                <div className="btn-group" role="tablist" aria-label="Vista de calendário">
                   <button
-                    className="agenda-nav-btn"
-                    onClick={() => {
-                      const d = new Date(cursorDate)
-                      d.setMonth(d.getMonth() - 1)
-                      setCursorDate(d)
-                    }}
+                    type="button"
+                    role="tab"
+                    aria-selected={viewMode === 'day'}
+                    className={`btn btn-sm ${viewMode === 'day' ? 'btn-primary' : 'btn-light'}`}
+                    onClick={() => setViewMode('day')}
                   >
-                    &lt; Mês Anterior
+                    Dia
                   </button>
                   <button
-                    className="agenda-nav-btn"
-                    onClick={() => {
-                      const d = new Date(cursorDate)
-                      d.setMonth(d.getMonth() + 1)
-                      setCursorDate(d)
-                    }}
+                    type="button"
+                    role="tab"
+                    aria-selected={viewMode === 'week'}
+                    className={`btn btn-sm ${viewMode === 'week' ? 'btn-primary' : 'btn-light'}`}
+                    onClick={() => setViewMode('week')}
                   >
-                    Mês Seguinte &gt;
+                    Semana
                   </button>
-                </>
-              ) : (
-                <>
-                  <button className="agenda-nav-btn" onClick={goPrevWeek}>
-                    &lt; Semana Anterior
+                  <button
+                    type="button"
+                    role="tab"
+                    aria-selected={viewMode === 'month'}
+                    className={`btn btn-sm ${viewMode === 'month' ? 'btn-primary' : 'btn-light'}`}
+                    onClick={() => setViewMode('month')}
+                  >
+                    Mês
                   </button>
-                  <button className="agenda-nav-btn" onClick={goNextWeek}>
-                    Semana Seguinte &gt;
-                  </button>
-                </>
-              )}
-            </div>
-          </div>
+                </div>
+
+                <div className="d-flex flex-wrap gap-2">
+                  {viewMode === 'month' ? (
+                    <>
+                      <button
+                        type="button"
+                        className="btn btn-light btn-sm"
+                        onClick={() => {
+                          const d = new Date(cursorDate)
+                          d.setMonth(d.getMonth() - 1)
+                          setCursorDate(d)
+                        }}
+                      >
+                        &lt; Mês Anterior
+                      </button>
+                      <button
+                        type="button"
+                        className="btn btn-light btn-sm"
+                        onClick={() => {
+                          const d = new Date(cursorDate)
+                          d.setMonth(d.getMonth() + 1)
+                          setCursorDate(d)
+                        }}
+                      >
+                        Mês Seguinte &gt;
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <button type="button" className="btn btn-light btn-sm" onClick={goPrevWeek}>
+                        &lt; Semana Anterior
+                      </button>
+                      <button type="button" className="btn btn-light btn-sm" onClick={goNextWeek}>
+                        Semana Seguinte &gt;
+                      </button>
+                    </>
+                  )}
+                </div>
+              </div>
 
           {viewMode === 'day' ? (
             <>
-              <div className="agenda-daytabs" aria-label="Dias da semana">
+              <div className="d-flex flex-wrap gap-2 mb-3" aria-label="Dias da semana">
                 {Array.from({ length: 6 }).map((_, i) => {
                   const d = new Date(weekStart)
                   d.setDate(d.getDate() + i)
@@ -290,7 +285,7 @@ export default function Agenda() {
                     <button
                       key={i}
                       type="button"
-                      className={`agenda-daytab${active ? ' is-active' : ''}`}
+                      className={`btn btn-sm ${active ? 'btn-primary' : 'btn-light'}`}
                       onClick={() => setSelectedDayIndex(i)}
                     >
                       {d.toLocaleDateString(undefined, { weekday: 'short', day: '2-digit' })}
@@ -326,10 +321,12 @@ export default function Agenda() {
               getDayCount={(d) => monthCountByISO.get(dateToISO(d)) || 0}
             />
           ) : null}
-        </section>
+            </div>
+          </section>
 
-        <aside className="agenda-aside">
-          <div className="agenda-card">
+          <aside className="flex-shrink-0" style={{ width: 300 }}>
+            <div className="d-flex flex-column gap-3">
+              <div className="ui-card p-3">
             <MiniCalendar
               currentDate={cursorDate}
               onSelectDate={handleSelectDate}
@@ -339,22 +336,24 @@ export default function Agenda() {
             />
           </div>
 
-          <div className="agenda-card">
-            <div className="agenda-card-title">Legenda de Médicos</div>
-            <div className="agenda-legend">
+              <div className="ui-card p-3">
+                <div className="fw-bold mb-2">Legenda de Médicos</div>
+                <div className="d-flex flex-column gap-2">
               {resources.map((r) => (
-                <div key={r.id} className="agenda-legend-row">
-                  <span className="agenda-dot" style={{ background: r.color }} /> {r.name}
+                    <div key={r.id} className="d-flex gap-2 align-items-center">
+                      <span className="d-inline-block rounded-2 flex-shrink-0" style={{ width: 12, height: 12, background: r.color }} />
+                      <span>{r.name}</span>
                 </div>
               ))}
             </div>
           </div>
 
-          <div className="agenda-card">
-            <div className="agenda-card-title">Dica</div>
-            <div className="agenda-card-muted">Passe o rato sobre um bloco para ver paciente, tempo de consulta, tipo e estado.</div>
+              <div className="ui-card p-3">
+                <div className="fw-bold">Dica</div>
+                <div className="ui-meta mt-2">Passe o rato sobre um bloco para ver paciente, tempo de consulta, tipo e estado.</div>
           </div>
-        </aside>
+            </div>
+          </aside>
         </div>
       </div>
     </AppLayout>

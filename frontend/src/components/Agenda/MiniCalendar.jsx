@@ -20,17 +20,48 @@ export default function MiniCalendar({
   for (let d = 1; d <= last.getDate(); d++) cells.push(new Date(year, month, d))
 
   return (
-    <div className="mc-root">
-      <div className="mc-header">
-        <button onClick={onPrevMonth} className="mc-nav">&lt;</button>
-        <div className="mc-title">{currentDate.toLocaleString(undefined, { month: 'long' })} {year}</div>
-        <button onClick={onNextMonth} className="mc-nav">&gt;</button>
+    <div className="w-100">
+      <div className="d-flex justify-content-between align-items-center">
+        <button
+          type="button"
+          onClick={onPrevMonth}
+          className="btn btn-light btn-sm border fw-bold"
+          style={{ width: 32, height: 32, padding: 0 }}
+          aria-label="Mês anterior"
+        >
+          &lt;
+        </button>
+        <div className="fw-semibold">{currentDate.toLocaleString(undefined, { month: 'long' })} {year}</div>
+        <button
+          type="button"
+          onClick={onNextMonth}
+          className="btn btn-light btn-sm border fw-bold"
+          style={{ width: 32, height: 32, padding: 0 }}
+          aria-label="Mês seguinte"
+        >
+          &gt;
+        </button>
       </div>
-      <div className="mc-grid">
-        {['S','T','Q','Q','S','S','D'].map((h) => <div key={h} className="mc-weekday">{h}</div>)}
-      {cells.map((c, i) => (
-        (() => {
-          const meta = c && typeof getDayMeta === 'function' ? getDayMeta(c) : null
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(7, 1fr)',
+          gap: 6,
+          marginTop: 8,
+        }}
+      >
+        {['S', 'T', 'Q', 'Q', 'S', 'S', 'D'].map((h) => (
+          <div key={h} className="text-center text-muted small">
+            {h}
+          </div>
+        ))}
+
+        {cells.map((c, i) => {
+          if (!c) {
+            return <div key={i} className="rounded-2" style={{ minHeight: 26 }} />
+          }
+
+          const meta = typeof getDayMeta === 'function' ? getDayMeta(c) : null
           const status = meta?.status || ''
           const occ = typeof meta?.occupancy === 'number' ? meta.occupancy : null
           const occBucket =
@@ -45,24 +76,28 @@ export default function MiniCalendar({
                     : occ > 0
                       ? 'occ-1'
                       : 'occ-0'
-          const isToday = c && c.toDateString() === new Date().toDateString()
+          const isToday = c.toDateString() === new Date().toDateString()
 
           return (
-            <div
+            <button
               key={i}
-              className={`mc-cell ${isToday ? 'today' : ''} ${status ? `mc-${status}` : ''} ${occBucket ? `mc-${occBucket}` : ''}`}
-              onClick={() => c && onSelectDate(c)}
+              type="button"
+              className={`mc-cell w-100 border-0 bg-transparent rounded-2 p-0 py-1 text-center ${
+                isToday ? 'today' : ''
+              } ${status ? `mc-${status}` : ''} ${occBucket ? `mc-${occBucket}` : ''}`}
+              onClick={() => onSelectDate(c)}
               title={
                 meta
-                  ? `${status === 'holiday' ? 'Feriado' : status === 'closed' ? 'Fechado' : 'Aberto'}${occ == null ? '' : ` • Ocupação: ${Math.round(occ * 100)}%`}`
+                  ? `${status === 'holiday' ? 'Feriado' : status === 'closed' ? 'Fechado' : 'Aberto'}${
+                      occ == null ? '' : ` • Ocupação: ${Math.round(occ * 100)}%`
+                    }`
                   : undefined
               }
             >
-              {c ? c.getDate() : ''}
-            </div>
+              {c.getDate()}
+            </button>
           )
-        })()
-      ))}
+        })}
       </div>
     </div>
   )

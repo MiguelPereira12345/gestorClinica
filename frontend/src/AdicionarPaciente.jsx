@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react'
 import './App.css'
 import { useNavigate } from 'react-router-dom'
 import AppLayout from './components/Layout/AppLayout'
+import PageHeader from './components/UI/PageHeader'
 import { buildPatientRecordFromForm, createEmptyPatientForm, upsertPatient } from './utils/patientStorage'
 
 export default function AdicionarPaciente() {
@@ -47,129 +48,104 @@ export default function AdicionarPaciente() {
 
 	return (
 		<AppLayout breadcrumb="Pacientes / Adicionar" userName="Dra. Sofia Lima">
-			<div className="patients-content">
-				<div className="patients-title-row">
-					<div className="patients-title">
-						<h1>Adicionar paciente</h1>
-					</div>
+			<div className="ui-page">
+				<PageHeader
+					title="Adicionar paciente"
+					actions={
+						<>
+							<button type="button" className="btn btn-secondary" onClick={() => navigate('/pacientes')}>
+								Cancelar
+							</button>
+							<button type="submit" form="add-patient-form" className="btn btn-primary" disabled={saving}>
+								{saving ? 'A guardar…' : 'Guardar'}
+							</button>
+						</>
+					}
+				/>
 
-					<div className="patients-title-actions">
-						<button
-							type="button"
-							className="patient-btn-secondary"
-							onClick={() => navigate('/pacientes')}
+				<form id="add-patient-form" className="d-grid gap-3" onSubmit={onSubmit}>
+					<details className="ui-card p-3 patient-details" open>
+						<summary
+							className="fw-bold"
+							style={{ color: 'rgba(30, 42, 53, 0.92)' }}
 						>
-							Cancelar
-						</button>
-						<button
-							type="submit"
-							form="add-patient-form"
-							className="patient-btn-primary"
-							disabled={saving}
-						>
-							{saving ? 'A guardar…' : 'Guardar'}
-						</button>
-					</div>
-				</div>
+							Registo dos Pacientes — Identificação Pessoal
+						</summary>
+						<div className="row g-3 mt-2">
+							<div className="col-12 col-md-6">
+								<label className="form-label" style={{ fontSize: 13, fontWeight: 800, color: 'rgba(122, 130, 138, 0.95)' }}>
+									Nome completo *
+								</label>
+								<input className="form-control" type="text" value={form.nomeCompleto} onChange={(e) => updateField('nomeCompleto', e.target.value)} required />
+							</div>
 
-				<form id="add-patient-form" className="patient-form" onSubmit={onSubmit}>
-					<details className="patient-form-section" open>
-						<summary>Registo dos Pacientes — Identificação Pessoal</summary>
-						<div className="patient-form-grid">
-							<label className="patient-form-field">
-								<span>Nome completo *</span>
-								<input
-									type="text"
-									value={form.nomeCompleto}
-									onChange={(e) => updateField('nomeCompleto', e.target.value)}
-									required
-								/>
-							</label>
+							<div className="col-12 col-md-6">
+								<label className="form-label" style={{ fontSize: 13, fontWeight: 800, color: 'rgba(122, 130, 138, 0.95)' }}>
+									Data de nascimento
+								</label>
+								<input className="form-control" type="date" value={form.dataNascimento} onChange={(e) => updateField('dataNascimento', e.target.value)} />
+							</div>
 
-							<label className="patient-form-field">
-								<span>Data de nascimento</span>
-								<input
-									type="date"
-									value={form.dataNascimento}
-									onChange={(e) => updateField('dataNascimento', e.target.value)}
-								/>
-							</label>
-
-							<label className="patient-form-field">
-								<span>Sexo</span>
-								<select value={form.sexo} onChange={(e) => updateField('sexo', e.target.value)}>
+							<div className="col-12 col-md-6">
+								<label className="form-label" style={{ fontSize: 13, fontWeight: 800, color: 'rgba(122, 130, 138, 0.95)' }}>
+									Sexo
+								</label>
+								<select className="form-select" value={form.sexo} onChange={(e) => updateField('sexo', e.target.value)}>
 									<option value="">Selecionar…</option>
 									<option value="Feminino">Feminino</option>
 									<option value="Masculino">Masculino</option>
 									<option value="Outro">Outro</option>
 									<option value="Prefere não dizer">Prefere não dizer</option>
 								</select>
-							</label>
+							</div>
 
-							<label className="patient-form-field patient-form-field-wide">
-								<span>Endereço</span>
-								<input
-									type="text"
-									value={form.endereco}
-									onChange={(e) => updateField('endereco', e.target.value)}
-									placeholder="Rua, nº, localidade"
-								/>
-							</label>
+							<div className="col-12">
+								<label className="form-label" style={{ fontSize: 13, fontWeight: 800, color: 'rgba(122, 130, 138, 0.95)' }}>
+									Endereço
+								</label>
+								<input className="form-control" type="text" value={form.endereco} onChange={(e) => updateField('endereco', e.target.value)} placeholder="Rua, nº, localidade" />
+							</div>
 
-							<label className="patient-form-field">
-								<span>Contacto (telefone)</span>
-								<input
-									type="tel"
-									value={form.contactoTelefone}
-									onChange={(e) => updateField('contactoTelefone', e.target.value)}
-									placeholder="Ex: 912 345 678"
-								/>
-							</label>
+							<div className="col-12 col-md-6">
+								<label className="form-label" style={{ fontSize: 13, fontWeight: 800, color: 'rgba(122, 130, 138, 0.95)' }}>
+									Contacto (telefone)
+								</label>
+								<input className="form-control" type="tel" value={form.contactoTelefone} onChange={(e) => updateField('contactoTelefone', e.target.value)} placeholder="Ex: 912 345 678" />
+							</div>
 
-							<label className="patient-form-field">
-								<span>Contacto (email)</span>
-								<input
-									type="email"
-									value={form.contactoEmail}
-									onChange={(e) => updateField('contactoEmail', e.target.value)}
-									placeholder="nome@exemplo.com"
-								/>
-							</label>
+							<div className="col-12 col-md-6">
+								<label className="form-label" style={{ fontSize: 13, fontWeight: 800, color: 'rgba(122, 130, 138, 0.95)' }}>
+									Contacto (email)
+								</label>
+								<input className="form-control" type="email" value={form.contactoEmail} onChange={(e) => updateField('contactoEmail', e.target.value)} placeholder="nome@exemplo.com" />
+							</div>
 
-							<label className="patient-form-field">
-								<span>Nº de utente (se aplicável)</span>
-								<input
-									type="text"
-									value={form.numeroUtente}
-									onChange={(e) => updateField('numeroUtente', e.target.value)}
-								/>
-							</label>
+							<div className="col-12 col-md-6">
+								<label className="form-label" style={{ fontSize: 13, fontWeight: 800, color: 'rgba(122, 130, 138, 0.95)' }}>
+									Nº de utente (se aplicável)
+								</label>
+								<input className="form-control" type="text" value={form.numeroUtente} onChange={(e) => updateField('numeroUtente', e.target.value)} />
+							</div>
 
-							<label className="patient-form-field">
-								<span>NIF</span>
-								<input
-									type="text"
-									value={form.nif}
-									onChange={(e) => updateField('nif', e.target.value)}
-								/>
-							</label>
+							<div className="col-12 col-md-6">
+								<label className="form-label" style={{ fontSize: 13, fontWeight: 800, color: 'rgba(122, 130, 138, 0.95)' }}>
+									NIF
+								</label>
+								<input className="form-control" type="text" value={form.nif} onChange={(e) => updateField('nif', e.target.value)} />
+							</div>
 
-							<label className="patient-form-field patient-form-field-wide">
-								<span>Subsistemas de saúde</span>
-								<input
-									type="text"
-									value={form.subsistemasSaude}
-									onChange={(e) => updateField('subsistemasSaude', e.target.value)}
-									placeholder="Ex: ADSE, SAMS…"
-								/>
-							</label>
+							<div className="col-12">
+								<label className="form-label" style={{ fontSize: 13, fontWeight: 800, color: 'rgba(122, 130, 138, 0.95)' }}>
+									Subsistemas de saúde
+								</label>
+								<input className="form-control" type="text" value={form.subsistemasSaude} onChange={(e) => updateField('subsistemasSaude', e.target.value)} placeholder="Ex: ADSE, SAMS…" />
+							</div>
 
-							<label className="patient-form-field">
-								<span>Estado civil</span>
-								<select
-									value={form.estadoCivil}
-									onChange={(e) => updateField('estadoCivil', e.target.value)}
-								>
+							<div className="col-12 col-md-6">
+								<label className="form-label" style={{ fontSize: 13, fontWeight: 800, color: 'rgba(122, 130, 138, 0.95)' }}>
+									Estado civil
+								</label>
+								<select className="form-select" value={form.estadoCivil} onChange={(e) => updateField('estadoCivil', e.target.value)}>
 									<option value="">Selecionar…</option>
 									<option value="Solteiro(a)">Solteiro(a)</option>
 									<option value="Casado(a)">Casado(a)</option>
@@ -177,270 +153,234 @@ export default function AdicionarPaciente() {
 									<option value="Divorciado(a)">Divorciado(a)</option>
 									<option value="Viúvo(a)">Viúvo(a)</option>
 								</select>
-							</label>
+							</div>
 
-							<label className="patient-form-field">
-								<span>Profissão</span>
-								<input
-									type="text"
-									value={form.profissao}
-									onChange={(e) => updateField('profissao', e.target.value)}
-								/>
-							</label>
+							<div className="col-12 col-md-6">
+								<label className="form-label" style={{ fontSize: 13, fontWeight: 800, color: 'rgba(122, 130, 138, 0.95)' }}>
+									Profissão
+								</label>
+								<input className="form-control" type="text" value={form.profissao} onChange={(e) => updateField('profissao', e.target.value)} />
+							</div>
 						</div>
 					</details>
 
-					<details className="patient-form-section">
-						<summary>Histórico Médico Geral</summary>
-						<div className="patient-form-grid">
-							<label className="patient-form-field patient-form-field-wide">
-								<span>Condições de saúde pré-existentes</span>
-								<textarea
-									rows={3}
-									value={form.condicoesPreExistentes}
-									onChange={(e) => updateField('condicoesPreExistentes', e.target.value)}
-									placeholder="Ex: diabetes, hipertensão, doenças cardíacas…"
-								/>
-							</label>
-							<label className="patient-form-field patient-form-field-wide">
-								<span>Medicamentos em uso</span>
-								<textarea
-									rows={3}
-									value={form.medicamentosEmUso}
-									onChange={(e) => updateField('medicamentosEmUso', e.target.value)}
-									placeholder="Prescritos e não prescritos"
-								/>
-							</label>
-							<label className="patient-form-field patient-form-field-wide">
-								<span>Alergias conhecidas</span>
-								<textarea
-									rows={3}
-									value={form.alergiasConhecidas}
-									onChange={(e) => updateField('alergiasConhecidas', e.target.value)}
-									placeholder="Medicamentos, alimentos, químicos…"
-								/>
-							</label>
-							<label className="patient-form-field patient-form-field-wide">
-								<span>Histórico cirúrgico relevante</span>
-								<textarea
-									rows={3}
-									value={form.historicoCirurgico}
-									onChange={(e) => updateField('historicoCirurgico', e.target.value)}
-								/>
-							</label>
-							<label className="patient-form-field patient-form-field-wide">
-								<span>Internações ou tratamentos médicos importantes</span>
-								<textarea
-									rows={3}
-									value={form.internacoesTratamentos}
-									onChange={(e) => updateField('internacoesTratamentos', e.target.value)}
-								/>
-							</label>
-							<label className="patient-form-field patient-form-field-wide">
-								<span>Gravidez (quando aplicável)</span>
-								<textarea
-									rows={2}
-									value={form.gravidez}
-									onChange={(e) => updateField('gravidez', e.target.value)}
-									placeholder="Indicar se aplicável"
-								/>
-							</label>
+					<details className="ui-card p-3 patient-details">
+						<summary className="fw-bold" style={{ color: 'rgba(30, 42, 53, 0.92)' }}>
+							Histórico Médico Geral
+						</summary>
+						<div className="row g-3 mt-2">
+							<div className="col-12">
+								<label className="form-label" style={{ fontSize: 13, fontWeight: 800, color: 'rgba(122, 130, 138, 0.95)' }}>
+									Condições de saúde pré-existentes
+								</label>
+								<textarea className="form-control" rows={3} value={form.condicoesPreExistentes} onChange={(e) => updateField('condicoesPreExistentes', e.target.value)} placeholder="Ex: diabetes, hipertensão, doenças cardíacas…" />
+							</div>
+							<div className="col-12">
+								<label className="form-label" style={{ fontSize: 13, fontWeight: 800, color: 'rgba(122, 130, 138, 0.95)' }}>
+									Medicamentos em uso
+								</label>
+								<textarea className="form-control" rows={3} value={form.medicamentosEmUso} onChange={(e) => updateField('medicamentosEmUso', e.target.value)} placeholder="Prescritos e não prescritos" />
+							</div>
+							<div className="col-12">
+								<label className="form-label" style={{ fontSize: 13, fontWeight: 800, color: 'rgba(122, 130, 138, 0.95)' }}>
+									Alergias conhecidas
+								</label>
+								<textarea className="form-control" rows={3} value={form.alergiasConhecidas} onChange={(e) => updateField('alergiasConhecidas', e.target.value)} placeholder="Medicamentos, alimentos, químicos…" />
+							</div>
+							<div className="col-12">
+								<label className="form-label" style={{ fontSize: 13, fontWeight: 800, color: 'rgba(122, 130, 138, 0.95)' }}>
+									Histórico cirúrgico relevante
+								</label>
+								<textarea className="form-control" rows={3} value={form.historicoCirurgico} onChange={(e) => updateField('historicoCirurgico', e.target.value)} />
+							</div>
+							<div className="col-12">
+								<label className="form-label" style={{ fontSize: 13, fontWeight: 800, color: 'rgba(122, 130, 138, 0.95)' }}>
+									Internações ou tratamentos médicos importantes
+								</label>
+								<textarea className="form-control" rows={3} value={form.internacoesTratamentos} onChange={(e) => updateField('internacoesTratamentos', e.target.value)} />
+							</div>
+							<div className="col-12">
+								<label className="form-label" style={{ fontSize: 13, fontWeight: 800, color: 'rgba(122, 130, 138, 0.95)' }}>
+									Gravidez (quando aplicável)
+								</label>
+								<textarea className="form-control" rows={2} value={form.gravidez} onChange={(e) => updateField('gravidez', e.target.value)} placeholder="Indicar se aplicável" />
+							</div>
 						</div>
 					</details>
 
-					<details className="patient-form-section">
-						<summary>Histórico Dentário</summary>
-						<div className="patient-form-grid">
-							<label className="patient-form-field patient-form-field-wide">
-								<span>Motivo da consulta inicial</span>
-								<textarea
-									rows={2}
-									value={form.motivoConsultaInicial}
-									onChange={(e) => updateField('motivoConsultaInicial', e.target.value)}
-								/>
-							</label>
-							<label className="patient-form-field patient-form-field-wide">
-								<span>Condições dentárias pré-existentes</span>
-								<textarea
-									rows={3}
-									value={form.condicoesDentarias}
-									onChange={(e) => updateField('condicoesDentarias', e.target.value)}
-									placeholder="Ex: cáries, problemas periodontais…"
-								/>
-							</label>
-							<label className="patient-form-field patient-form-field-wide">
-								<span>Histórico de tratamentos dentários passados</span>
-								<textarea
-									rows={3}
-									value={form.historicoTratamentosDentarios}
-									onChange={(e) => updateField('historicoTratamentosDentarios', e.target.value)}
-									placeholder="Ex: implantes, ortodontia, próteses…"
-								/>
-							</label>
-							<label className="patient-form-field patient-form-field-wide">
-								<span>Experiência com anestesias (locais/gerais)</span>
-								<textarea
-									rows={2}
-									value={form.experienciaAnestesias}
-									onChange={(e) => updateField('experienciaAnestesias', e.target.value)}
-								/>
-							</label>
-							<label className="patient-form-field patient-form-field-wide">
-								<span>Histórico de dor/desconforto/sensibilidade</span>
-								<textarea
-									rows={2}
-									value={form.historicoDorSensibilidade}
-									onChange={(e) => updateField('historicoDorSensibilidade', e.target.value)}
-								/>
-							</label>
+					<details className="ui-card p-3 patient-details">
+						<summary className="fw-bold" style={{ color: 'rgba(30, 42, 53, 0.92)' }}>
+							Histórico Dentário
+						</summary>
+						<div className="row g-3 mt-2">
+							<div className="col-12">
+								<label className="form-label" style={{ fontSize: 13, fontWeight: 800, color: 'rgba(122, 130, 138, 0.95)' }}>
+									Motivo da consulta inicial
+								</label>
+								<textarea className="form-control" rows={2} value={form.motivoConsultaInicial} onChange={(e) => updateField('motivoConsultaInicial', e.target.value)} />
+							</div>
+							<div className="col-12">
+								<label className="form-label" style={{ fontSize: 13, fontWeight: 800, color: 'rgba(122, 130, 138, 0.95)' }}>
+									Condições dentárias pré-existentes
+								</label>
+								<textarea className="form-control" rows={3} value={form.condicoesDentarias} onChange={(e) => updateField('condicoesDentarias', e.target.value)} placeholder="Ex: cáries, problemas periodontais…" />
+							</div>
+							<div className="col-12">
+								<label className="form-label" style={{ fontSize: 13, fontWeight: 800, color: 'rgba(122, 130, 138, 0.95)' }}>
+									Histórico de tratamentos dentários passados
+								</label>
+								<textarea className="form-control" rows={3} value={form.historicoTratamentosDentarios} onChange={(e) => updateField('historicoTratamentosDentarios', e.target.value)} placeholder="Ex: implantes, ortodontia, próteses…" />
+							</div>
+							<div className="col-12">
+								<label className="form-label" style={{ fontSize: 13, fontWeight: 800, color: 'rgba(122, 130, 138, 0.95)' }}>
+									Experiência com anestesias (locais/gerais)
+								</label>
+								<textarea className="form-control" rows={2} value={form.experienciaAnestesias} onChange={(e) => updateField('experienciaAnestesias', e.target.value)} />
+							</div>
+							<div className="col-12">
+								<label className="form-label" style={{ fontSize: 13, fontWeight: 800, color: 'rgba(122, 130, 138, 0.95)' }}>
+									Histórico de dor/desconforto/sensibilidade
+								</label>
+								<textarea className="form-control" rows={2} value={form.historicoDorSensibilidade} onChange={(e) => updateField('historicoDorSensibilidade', e.target.value)} />
+							</div>
 						</div>
 					</details>
 
-					<details className="patient-form-section">
-						<summary>Hábitos e Estilo de Vida</summary>
-						<div className="patient-form-grid">
-							<label className="patient-form-field patient-form-field-wide">
-								<span>Hábitos de higiene oral</span>
-								<textarea
-									rows={3}
-									value={form.habitosHigieneOral}
-									onChange={(e) => updateField('habitosHigieneOral', e.target.value)}
-									placeholder="Frequência e tipo de escovagem, fio dentário…"
-								/>
-							</label>
+					<details className="ui-card p-3 patient-details">
+						<summary className="fw-bold" style={{ color: 'rgba(30, 42, 53, 0.92)' }}>
+							Hábitos e Estilo de Vida
+						</summary>
+						<div className="row g-3 mt-2">
+							<div className="col-12">
+								<label className="form-label" style={{ fontSize: 13, fontWeight: 800, color: 'rgba(122, 130, 138, 0.95)' }}>
+									Hábitos de higiene oral
+								</label>
+								<textarea className="form-control" rows={3} value={form.habitosHigieneOral} onChange={(e) => updateField('habitosHigieneOral', e.target.value)} placeholder="Frequência e tipo de escovagem, fio dentário…" />
+							</div>
 
-							<label className="patient-form-field patient-form-field-wide">
-								<span>Hábitos alimentares</span>
-								<textarea
-									rows={3}
-									value={form.habitosAlimentares}
-									onChange={(e) => updateField('habitosAlimentares', e.target.value)}
-									placeholder="Ingestão frequente de açúcar, bebidas ácidas…"
-								/>
-							</label>
+							<div className="col-12">
+								<label className="form-label" style={{ fontSize: 13, fontWeight: 800, color: 'rgba(122, 130, 138, 0.95)' }}>
+									Hábitos alimentares
+								</label>
+								<textarea className="form-control" rows={3} value={form.habitosAlimentares} onChange={(e) => updateField('habitosAlimentares', e.target.value)} placeholder="Ingestão frequente de açúcar, bebidas ácidas…" />
+							</div>
 
-							<label className="patient-form-field">
-								<span>Consumo de tabaco</span>
-								<select
-									value={form.consumoTabaco}
-									onChange={(e) => updateField('consumoTabaco', e.target.value)}
-								>
+							<div className="col-12 col-md-4">
+								<label className="form-label" style={{ fontSize: 13, fontWeight: 800, color: 'rgba(122, 130, 138, 0.95)' }}>
+									Consumo de tabaco
+								</label>
+								<select className="form-select" value={form.consumoTabaco} onChange={(e) => updateField('consumoTabaco', e.target.value)}>
 									<option value="">Selecionar…</option>
 									<option value="Não">Não</option>
 									<option value="Ocasional">Ocasional</option>
 									<option value="Regular">Regular</option>
 								</select>
-							</label>
+							</div>
 
-							<label className="patient-form-field">
-								<span>Consumo de álcool</span>
-								<select
-									value={form.consumoAlcool}
-									onChange={(e) => updateField('consumoAlcool', e.target.value)}
-								>
+							<div className="col-12 col-md-4">
+								<label className="form-label" style={{ fontSize: 13, fontWeight: 800, color: 'rgba(122, 130, 138, 0.95)' }}>
+									Consumo de álcool
+								</label>
+								<select className="form-select" value={form.consumoAlcool} onChange={(e) => updateField('consumoAlcool', e.target.value)}>
 									<option value="">Selecionar…</option>
 									<option value="Não">Não</option>
 									<option value="Ocasional">Ocasional</option>
 									<option value="Regular">Regular</option>
 								</select>
-							</label>
+							</div>
 
-							<label className="patient-form-field">
-								<span>Consumo de drogas</span>
-								<select
-									value={form.consumoDrogas}
-									onChange={(e) => updateField('consumoDrogas', e.target.value)}
-								>
+							<div className="col-12 col-md-4">
+								<label className="form-label" style={{ fontSize: 13, fontWeight: 800, color: 'rgba(122, 130, 138, 0.95)' }}>
+									Consumo de drogas
+								</label>
+								<select className="form-select" value={form.consumoDrogas} onChange={(e) => updateField('consumoDrogas', e.target.value)}>
 									<option value="">Selecionar…</option>
 									<option value="Não">Não</option>
 									<option value="Ocasional">Ocasional</option>
 									<option value="Regular">Regular</option>
 								</select>
-							</label>
+							</div>
 
-							<label className="patient-form-field patient-form-checkbox">
-								<input
-									type="checkbox"
-									checked={form.bruxismo}
-									onChange={(e) => updateField('bruxismo', e.target.checked)}
-								/>
-								<span>Bruxismo (aperto/ranger)</span>
-							</label>
+							<div className="col-12">
+								<div className="form-check">
+									<input className="form-check-input" type="checkbox" checked={form.bruxismo} onChange={(e) => updateField('bruxismo', e.target.checked)} id="add-patient-bruxismo" />
+									<label className="form-check-label" htmlFor="add-patient-bruxismo" style={{ fontSize: 13, fontWeight: 800, color: 'rgba(122, 130, 138, 0.95)' }}>
+										Bruxismo (aperto/ranger)
+									</label>
+								</div>
+							</div>
 
-							<label className="patient-form-field patient-form-field-wide">
-								<span>Atividades desportivas</span>
-								<textarea
-									rows={2}
-									value={form.atividadesDesportivas}
-									onChange={(e) => updateField('atividadesDesportivas', e.target.value)}
-									placeholder="Especialmente com risco para a saúde dentária"
-								/>
-							</label>
+							<div className="col-12">
+								<label className="form-label" style={{ fontSize: 13, fontWeight: 800, color: 'rgba(122, 130, 138, 0.95)' }}>
+									Atividades desportivas
+								</label>
+								<textarea className="form-control" rows={2} value={form.atividadesDesportivas} onChange={(e) => updateField('atividadesDesportivas', e.target.value)} placeholder="Especialmente com risco para a saúde dentária" />
+							</div>
 						</div>
 					</details>
 
-					<details className="patient-form-section">
-						<summary>Anexar exames clínicos</summary>
-						<div className="patient-form-grid">
-							<label className="patient-form-field patient-form-field-wide">
-								<span>Ficheiros</span>
-								<input type="file" multiple onChange={onPickFiles} />
+					<details className="ui-card p-3 patient-details">
+						<summary className="fw-bold" style={{ color: 'rgba(30, 42, 53, 0.92)' }}>
+							Anexar exames clínicos
+						</summary>
+						<div className="row g-3 mt-2">
+							<div className="col-12">
+								<label className="form-label" style={{ fontSize: 13, fontWeight: 800, color: 'rgba(122, 130, 138, 0.95)' }}>
+									Ficheiros
+								</label>
+								<input className="form-control" type="file" multiple onChange={onPickFiles} />
 								{fileNames.length ? (
-									<ul className="patient-form-files" aria-label="Ficheiros selecionados">
+									<ul className="list-group mt-2" aria-label="Ficheiros selecionados">
 										{fileNames.map((name) => (
-											<li key={name}>{name}</li>
+											<li className="list-group-item py-2" key={name}>
+												{name}
+											</li>
 										))}
 									</ul>
 								) : (
-									<div className="patient-form-help">Ainda não selecionaste ficheiros.</div>
+									<div className="form-text">Ainda não selecionaste ficheiros.</div>
 								)}
-							</label>
+							</div>
 						</div>
 					</details>
 
-					<details className="patient-form-section">
-						<summary>Tratamentos anteriores e resultados</summary>
-						<div className="patient-form-grid">
-							<label className="patient-form-field patient-form-field-wide">
-								<span>Histórico de tratamentos (Clinimolelos e/ou outras)</span>
-								<textarea
-									rows={3}
-									value={form.historicoTratamentos}
-									onChange={(e) => updateField('historicoTratamentos', e.target.value)}
-								/>
-							</label>
-							<label className="patient-form-field patient-form-field-wide">
-								<span>Resultados de tratamentos anteriores</span>
-								<textarea
-									rows={3}
-									value={form.resultadosTratamentos}
-									onChange={(e) => updateField('resultadosTratamentos', e.target.value)}
-									placeholder="Satisfação, sucesso, complicações…"
-								/>
-							</label>
-							<label className="patient-form-field patient-form-field-wide">
-								<span>Planos de tratamento recomendados e realizados</span>
-								<textarea
-									rows={3}
-									value={form.planosTratamento}
-									onChange={(e) => updateField('planosTratamento', e.target.value)}
-								/>
-							</label>
+					<details className="ui-card p-3 patient-details">
+						<summary className="fw-bold" style={{ color: 'rgba(30, 42, 53, 0.92)' }}>
+							Tratamentos anteriores e resultados
+						</summary>
+						<div className="row g-3 mt-2">
+							<div className="col-12">
+								<label className="form-label" style={{ fontSize: 13, fontWeight: 800, color: 'rgba(122, 130, 138, 0.95)' }}>
+									Histórico de tratamentos (Clinimolelos e/ou outras)
+								</label>
+								<textarea className="form-control" rows={3} value={form.historicoTratamentos} onChange={(e) => updateField('historicoTratamentos', e.target.value)} />
+							</div>
+							<div className="col-12">
+								<label className="form-label" style={{ fontSize: 13, fontWeight: 800, color: 'rgba(122, 130, 138, 0.95)' }}>
+									Resultados de tratamentos anteriores
+								</label>
+								<textarea className="form-control" rows={3} value={form.resultadosTratamentos} onChange={(e) => updateField('resultadosTratamentos', e.target.value)} placeholder="Satisfação, sucesso, complicações…" />
+							</div>
+							<div className="col-12">
+								<label className="form-label" style={{ fontSize: 13, fontWeight: 800, color: 'rgba(122, 130, 138, 0.95)' }}>
+									Planos de tratamento recomendados e realizados
+								</label>
+								<textarea className="form-control" rows={3} value={form.planosTratamento} onChange={(e) => updateField('planosTratamento', e.target.value)} />
+							</div>
 						</div>
 					</details>
 
-					<details className="patient-form-section">
-						<summary>Observações adicionais</summary>
-						<div className="patient-form-grid">
-							<label className="patient-form-field patient-form-field-wide">
-								<span>Notas</span>
-								<textarea
-									rows={4}
-									value={form.observacoesAdicionais}
-									onChange={(e) => updateField('observacoesAdicionais', e.target.value)}
-									placeholder="Ex: ansiedade, medos específicos, necessidades especiais…"
-								/>
-							</label>
+					<details className="ui-card p-3 patient-details">
+						<summary className="fw-bold" style={{ color: 'rgba(30, 42, 53, 0.92)' }}>
+							Observações adicionais
+						</summary>
+						<div className="row g-3 mt-2">
+							<div className="col-12">
+								<label className="form-label" style={{ fontSize: 13, fontWeight: 800, color: 'rgba(122, 130, 138, 0.95)' }}>
+									Notas
+								</label>
+								<textarea className="form-control" rows={4} value={form.observacoesAdicionais} onChange={(e) => updateField('observacoesAdicionais', e.target.value)} placeholder="Ex: ansiedade, medos específicos, necessidades especiais…" />
+							</div>
 						</div>
 					</details>
 				</form>

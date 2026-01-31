@@ -19,27 +19,42 @@ export default function WeeklyCalendar({ weekStart, appointments = [] }) {
   // include HOUR_END as the last visible hour (inclusive)
   const totalHours = HOUR_END - HOUR_START + 1
   const gridHeight = totalHours * HOUR_HEIGHT
+  const timeColWidth = 80
 
   return (
-    <div className="wc-root">
-      <div className="wc-header">
-        <div className="wc-time-col" />
+    <div className="w-100">
+      <div className="d-flex">
+        <div className="flex-shrink-0" style={{ width: timeColWidth }} />
         {days.map((d) => (
-          <div key={d.toDateString()} className="wc-day-col-header">{d.toLocaleDateString(undefined, { weekday: 'short', day: 'numeric' })}</div>
+          <div
+            key={d.toDateString()}
+            className="flex-grow-1 py-2 text-center border-bottom bg-light small fw-semibold"
+          >
+            {d.toLocaleDateString(undefined, { weekday: 'short', day: 'numeric' })}
+          </div>
         ))}
       </div>
 
-      <div className="wc-body" style={{ height: gridHeight }}>
-        <div className="wc-time-col">
+      <div className="d-flex" style={{ height: gridHeight }}>
+        <div className="flex-shrink-0 bg-white" style={{ width: timeColWidth }}>
           {Array.from({ length: totalHours }).map((_, i) => (
-            <div key={i} className="wc-time-cell">{String(HOUR_START + i).padStart(2, '0')}:00</div>
+            <div
+              key={i}
+              className="d-flex align-items-center border-bottom px-2 text-muted small"
+              style={{ height: HOUR_HEIGHT }}
+            >
+              {String(HOUR_START + i).padStart(2, '0')}:00
+            </div>
           ))}
         </div>
 
-        <div className="wc-days-wrap">
+        <div className="d-flex flex-grow-1" style={{ position: 'relative' }}>
           {days.map((day, dayIndex) => (
-            <div key={dayIndex} className="wc-day-col">
-              <div className="wc-day-grid" style={{ height: gridHeight }}>
+            <div
+              key={dayIndex}
+              className={dayIndex === 0 ? 'flex-grow-1 position-relative' : 'flex-grow-1 position-relative border-start'}
+            >
+              <div className="position-relative" style={{ height: gridHeight }}>
                 {/* place appointments for this day */}
                 {appointments
                   .filter((a) => {
@@ -58,12 +73,21 @@ export default function WeeklyCalendar({ weekStart, appointments = [] }) {
                     return (
                       <div
                         key={a.id}
-                        className="wc-appointment"
+                        className="position-absolute start-0 end-0 mx-2 rounded-2 shadow-sm p-2 overflow-hidden"
                         title={`${a.paciente_nome} — ${a.tipo_consulta}`}
-                        style={{ top: top + 'px', height: Math.max(28, height) + 'px', background: color }}
+                        style={{
+                          top: `${top}px`,
+                          height: `${Math.max(28, height)}px`,
+                          background: color,
+                          color: '#033',
+                        }}
                       >
-                        <div className="wc-appointment-title">{a.paciente_nome}</div>
-                        <div className="wc-appointment-meta">{new Date(a.data_inicio).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+                        <div className="fw-semibold" style={{ fontSize: 13 }}>
+                          {a.paciente_nome}
+                        </div>
+                        <div className="text-muted" style={{ fontSize: 11 }}>
+                          {new Date(a.data_inicio).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </div>
                       </div>
                     )
                   })}

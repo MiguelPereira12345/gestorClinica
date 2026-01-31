@@ -317,267 +317,289 @@ export default function AdicionarConsulta() {
 			breadcrumb="Agenda / Marcar consulta"
 			userName="Receção"
 			actions={
-				<button type="button" className="mcx-top-btn" onClick={() => navigate('/agenda')}>
+				<button type="button" className="btn btn-secondary" onClick={() => navigate('/agenda')}>
 					← Voltar
 				</button>
 			}
 		>
-			<div className="mcx-page" aria-label="Marcar consulta">
-				<section className="mcx-left" aria-label="Formulário">
-					<div className="mcx-card">
-						<div className="mcx-card-title">Marcar consulta</div>
+			<div className="ui-page" aria-label="Marcar consulta">
+				<div className="row g-3">
+					<section className="col-12 col-lg-4" aria-label="Formulário">
+						<div className="mcx-sticky-lg">
+							<div className="ui-card p-3">
+								<div className="fw-bold">Marcar consulta</div>
 
-						<div className="mcx-field">
-							<label className="mcx-label" htmlFor="patient-search">Paciente</label>
-							<div className="mcx-patient-row">
-								<div className="mcx-patient-search">
-									<input
-										id="patient-search"
-										ref={patientInputRef}
-										value={patientQuery}
-										onChange={(e) => {
-											setPatientQuery(e.target.value)
-											setShowPatientResults(true)
-											setSelectedPatient(null)
-											setError('')
-										}}
-										onFocus={() => setShowPatientResults(true)}
-										placeholder="Pesquisar por nome, ID ou email (atalho: /)"
-										autoComplete="off"
-									/>
-									{showPatientResults && patientResults.length ? (
-										<div ref={patientPopoverRef} className="mcx-popover" role="listbox">
-											{patientResults.map((p) => (
-												<button
-													key={p.id}
-													type="button"
-													className="mcx-popover-item"
-													onClick={() => pickPatient(p)}
-												>
-													<div className="mcx-popover-main">{p.nome}</div>
-													<div className="mcx-popover-sub">{p.id}{p.email ? ` • ${p.email}` : ''}</div>
-												</button>
-											))}
+								<div className="mt-3">
+									<label className="form-label" htmlFor="patient-search">Paciente</label>
+									<div className="d-flex gap-2 align-items-start">
+										<div className="position-relative flex-grow-1">
+											<input
+												id="patient-search"
+												ref={patientInputRef}
+												className="form-control"
+												value={patientQuery}
+												onChange={(e) => {
+													setPatientQuery(e.target.value)
+													setShowPatientResults(true)
+													setSelectedPatient(null)
+													setError('')
+												}}
+												onFocus={() => setShowPatientResults(true)}
+												placeholder="Pesquisar por nome, ID ou email (atalho: /)"
+												autoComplete="off"
+											/>
+											{showPatientResults && patientResults.length ? (
+												<div ref={patientPopoverRef} className="dropdown-menu show w-100 p-0" role="listbox">
+													{patientResults.map((p) => (
+														<button key={p.id} type="button" className="dropdown-item py-2" onClick={() => pickPatient(p)}>
+															<div className="fw-semibold">{p.nome}</div>
+															<div className="ui-meta">{p.id}{p.email ? ` • ${p.email}` : ''}</div>
+														</button>
+													))}
+												</div>
+											) : null}
+										</div>
+										<button type="button" className="btn btn-light btn-sm" onClick={() => navigate('/pacientes/novo')} title="Alt+N">
+											+ Novo
+										</button>
+									</div>
+									{selectedPatient ? (
+										<div className="mt-2 p-2 rounded border border-success border-opacity-25 bg-success bg-opacity-10">
+											Selecionado: <strong>{selectedPatient.nome}</strong> <span className="ui-meta">({selectedPatient.id})</span>
 										</div>
 									) : null}
 								</div>
-								<button type="button" className="mcx-btn" onClick={() => navigate('/pacientes/novo')} title="Alt+N">
-									+ Novo
-								</button>
-							</div>
-							{selectedPatient ? (
-								<div className="mcx-selected">
-									Selecionado: <strong>{selectedPatient.nome}</strong> <span className="mcx-muted">({selectedPatient.id})</span>
+
+								<div className="mt-3">
+									<label className="form-label">Tipo/Motivo</label>
+									<select className="form-select" value={typeId} onChange={(e) => setTypeId(e.target.value)}>
+										{APPOINTMENT_TYPES.map((t) => (
+											<option key={t.id} value={t.id}>
+												{t.label} ({t.durationMin} min)
+											</option>
+										))}
+									</select>
 								</div>
-							) : null}
-						</div>
 
-						<div className="mcx-field">
-							<label className="mcx-label">Tipo/Motivo</label>
-							<select className="mcx-select" value={typeId} onChange={(e) => setTypeId(e.target.value)}>
-								{APPOINTMENT_TYPES.map((t) => (
-									<option key={t.id} value={t.id}>
-										{t.label} ({t.durationMin} min)
-									</option>
-								))}
-							</select>
-						</div>
-
-						<div className="mcx-field">
-							<label className="mcx-label">Profissional</label>
-							<select className="mcx-select" value={professionalId} onChange={(e) => setProfessionalId(e.target.value)}>
-								<option value="any">Qualquer (mais rápido)</option>
-								{resources.map((r) => (
-									<option key={r.id} value={String(r.id)}>
-										{r.name}
-									</option>
-								))}
-							</select>
-						</div>
-
-						<div className="mcx-field">
-							<label className="mcx-label">Estado</label>
-							<div className="mcx-seg">
-								<button
-									type="button"
-									className={`mcx-seg-btn${bookingStatus === 'confirmada' ? ' is-active' : ''}`}
-									onClick={() => setBookingStatus('confirmada')}
-								>
-									Confirmada
-								</button>
-								<button
-									type="button"
-									className={`mcx-seg-btn${bookingStatus === 'a_confirmar' ? ' is-active' : ''}`}
-									onClick={() => setBookingStatus('a_confirmar')}
-								>
-									A confirmar
-								</button>
-							</div>
-						</div>
-
-						<div className="mcx-field">
-							<div className="mcx-notes-head">
-								<label className="mcx-label" htmlFor="notes">Notas</label>
-								<button type="button" className="mcx-link" onClick={() => setNotesExpanded((v) => !v)}>
-									{notesExpanded ? 'Menos' : 'Expandir'}
-								</button>
-							</div>
-							<textarea
-								id="notes"
-								className="mcx-textarea"
-								rows={notesExpanded ? 5 : 2}
-								value={notes}
-								onChange={(e) => setNotes(e.target.value)}
-								placeholder="Ex.: preferir manhã; confirmar por telefone; trazer radiografia…"
-							/>
-						</div>
-
-						{selectedSlot ? (
-							<div className="mcx-summary">
-								<div className="mcx-summary-title">Horário escolhido</div>
-								<div className="mcx-summary-row">
-									<strong>{formatSlotLabel(selectedSlot.date, selectedSlot.hhmm)}</strong>
-									<span className="mcx-muted">• {resources.find((r) => r.id === selectedSlot.medicoId)?.name || 'Profissional'}</span>
+								<div className="mt-3">
+									<label className="form-label">Profissional</label>
+									<select className="form-select" value={professionalId} onChange={(e) => setProfessionalId(e.target.value)}>
+										<option value="any">Qualquer (mais rápido)</option>
+										{resources.map((r) => (
+											<option key={r.id} value={String(r.id)}>
+												{r.name}
+											</option>
+										))}
+									</select>
 								</div>
-								<button type="button" className="mcx-link" onClick={() => setSelectedSlot(null)}>
-									Limpar (Esc)
-								</button>
+
+								<div className="mt-3">
+									<label className="form-label">Estado</label>
+									<div className="btn-group w-100" role="group" aria-label="Estado">
+										<button
+											type="button"
+											className={`btn btn-sm ${bookingStatus === 'confirmada' ? 'btn-primary' : 'btn-light'}`}
+											onClick={() => setBookingStatus('confirmada')}
+										>
+											Confirmada
+										</button>
+										<button
+											type="button"
+											className={`btn btn-sm ${bookingStatus === 'a_confirmar' ? 'btn-primary' : 'btn-light'}`}
+											onClick={() => setBookingStatus('a_confirmar')}
+										>
+											A confirmar
+										</button>
+									</div>
+								</div>
+
+								<div className="mt-3">
+									<div className="d-flex align-items-center justify-content-between gap-2">
+										<label className="form-label mb-0" htmlFor="notes">Notas</label>
+										<button type="button" className="btn btn-link p-0" onClick={() => setNotesExpanded((v) => !v)}>
+											{notesExpanded ? 'Menos' : 'Expandir'}
+										</button>
+									</div>
+									<textarea
+										id="notes"
+										className="form-control"
+										rows={notesExpanded ? 5 : 2}
+										value={notes}
+										onChange={(e) => setNotes(e.target.value)}
+										placeholder="Ex.: preferir manhã; confirmar por telefone; trazer radiografia…"
+									/>
+								</div>
+
+								<div className="mt-3">
+									{selectedSlot ? (
+										<div className="p-2 rounded border bg-light">
+											<div className="fw-bold mb-1">Horário escolhido</div>
+											<div className="d-flex gap-2 flex-wrap align-items-baseline">
+												<strong>{formatSlotLabel(selectedSlot.date, selectedSlot.hhmm)}</strong>
+												<span className="ui-meta">• {resources.find((r) => r.id === selectedSlot.medicoId)?.name || 'Profissional'}</span>
+											</div>
+											<button type="button" className="btn btn-link p-0" onClick={() => setSelectedSlot(null)}>
+												Limpar (Esc)
+											</button>
+										</div>
+									) : (
+										<div className="ui-meta">Dica: escolhe o horário na coluna da direita (1 clique).</div>
+									)}
+								</div>
+
+								{error ? (
+									<div className="alert alert-danger py-2 mt-3 mb-0" role="alert">
+										{error}
+									</div>
+								) : null}
 							</div>
-						) : (
-							<div className="mcx-muted">Dica: escolhe o horário na coluna da direita (1 clique).</div>
-						)}
 
-						{error ? <div className="mcx-error" role="alert">{error}</div> : null}
-					</div>
-
-					<div className="mcx-sticky">
-						<button type="button" className="mcx-primary" onClick={submit}>
-							Marcar consulta
-						</button>
-						<div className="mcx-hints">
-							<span>/ pesquisar paciente</span>
-							<span>Ctrl+Enter marcar</span>
-							<span>Alt+N novo paciente</span>
+							<div className="mcx-sticky-bottom mt-3">
+								<button type="button" className="btn btn-primary w-100" onClick={submit}>
+									Marcar consulta
+								</button>
+								<div className="ui-meta d-flex flex-wrap gap-2 mt-2">
+									<span>/ pesquisar paciente</span>
+									<span>Ctrl+Enter marcar</span>
+									<span>Alt+N novo paciente</span>
+								</div>
+							</div>
 						</div>
-					</div>
-				</section>
+					</section>
 
-				<aside className="mcx-right" aria-label="Disponibilidade">
-					<div className="mcx-card">
-						<div className="mcx-right-head">
-							<div>
-								<div className="mcx-card-title">Disponibilidade</div>
-								<div className="mcx-muted">Sem inserir hora manualmente — escolhe um slot.</div>
-							</div>
-							<div className="mcx-tabs" role="tablist">
-								<button
-									type="button"
-									role="tab"
-									aria-selected={availabilityMode === 'next'}
-									className={`mcx-tab${availabilityMode === 'next' ? ' is-active' : ''}`}
-									onClick={() => setAvailabilityMode('next')}
-								>
-									Próximos horários
-								</button>
-								<button
-									type="button"
-									role="tab"
-									aria-selected={availabilityMode === 'byPro'}
-									className={`mcx-tab${availabilityMode === 'byPro' ? ' is-active' : ''}`}
-									onClick={() => setAvailabilityMode('byPro')}
-								>
-									Por profissional
-								</button>
-							</div>
-						</div>
-
-						<div className="mcx-right-grid">
-							<div className="mcx-calendar">
-								<MiniCalendar
-									currentDate={calendarMonth}
-									onSelectDate={(d) => setSelectedDate(startOfDay(d))}
-									onPrevMonth={() => {
-										const d = new Date(calendarMonth)
-										d.setMonth(d.getMonth() - 1)
-										setCalendarMonth(d)
-									}}
-									onNextMonth={() => {
-										const d = new Date(calendarMonth)
-										d.setMonth(d.getMonth() + 1)
-										setCalendarMonth(d)
-									}}
-									getDayMeta={getDayMeta}
-								/>
-								<div className="mcx-muted mcx-mini-legend">Dias a cinzento: sem horários para o tipo/duração atual.</div>
+					<aside className="col-12 col-lg-8" aria-label="Disponibilidade">
+						<div className="ui-card p-3">
+							<div className="d-flex justify-content-between align-items-start gap-2 flex-wrap mb-3">
+								<div>
+									<div className="fw-bold">Disponibilidade</div>
+									<div className="ui-meta">Sem inserir hora manualmente — escolhe um slot.</div>
+								</div>
+								<div className="btn-group" role="tablist" aria-label="Modo de disponibilidade">
+									<button
+										type="button"
+										role="tab"
+										aria-selected={availabilityMode === 'next'}
+										className={`btn btn-sm ${availabilityMode === 'next' ? 'btn-primary' : 'btn-light'}`}
+										onClick={() => setAvailabilityMode('next')}
+									>
+										Próximos horários
+									</button>
+									<button
+										type="button"
+										role="tab"
+										aria-selected={availabilityMode === 'byPro'}
+										className={`btn btn-sm ${availabilityMode === 'byPro' ? 'btn-primary' : 'btn-light'}`}
+										onClick={() => setAvailabilityMode('byPro')}
+									>
+										Por profissional
+									</button>
+								</div>
 							</div>
 
-							<div className="mcx-slots">
-								{availabilityMode === 'next' ? (
-									<>
-										<div className="mcx-section-title">Próximos horários</div>
-										{nextSlots.length ? (
-											<div className="mcx-slot-list">
-												{nextSlots.map((s) => (
+							<div className="row g-3">
+								<div className="col-12 col-md-5">
+									<MiniCalendar
+										currentDate={calendarMonth}
+										onSelectDate={(d) => setSelectedDate(startOfDay(d))}
+										onPrevMonth={() => {
+											const d = new Date(calendarMonth)
+											d.setMonth(d.getMonth() - 1)
+											setCalendarMonth(d)
+										}}
+										onNextMonth={() => {
+											const d = new Date(calendarMonth)
+											d.setMonth(d.getMonth() + 1)
+											setCalendarMonth(d)
+										}}
+										getDayMeta={getDayMeta}
+									/>
+									<div className="ui-meta mt-2">Dias a cinzento: sem horários para o tipo/duração atual.</div>
+								</div>
+
+								<div className="col-12 col-md-7">
+									{availabilityMode === 'next' ? (
+										<>
+											<div className="fw-bold mb-2">Próximos horários</div>
+											{nextSlots.length ? (
+												<div className="list-group">
+													{nextSlots.map((s) => {
+														const isActive =
+															selectedSlot &&
+															dateToISO(selectedSlot.date) === dateToISO(s.date) &&
+															selectedSlot.hhmm === s.hhmm &&
+															selectedSlot.medicoId === s.medicoId
+														return (
+															<button
+																key={`${dateToISO(s.date)}|${s.hhmm}|${s.medicoId}`}
+																type="button"
+																className={`list-group-item list-group-item-action${isActive ? ' active' : ''}`}
+																onClick={() => pickSlot(s)}
+															>
+																<div className="fw-semibold">{formatSlotLabel(s.date, s.hhmm)}</div>
+																<div className={isActive ? 'text-white-50 small' : 'text-muted small'}>
+																	{resources.find((r) => r.id === s.medicoId)?.name || 'Profissional'}
+																</div>
+															</button>
+														)
+													})}
+												</div>
+											) : (
+												<div className="ui-meta">Sem horários nos próximos dias para este tipo/duração.</div>
+											)}
+										</>
+									) : (
+										<>
+											<div className="fw-bold mb-2">{selectedDate.toLocaleDateString('pt-PT', { weekday: 'long', day: '2-digit', month: 'long' })}</div>
+											<div className="d-flex flex-wrap gap-2 mb-2" role="tablist" aria-label="Profissionais">
+												{resources.map((r) => (
 													<button
-														key={`${dateToISO(s.date)}|${s.hhmm}|${s.medicoId}`}
+														key={r.id}
 														type="button"
-														className={`mcx-slot-btn${selectedSlot && dateToISO(selectedSlot.date) === dateToISO(s.date) && selectedSlot.hhmm === s.hhmm && selectedSlot.medicoId === s.medicoId ? ' is-selected' : ''}`}
-														onClick={() => pickSlot(s)}
+														className={`btn btn-sm ${Number(professionalId) === r.id ? 'btn-primary' : 'btn-light'}`}
+														onClick={() => setProfessionalId(String(r.id))}
 													>
-														<div className="mcx-slot-main">{formatSlotLabel(s.date, s.hhmm)}</div>
-														<div className="mcx-slot-sub">{resources.find((r) => r.id === s.medicoId)?.name || 'Profissional'}</div>
+														{r.name}
 													</button>
 												))}
 											</div>
-										) : (
-											<div className="mcx-muted">Sem horários nos próximos dias para este tipo/duração.</div>
-										)}
-									</>
-								) : (
-									<>
-										<div className="mcx-section-title">{selectedDate.toLocaleDateString('pt-PT', { weekday: 'long', day: '2-digit', month: 'long' })}</div>
-										<div className="mcx-pro-tabs" role="tablist" aria-label="Profissionais">
-											{resources.map((r) => (
-												<button
-													key={r.id}
-													type="button"
-													className={`mcx-pro-tab${Number(professionalId) === r.id ? ' is-active' : ''}`}
-													onClick={() => setProfessionalId(String(r.id))}
-												>
-													{r.name}
-												</button>
-											))}
-										</div>
-										{professionalId === 'any' ? (
-											<div className="mcx-muted">Escolhe um profissional acima para ver os slots.</div>
-										) : (
-											(() => {
-												const pid = Number(professionalId)
-												const slots = byProfessionalDaySlots.get(pid) || []
-												return slots.length ? (
-													<div className="mcx-chip-row">
-														{slots.map((hhmm) => (
-															<button
-																key={hhmm}
-																type="button"
-																className={`mcx-chip${selectedSlot && dateToISO(selectedSlot.date) === dateToISO(selectedDate) && selectedSlot.hhmm === hhmm && selectedSlot.medicoId === pid ? ' is-selected' : ''}`}
-																onClick={() => pickSlot({ date: selectedDate, hhmm, medicoId: pid })}
-															>
-																{hhmm}
-															</button>
-														))}
-													</div>
-												) : (
-													<div className="mcx-muted">Sem horários neste dia para este tipo/duração.</div>
-												)
-											})()
-										)}
-									</>
-								)}
+											{professionalId === 'any' ? (
+												<div className="ui-meta">Escolhe um profissional acima para ver os slots.</div>
+											) : (
+												(() => {
+													const pid = Number(professionalId)
+													const slots = byProfessionalDaySlots.get(pid) || []
+													return slots.length ? (
+														<div className="d-flex flex-wrap gap-2">
+															{slots.map((hhmm) => (
+																<button
+																	key={hhmm}
+																	type="button"
+																	className={`btn btn-sm ${
+																	selectedSlot &&
+																	dateToISO(selectedSlot.date) === dateToISO(selectedDate) &&
+																	selectedSlot.hhmm === hhmm &&
+																	selectedSlot.medicoId === pid
+																		? 'btn-primary'
+																		: 'btn-light'
+																	}`}
+																	onClick={() => pickSlot({ date: selectedDate, hhmm, medicoId: pid })}
+																>
+																	{hhmm}
+																</button>
+															))}
+														</div>
+													) : (
+														<div className="ui-meta">Sem horários neste dia para este tipo/duração.</div>
+													)
+												})()
+											)}
+										</>
+									)}
+								</div>
 							</div>
 						</div>
-					</div>
-				</aside>
+					</aside>
+				</div>
 			</div>
 		</AppLayout>
 	)

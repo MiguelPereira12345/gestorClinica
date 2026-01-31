@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import AppLayout from './components/Layout/AppLayout'
+import PageHeader from './components/UI/PageHeader'
 import Informacao from './components/Detalhes/Informacao'
 import Exames from './components/Detalhes/Exames'
 import AnexosClinicos from './components/Detalhes/AnexosClinicos'
@@ -42,41 +43,37 @@ export default function EditarDetalhes(){
 
   return (
     <AppLayout breadcrumb="Pacientes > João Pedro da Silva > Detalhes" userName="Dra. Sofia Lima">
-      <div className="patient-page">
+      <div className="ui-page" style={{ padding: '20px 40px' }}>
+        <div className="mb-3">
+          <button className="btn btn-light" type="button">
+            RGPD / Consentimentos
+          </button>
+        </div>
 
-
-          {/* RGPD / Consentimentos */}
-          <div className="patient-section">
-            <button className="patient-rgpd-btn">
-              RGPD / Consentimentos
-            </button>
-          </div>
-
-
-
-          {/* Botões */}
-          <div className="patient-header">
-            <h1 className="patient-title">Ficha do Paciente</h1>
-            <div className="patient-actions">
-              <button className="patient-btn-secondary">
+        <PageHeader
+          title="Ficha do Paciente"
+          actions={
+            <>
+              <button className="btn btn-secondary" type="button">
                 Voltar à Lista
               </button>
               {!isEditing ? (
-                <button className="patient-btn-primary" onClick={handleEdit}>
+                <button className="btn btn-primary" type="button" onClick={handleEdit}>
                   Editar Paciente
                 </button>
               ) : (
                 <>
-                  <button className="patient-btn-secondary" onClick={handleCancel}>
+                  <button className="btn btn-secondary" type="button" onClick={handleCancel}>
                     Cancelar
                   </button>
-                  <button className="patient-btn-primary" onClick={handleSave}>
+                  <button className="btn btn-primary" type="button" onClick={handleSave}>
                     Guardar
                   </button>
                 </>
               )}
-            </div>
-          </div>
+            </>
+          }
+        />
 
 
 
@@ -90,29 +87,38 @@ export default function EditarDetalhes(){
 
 
           {/* Histórico Clínico */}
-          <div className="patient-section">
-            <div className="patient-section-header">
+          <section className="ui-card p-3 mb-3" aria-label="Histórico Clínico">
+            <div className="d-flex justify-content-between align-items-start gap-3 flex-wrap">
               <div>
-                <h2 className="patient-section-title">Histórico Clínico</h2>
-                <p className="patient-section-subtitle">Registos em ordem cronológica</p>
+                <h2 className="m-0" style={{ fontSize: 16, fontWeight: 600 }}>
+                  Histórico Clínico
+                </h2>
+                <p className="mt-1 mb-0" style={{ fontSize: 13, color: '#999' }}>
+                  Registos em ordem cronológica
+                </p>
               </div>
-              <button className="patient-btn-small">
+              <button className="btn btn-sm btn-light" type="button">
                 Ver mais detalhes
               </button>
             </div>
 
-            {/* Nota clínica */}
-            <div className="patient-card">
-              <div className="patient-card-content">
-                <div className="patient-card-body">
-                  <h3 className="patient-card-title">Nota clínica adicionada</h3>
-                  <p className="patient-card-meta">12/05/2025 • Dr. Alex Morgan</p>
-                  <p className="patient-card-text">Texto: Dor lombar crónica, recomendado fisioterapia 2x/semana.</p>
+            <div className="border rounded-2 p-3 mt-3" style={{ background: '#f9f9f9', borderColor: '#ddd' }}>
+              <div className="d-flex align-items-start justify-content-between gap-3">
+                <div>
+                  <h3 className="m-0" style={{ fontSize: 15, fontWeight: 600 }}>
+                    Nota clínica adicionada
+                  </h3>
+                  <p className="mt-2 mb-2" style={{ fontSize: 13, color: '#666' }}>
+                    12/05/2025 • Dr. Alex Morgan
+                  </p>
+                  <p className="m-0" style={{ fontSize: 14, color: '#333' }}>
+                    Texto: Dor lombar crónica, recomendado fisioterapia 2x/semana.
+                  </p>
                 </div>
-                <span className="patient-card-badge">#HC-1021</span>
+                <span style={{ fontSize: 12, color: '#999' }}>#HC-1021</span>
               </div>
             </div>
-          </div>
+          </section>
 
           {/* Exames e Testes */}
           <Exames />
@@ -124,27 +130,35 @@ export default function EditarDetalhes(){
           <RGPDConsentimentos />
 
           {/* Planos de Tratamento */}
-          <div className="patient-section-large">
-            <div className="patient-section-header">
+          <section className="ui-card p-3 mt-4" aria-label="Planos de Tratamento">
+            <div className="d-flex justify-content-between align-items-start gap-3 flex-wrap">
               <div>
-                <h2 className="patient-section-title">Planos de Tratamento</h2>
-                <p className="patient-section-subtitle">Histórico e estado dos planos</p>
+                <h2 className="m-0" style={{ fontSize: 16, fontWeight: 600 }}>
+                  Planos de Tratamento
+                </h2>
+                <p className="mt-1 mb-0" style={{ fontSize: 13, color: '#999' }}>
+                  Histórico e estado dos planos
+                </p>
               </div>
-              <button className="patient-btn-export">
+              <button className="btn btn-light" type="button">
                 Exportar PDF
               </button>
             </div>
 
-            <div className="patient-card">
-              <div className="patient-plan-row">
+            <div className="border rounded-2 p-3 mt-3" style={{ background: '#f9f9f9', borderColor: '#ddd' }}>
+              <div className="d-flex align-items-center justify-content-between gap-3 flex-wrap">
                 <div>
-                  <h3 className="patient-card-title">Plano 2025-Q2 • Versão 1.3</h3>
+                  <h3 className="m-0" style={{ fontSize: 15, fontWeight: 600 }}>
+                    Plano 2025-Q2 • Versão 1.3
+                  </h3>
                 </div>
-                <span className="patient-status-badge">Ativo</span>
-                <span className="patient-date-text">12/05/2025</span>
+                <span className="badge" style={{ background: '#e8f5e9', color: '#2e7d32', borderRadius: 4, fontSize: 12, fontWeight: 500 }}>
+                  Ativo
+                </span>
+                <span style={{ fontSize: 13, color: '#999' }}>12/05/2025</span>
               </div>
             </div>
-          </div>
+          </section>
       </div>
     </AppLayout>
   )

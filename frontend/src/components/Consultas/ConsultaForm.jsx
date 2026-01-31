@@ -76,37 +76,35 @@ export default function ConsultaForm({
 	}
 
 	return (
-		<section className="consulta-card" aria-label="Formulário de consulta">
-			<div className="consulta-card-head">
-				<div>
-					<div className="consulta-card-title">Dados da Consulta</div>
-					<div className="consulta-card-sub">Preenche a informação conforme o processo clínico.</div>
-				</div>
+		<section className="ui-card p-3" aria-label="Formulário de consulta">
+			<div className="mb-3">
+				<div className="fw-bold">Dados da Consulta</div>
+				<div className="ui-meta">Preenche a informação conforme o processo clínico.</div>
 			</div>
 
-			<div className="consulta-form-grid">
-				<div className="consulta-form-field">
-					<label className="consulta-form-label">Paciente</label>
+			<div className="row g-3">
+				<div className="col-md-6">
+					<label className="form-label">Paciente</label>
 					<input
-						className="consulta-form-input"
+						className="form-control"
 						placeholder="Nome do paciente"
 						value={form.patientName}
 						onChange={(e) => update({ patientName: e.target.value })}
 					/>
 				</div>
 
-				<div className="consulta-form-field">
-					<label className="consulta-form-label">ID do paciente (opcional)</label>
-					<div style={{ display: 'flex', gap: 10 }}>
+				<div className="col-md-6">
+					<label className="form-label">ID do paciente (opcional)</label>
+					<div className="d-flex gap-2">
 						<input
-							className="consulta-form-input"
+							className="form-control"
 							placeholder="Ex: P001"
 							value={form.patientId}
 							onChange={(e) => update({ patientId: e.target.value })}
 						/>
 						<button
 							type="button"
-							className="consultas-btn consultas-btn-light"
+							className="btn btn-light"
 							onClick={() => navigate('/pacientes/novo')}
 						>
 							Criar paciente
@@ -114,10 +112,10 @@ export default function ConsultaForm({
 					</div>
 				</div>
 
-				<div className="consulta-form-field">
-					<label className="consulta-form-label">Profissional</label>
+				<div className="col-md-6">
+					<label className="form-label">Profissional</label>
 					<select
-						className="consulta-form-select"
+						className="form-select"
 						value={form.medicoId}
 						onChange={(e) => update({ medicoId: e.target.value })}
 					>
@@ -130,10 +128,10 @@ export default function ConsultaForm({
 					</select>
 				</div>
 
-				<div className="consulta-form-field">
-					<label className="consulta-form-label">Especialidade</label>
+				<div className="col-md-6">
+					<label className="form-label">Especialidade</label>
 					<select
-						className="consulta-form-select"
+						className="form-select"
 						value={form.specialty}
 						onChange={(e) => update({ specialty: e.target.value })}
 					>
@@ -145,30 +143,30 @@ export default function ConsultaForm({
 					</select>
 				</div>
 
-				<div className="consulta-form-field">
-					<label className="consulta-form-label">Data</label>
+				<div className="col-md-6">
+					<label className="form-label">Data</label>
 					<input
 						type="date"
-						className="consulta-form-input"
+						className="form-control"
 						value={form.date}
 						onChange={(e) => update({ date: e.target.value })}
 					/>
 				</div>
 
-				<div className="consulta-form-field">
-					<label className="consulta-form-label">Hora</label>
+				<div className="col-md-6">
+					<label className="form-label">Hora</label>
 					<input
 						type="time"
-						className="consulta-form-input"
+						className="form-control"
 						value={form.time}
 						onChange={(e) => update({ time: e.target.value })}
 					/>
 				</div>
 
-				<div className="consulta-form-field">
-					<label className="consulta-form-label">Duração</label>
+				<div className="col-md-6">
+					<label className="form-label">Duração</label>
 					<select
-						className="consulta-form-select"
+						className="form-select"
 						value={String(form.durationMin)}
 						onChange={(e) => update({ durationMin: Number(e.target.value) })}
 					>
@@ -180,10 +178,10 @@ export default function ConsultaForm({
 					</select>
 				</div>
 
-				<div className="consulta-form-field">
-					<label className="consulta-form-label">Tipo de marcação</label>
+				<div className="col-md-6">
+					<label className="form-label">Tipo de marcação</label>
 					<select
-						className="consulta-form-select"
+						className="form-select"
 						value={form.bookingType}
 						onChange={(e) => update({ bookingType: e.target.value })}
 					>
@@ -195,10 +193,10 @@ export default function ConsultaForm({
 					</select>
 				</div>
 
-				<div className="consulta-form-field">
-					<label className="consulta-form-label">Estado</label>
+				<div className="col-md-6">
+					<label className="form-label">Estado</label>
 					<select
-						className="consulta-form-select"
+						className="form-select"
 						value={form.bookingStatus}
 						onChange={(e) => update({ bookingStatus: e.target.value })}
 					>
@@ -211,36 +209,41 @@ export default function ConsultaForm({
 				</div>
 			</div>
 
-			<div style={{ marginTop: 12 }}>
-				<label className="consulta-form-label">Razão da primeira visita</label>
+			<div className="mt-3">
+				<label className="form-label">Razão da primeira visita</label>
 				<textarea
-					className="consulta-form-textarea"
+					className="form-control"
 					rows={2}
 					value={form.firstVisitReason}
 					onChange={(e) => update({ firstVisitReason: e.target.value })}
 				/>
 			</div>
 
-			<div style={{ marginTop: 12 }}>
-				<label className="consulta-form-label">Notas internas</label>
+			<div className="mt-3">
+				<label className="form-label">Notas internas</label>
 				<textarea
-					className="consulta-form-textarea"
+					className="form-control"
 					rows={3}
 					value={form.notes}
 					onChange={(e) => update({ notes: e.target.value })}
 				/>
 			</div>
 
-			{error ? <div style={{ marginTop: 10, color: '#c53a3a', fontWeight: 700 }}>{error}</div> : null}
+			{error ? (
+				<div className="alert alert-danger py-2 mt-3 mb-0" role="alert">
+					{error}
+				</div>
+			) : null}
 
-			<div className="consulta-form-actions">
-				<button type="button" className="consultas-btn" onClick={onCancel}>
+			<div className="d-flex gap-2 justify-content-end mt-3">
+				<button type="button" className="btn btn-secondary" onClick={onCancel}>
 					Cancelar
 				</button>
-				<button type="button" className="consultas-btn consultas-btn-primary" onClick={submit}>
+				<button type="button" className="btn btn-primary" onClick={submit}>
 					{submitLabel}
 				</button>
 			</div>
 		</section>
 	)
 }
+

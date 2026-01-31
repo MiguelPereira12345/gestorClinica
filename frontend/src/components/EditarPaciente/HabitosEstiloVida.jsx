@@ -2,55 +2,79 @@ import React from 'react'
 
 export default function HabitosEstiloVida({ form, updateField }) {
 	return (
-		<details className="patient-form-section">
-			<summary>Hábitos e Estilo de Vida</summary>
-			<div className="patient-form-grid">
-				<label className="patient-form-field patient-form-field-wide">
-					<span>Hábitos de higiene oral</span>
-					<textarea rows={3} value={form.habitosHigieneOral} onChange={(e) => updateField('habitosHigieneOral', e.target.value)} />
-				</label>
-				<label className="patient-form-field patient-form-field-wide">
-					<span>Hábitos alimentares</span>
-					<textarea rows={3} value={form.habitosAlimentares} onChange={(e) => updateField('habitosAlimentares', e.target.value)} />
-				</label>
+		<details className="ui-card p-3 patient-details">
+			<summary className="fw-bold" style={{ color: 'rgba(30, 42, 53, 0.92)' }}>
+				Hábitos e Estilo de Vida
+			</summary>
+			<div className="row g-3 mt-2">
+				<div className="col-12">
+					<label className="form-label" style={{ fontSize: 13, fontWeight: 800, color: 'rgba(122, 130, 138, 0.95)' }}>
+						Hábitos de higiene oral
+					</label>
+					<textarea className="form-control" rows={3} value={form.habitosHigieneOral} onChange={(e) => updateField('habitosHigieneOral', e.target.value)} />
+				</div>
+				<div className="col-12">
+					<label className="form-label" style={{ fontSize: 13, fontWeight: 800, color: 'rgba(122, 130, 138, 0.95)' }}>
+						Hábitos alimentares
+					</label>
+					<textarea className="form-control" rows={3} value={form.habitosAlimentares} onChange={(e) => updateField('habitosAlimentares', e.target.value)} />
+				</div>
 
-				<label className="patient-form-field">
-					<span>Tabaco</span>
-					<select value={form.consumoTabaco} onChange={(e) => updateField('consumoTabaco', e.target.value)}>
+				<div className="col-12 col-md-4">
+					<label className="form-label" style={{ fontSize: 13, fontWeight: 800, color: 'rgba(122, 130, 138, 0.95)' }}>
+						Tabaco
+					</label>
+					<select className="form-select" value={form.consumoTabaco} onChange={(e) => updateField('consumoTabaco', e.target.value)}>
 						<option value="">Selecionar…</option>
 						<option value="Não">Não</option>
 						<option value="Ocasional">Ocasional</option>
 						<option value="Regular">Regular</option>
 					</select>
-				</label>
-				<label className="patient-form-field">
-					<span>Álcool</span>
-					<select value={form.consumoAlcool} onChange={(e) => updateField('consumoAlcool', e.target.value)}>
+				</div>
+				<div className="col-12 col-md-4">
+					<label className="form-label" style={{ fontSize: 13, fontWeight: 800, color: 'rgba(122, 130, 138, 0.95)' }}>
+						Álcool
+					</label>
+					<select className="form-select" value={form.consumoAlcool} onChange={(e) => updateField('consumoAlcool', e.target.value)}>
 						<option value="">Selecionar…</option>
 						<option value="Não">Não</option>
 						<option value="Ocasional">Ocasional</option>
 						<option value="Regular">Regular</option>
 					</select>
-				</label>
-				<label className="patient-form-field">
-					<span>Drogas</span>
-					<select value={form.consumoDrogas} onChange={(e) => updateField('consumoDrogas', e.target.value)}>
+				</div>
+				<div className="col-12 col-md-4">
+					<label className="form-label" style={{ fontSize: 13, fontWeight: 800, color: 'rgba(122, 130, 138, 0.95)' }}>
+						Drogas
+					</label>
+					<select className="form-select" value={form.consumoDrogas} onChange={(e) => updateField('consumoDrogas', e.target.value)}>
 						<option value="">Selecionar…</option>
 						<option value="Não">Não</option>
 						<option value="Ocasional">Ocasional</option>
 						<option value="Regular">Regular</option>
 					</select>
-				</label>
+				</div>
 
-				<label className="patient-form-field patient-form-checkbox">
-					<input type="checkbox" checked={!!form.bruxismo} onChange={(e) => updateField('bruxismo', e.target.checked)} />
-					<span>Bruxismo (aperto/ranger)</span>
-				</label>
+				<div className="col-12">
+					<div className="form-check">
+						<input
+							className="form-check-input"
+							type="checkbox"
+							checked={!!form.bruxismo}
+							onChange={(e) => updateField('bruxismo', e.target.checked)}
+							id="edit-patient-bruxismo"
+						/>
+						<label className="form-check-label" htmlFor="edit-patient-bruxismo" style={{ fontSize: 13, fontWeight: 800, color: 'rgba(122, 130, 138, 0.95)' }}>
+							Bruxismo (aperto/ranger)
+						</label>
+					</div>
+				</div>
 
-				<label className="patient-form-field patient-form-field-wide">
-					<span>Atividades desportivas</span>
-					<textarea rows={2} value={form.atividadesDesportivas} onChange={(e) => updateField('atividadesDesportivas', e.target.value)} />
-				</label>
+				<div className="col-12">
+					<label className="form-label" style={{ fontSize: 13, fontWeight: 800, color: 'rgba(122, 130, 138, 0.95)' }}>
+						Atividades desportivas
+					</label>
+					<textarea className="form-control" rows={2} value={form.atividadesDesportivas} onChange={(e) => updateField('atividadesDesportivas', e.target.value)} />
+				</div>
 			</div>
 		</details>
 	)

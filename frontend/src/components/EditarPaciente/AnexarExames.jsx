@@ -2,22 +2,28 @@ import React from 'react'
 
 export default function AnexarExames({ files, onPickFiles }) {
 	return (
-		<details className="patient-form-section">
-			<summary>Anexar exames clínicos</summary>
-			<div className="patient-form-grid">
-				<label className="patient-form-field patient-form-field-wide">
-					<span>Ficheiros</span>
-					<input type="file" multiple onChange={onPickFiles} />
+		<details className="ui-card p-3 patient-details">
+			<summary className="fw-bold" style={{ color: 'rgba(30, 42, 53, 0.92)' }}>
+				Anexar exames clínicos
+			</summary>
+			<div className="row g-3 mt-2">
+				<div className="col-12">
+					<label className="form-label" style={{ fontSize: 13, fontWeight: 800, color: 'rgba(122, 130, 138, 0.95)' }}>
+						Ficheiros
+					</label>
+					<input className="form-control" type="file" multiple onChange={onPickFiles} />
 					{files.length ? (
-						<ul className="patient-form-files" aria-label="Ficheiros selecionados">
+						<ul className="list-group mt-2" aria-label="Ficheiros selecionados">
 							{files.map((f) => (
-								<li key={f.name}>{f.name}</li>
+								<li className="list-group-item py-2" key={f.name}>
+									{f.name}
+								</li>
 							))}
 						</ul>
 					) : (
-						<div className="patient-form-help">Ainda não selecionaste ficheiros.</div>
+						<div className="form-text">Ainda não selecionaste ficheiros.</div>
 					)}
-				</label>
+				</div>
 			</div>
 		</details>
 	)

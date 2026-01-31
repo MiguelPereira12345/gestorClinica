@@ -2,7 +2,6 @@ import React, { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Plus } from 'lucide-react'
 import AppLayout from './components/Layout/AppLayout'
-import './Consultas.css'
 
 import ConsultasFilters from './components/Consultas/ConsultasFilters'
 import ConsultasTable from './components/Consultas/ConsultasTable'
@@ -51,16 +50,16 @@ export default function ConsultasLista() {
 
 	return (
 		<AppLayout breadcrumb="Consultas > Lista" userName="Dra. Sofia Lima">
-			<div className="consultas-page">
-				<div className="consultas-title-row">
-					<h1 className="consultas-title">Consultas Marcadas</h1>
-					<div className="consultas-title-actions">
+			<div className="ui-page">
+				<div className="ui-page-header">
+					<h1 className="ui-page-title">Consultas Marcadas</h1>
+					<div className="ui-page-actions">
 						<button
 							type="button"
-							className="consultas-btn consultas-btn-primary"
+							className="btn btn-primary"
 							onClick={() => navigate('/consultas/nova')}
 						>
-							<Plus className="consultas-btn-icon" aria-hidden="true" />
+							<Plus size={16} aria-hidden="true" />
 							Adicionar Consulta
 						</button>
 					</div>
@@ -77,7 +76,7 @@ export default function ConsultasLista() {
 					onSaveView={onSaveView}
 				/>
 
-				<div className="consultas-meta-row">
+				<div className="d-flex align-items-center justify-content-between gap-2 flex-wrap ui-meta mt-3 mb-2">
 					<div>Mostrando {startIdx}–{endIdx} de {result.total} consultas</div>
 					<Pagination
 						page={result.page}
@@ -96,3 +95,4 @@ export default function ConsultasLista() {
 		</AppLayout>
 	)
 }
+

@@ -2,7 +2,6 @@ import React, { useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
 import AppLayout from './components/Layout/AppLayout'
-import './Consultas.css'
 
 import ConsultaForm from './components/Consultas/ConsultaForm'
 import { createConsulta } from './utils/consultasStorage'
@@ -37,17 +36,17 @@ export default function NovaConsulta() {
 			breadcrumb="Consultas > Nova"
 			userName="Dra. Sofia Lima"
 			actions={
-				<button type="button" className="consultas-btn" onClick={() => navigate('/consultas')}>
-					<ArrowLeft className="consultas-btn-icon" aria-hidden="true" />
+					<button type="button" className="btn btn-secondary" onClick={() => navigate('/consultas')}>
+					<ArrowLeft size={16} aria-hidden="true" />
 					Voltar à lista
 				</button>
 			}
 		>
-			<div className="consultas-page">
-				<div className="consulta-detail-header">
+			<div className="ui-page">
+				<div className="ui-page-header">
 					<div>
-						<h1 className="consulta-detail-title">Adicionar Consulta</h1>
-						<div className="consulta-detail-sub">Criação rápida conforme Figma e requisitos.</div>
+						<h1 className="ui-page-title">Adicionar Consulta</h1>
+						<div className="ui-page-subtitle">Criação rápida conforme Figma e requisitos.</div>
 					</div>
 				</div>
 
@@ -64,3 +63,4 @@ export default function NovaConsulta() {
 		</AppLayout>
 	)
 }
+

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom'; // Import useNavigate
-import './AdicionarColaborador.css';
+import { useNavigate } from 'react-router-dom';
+import AppLayout from './components/Layout/AppLayout';
 
 export default function AdicionarColaborador() {
   const navigate = useNavigate(); // Initialize useNavigate
@@ -68,212 +68,216 @@ export default function AdicionarColaborador() {
     });
 
   return (
-    <div className="acol-container">
-      <div className="acol-page">
-        {/* Left Column */}
-        <div className="acol-left">
-          {/* Dados Pessoais */}
-          <div className="acol-card">
-            <div className="acol-card-title">Dados Pessoais</div>
+    <AppLayout
+      breadcrumb="Colaboradores / Adicionar"
+      userName="Receção"
+      actions={
+        <button type="button" className="btn btn-secondary" onClick={() => navigate('/colaboradores')}>
+          ← Voltar
+        </button>
+      }
+    >
+      <div className="ui-page">
+        <div className="row g-3">
+          <section className="col-12 col-lg-5" aria-label="Formulário">
+            <div className="position-sticky" style={{ top: 12 }}>
+              <div className="ui-card p-3">
+                <div className="fw-bold">Dados Pessoais</div>
 
-            <div className="acol-field">
-              <label className="acol-label">Nome Completo</label>
-              <input
-                type="text"
-                name="nome"
-                value={formData.nome}
-                onChange={handleInputChange}
-                className="acol-select"
-                placeholder="Insira o nome completo"
-              />
-            </div>
+                <div className="mt-3">
+                  <label className="form-label">Nome Completo</label>
+                  <input
+                    type="text"
+                    name="nome"
+                    value={formData.nome}
+                    onChange={handleInputChange}
+                    className="form-control"
+                    placeholder="Insira o nome completo"
+                  />
+                </div>
 
-            <div className="acol-field">
-              <label className="acol-label">Email</label>
-              <input
-                type="email"
-                name="email"
-                value={formData.email}
-                onChange={handleInputChange}
-                className="acol-select"
-                placeholder="email@exemplo.com"
-              />
-            </div>
+                <div className="mt-3">
+                  <label className="form-label">Email</label>
+                  <input
+                    type="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleInputChange}
+                    className="form-control"
+                    placeholder="email@exemplo.com"
+                  />
+                </div>
 
-            <div className="acol-field">
-              <label className="acol-label">Telefone</label>
-              <input
-                type="tel"
-                name="telefone"
-                value={formData.telefone}
-                onChange={handleInputChange}
-                className="acol-select"
-                placeholder="(00) 00000-0000"
-              />
-            </div>
-          </div>
-
-          {/* Informações Profissionais */}
-          <div className="acol-card">
-            <div className="acol-card-title">Informações Profissionais</div>
-
-            <div className="acol-field">
-              <label className="acol-label">Departamento</label>
-              <select
-                name="departamento"
-                value={formData.departamento}
-                onChange={handleInputChange}
-                className="acol-select"
-              >
-                <option value="">Selecione um departamento</option>
-                <option value="recepção">Recepção</option>
-                <option value="consultas">Consultas</option>
-                <option value="administrativo">Administrativo</option>
-                <option value="financeiro">Financeiro</option>
-              </select>
-            </div>
-
-            <div className="acol-field">
-              <label className="acol-label">Cargo</label>
-              <input
-                type="text"
-                name="cargo"
-                value={formData.cargo}
-                onChange={handleInputChange}
-                className="acol-select"
-                placeholder="Cargo do colaborador"
-              />
-            </div>
-
-            <div className="acol-field">
-              <label className="acol-label">Especialidade</label>
-              <input
-                type="text"
-                name="especialidade"
-                value={formData.especialidade}
-                onChange={handleInputChange}
-                className="acol-select"
-                placeholder="Especialidade (se aplicável)"
-              />
-            </div>
-
-            <div className="acol-field">
-              <label className="acol-label">Status</label>
-              <div className="acol-seg">
-                <button
-                  className={`acol-seg-btn ${formData.ativo ? 'is-active' : ''}`}
-                  onClick={() => setFormData(prev => ({ ...prev, ativo: true }))}
-                >
-                  Ativo
-                </button>
-                <button
-                  className={`acol-seg-btn ${!formData.ativo ? 'is-active' : ''}`}
-                  onClick={() => setFormData(prev => ({ ...prev, ativo: false }))}
-                >
-                  Inativo
-                </button>
+                <div className="mt-3">
+                  <label className="form-label">Telefone</label>
+                  <input
+                    type="tel"
+                    name="telefone"
+                    value={formData.telefone}
+                    onChange={handleInputChange}
+                    className="form-control"
+                    placeholder="(00) 00000-0000"
+                  />
+                </div>
               </div>
+
+              <div className="ui-card p-3 mt-3">
+                <div className="fw-bold">Informações Profissionais</div>
+
+                <div className="mt-3">
+                  <label className="form-label">Departamento</label>
+                  <select
+                    name="departamento"
+                    value={formData.departamento}
+                    onChange={handleInputChange}
+                    className="form-select"
+                  >
+                    <option value="">Selecione um departamento</option>
+                    <option value="recepção">Recepção</option>
+                    <option value="consultas">Consultas</option>
+                    <option value="administrativo">Administrativo</option>
+                    <option value="financeiro">Financeiro</option>
+                  </select>
+                </div>
+
+                <div className="mt-3">
+                  <label className="form-label">Cargo</label>
+                  <input
+                    type="text"
+                    name="cargo"
+                    value={formData.cargo}
+                    onChange={handleInputChange}
+                    className="form-control"
+                    placeholder="Cargo do colaborador"
+                  />
+                </div>
+
+                <div className="mt-3">
+                  <label className="form-label">Especialidade</label>
+                  <input
+                    type="text"
+                    name="especialidade"
+                    value={formData.especialidade}
+                    onChange={handleInputChange}
+                    className="form-control"
+                    placeholder="Especialidade (se aplicável)"
+                  />
+                </div>
+
+                <div className="mt-3">
+                  <label className="form-label">Estado</label>
+                  <div className="btn-group w-100" role="group" aria-label="Estado">
+                    <button
+                      type="button"
+                      className={`btn btn-sm ${formData.ativo ? 'btn-primary' : 'btn-light'}`}
+                      onClick={() => setFormData(prev => ({ ...prev, ativo: true }))}
+                    >
+                      Ativo
+                    </button>
+                    <button
+                      type="button"
+                      className={`btn btn-sm ${!formData.ativo ? 'btn-primary' : 'btn-light'}`}
+                      onClick={() => setFormData(prev => ({ ...prev, ativo: false }))}
+                    >
+                      Inativo
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {error ? (
+                <div className="alert alert-danger py-2 mt-3 mb-0" role="alert">
+                  {error}
+                </div>
+              ) : null}
+
+              <button type="button" className="btn btn-primary w-100 mt-3" onClick={handleAddColaborador}>
+                {selectedColaborador ? 'Atualizar Colaborador' : 'Adicionar Colaborador'}
+              </button>
             </div>
-          </div>
+          </section>
 
-          {/* Erro */}
-          {error && <div className="acol-error">{error}</div>}
-
-          {/* Botão Principal */}
-          <div className="acol-sticky">
-            <button className="acol-primary" onClick={handleAddColaborador}>
-              {selectedColaborador ? 'Atualizar Colaborador' : 'Adicionar Colaborador'}
-            </button>
-          </div>
-        </div>
-
-        {/* Right Column */}
-        <div className="acol-right">
-          {/* Pesquisa */}
-          <div className="acol-card">
-            <div className="acol-card-title">Buscar Colaborador</div>
-            <div className="acol-collaborator-row">
-              <div className="acol-collaborator-search">
+          <aside className="col-12 col-lg-7" aria-label="Lista">
+            <div className="ui-card p-3">
+              <div className="fw-bold">Buscar Colaborador</div>
+              <div className="mt-3">
                 <input
                   type="text"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
+                  className="form-control"
                   placeholder="Buscar por nome ou email..."
                 />
               </div>
             </div>
-          </div>
 
-          {/* Lista de Colaboradores */}
-          <div className="acol-card">
-            <div className="acol-right-head">
-              <div className="acol-section-title">
-                Colaboradores ({filteredColaboradores.length})
-              </div>
-              <div className="acol-tabs">
-                <button
-                  className={`acol-tab ${activeTab === 'todos' ? 'is-active' : ''}`}
-                  onClick={() => setActiveTab('todos')}
-                >
-                  Todos
-                </button>
-                <button
-                  className={`acol-tab ${activeTab === 'ativos' ? 'is-active' : ''}`}
-                  onClick={() => setActiveTab('ativos')}
-                >
-                  Ativos
-                </button>
-              </div>
-            </div>
-
-            <div className="acol-list">
-              {filteredColaboradores.length === 0 ? (
-                <div className="acol-muted">
-                  Nenhum colaborador encontrado
+            <div className="ui-card p-3 mt-3">
+              <div className="d-flex justify-content-between align-items-start gap-2 flex-wrap mb-3">
+                <div>
+                  <div className="fw-bold">Colaboradores</div>
+                  <div className="ui-meta">{filteredColaboradores.length} resultado(s)</div>
                 </div>
-              ) : (
-                filteredColaboradores.map(col => (
+                <div className="btn-group" role="tablist" aria-label="Filtro">
                   <button
-                    key={col.id}
-                    className={`acol-list-btn ${selectedColaborador?.id === col.id ? 'is-selected' : ''}`}
-                    onClick={() => handleSelectColaborador(col)}
+                    type="button"
+                    className={`btn btn-sm ${activeTab === 'todos' ? 'btn-primary' : 'btn-light'}`}
+                    onClick={() => setActiveTab('todos')}
                   >
-                    <div className="acol-list-main">{col.nome}</div>
-                    <div className="acol-list-sub">{col.cargo} • {col.departamento}</div>
+                    Todos
                   </button>
-                ))
+                  <button
+                    type="button"
+                    className={`btn btn-sm ${activeTab === 'ativos' ? 'btn-primary' : 'btn-light'}`}
+                    onClick={() => setActiveTab('ativos')}
+                  >
+                    Ativos
+                  </button>
+                </div>
+              </div>
+
+              {filteredColaboradores.length === 0 ? (
+                <div className="ui-meta">Nenhum colaborador encontrado</div>
+              ) : (
+                <div className="list-group">
+                  {filteredColaboradores.map(col => {
+                    const isActive = selectedColaborador?.id === col.id;
+                    return (
+                      <button
+                        key={col.id}
+                        type="button"
+                        className={`list-group-item list-group-item-action${isActive ? ' active' : ''}`}
+                        onClick={() => handleSelectColaborador(col)}
+                      >
+                        <div className="fw-semibold">{col.nome}</div>
+                        <div className={isActive ? 'text-white-50 small' : 'text-muted small'}>
+                          {col.cargo} • {col.departamento}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
               )}
             </div>
-          </div>
 
-          {/* Resumo */}
-          {selectedColaborador && (
-            <div className="acol-card">
-              <div className="acol-summary-title">Resumo do Colaborador</div>
-              <div className="acol-summary">
-                <div className="acol-summary-row">
-                  <strong>Nome:</strong>
-                  <span>{selectedColaborador.nome}</span>
-                </div>
-                <div className="acol-summary-row">
-                  <strong>Email:</strong>
-                  <span>{selectedColaborador.email}</span>
-                </div>
-                <div className="acol-summary-row">
-                  <strong>Departamento:</strong>
-                  <span>{selectedColaborador.departamento}</span>
-                </div>
-                <div className="acol-summary-row">
-                  <strong>Status:</strong>
-                  <span className="acol-chip">
-                    {selectedColaborador.ativo ? '✓ Ativo' : '✗ Inativo'}
-                  </span>
+            {selectedColaborador ? (
+              <div className="ui-card p-3 mt-3">
+                <div className="fw-bold mb-2">Resumo do Colaborador</div>
+                <div className="d-grid gap-2">
+                  <div><strong>Nome:</strong> {selectedColaborador.nome}</div>
+                  <div><strong>Email:</strong> {selectedColaborador.email}</div>
+                  <div><strong>Departamento:</strong> {selectedColaborador.departamento}</div>
+                  <div>
+                    <strong>Estado:</strong>{' '}
+                    <span className={`badge ${selectedColaborador.ativo ? 'text-bg-success' : 'text-bg-secondary'}`}>
+                      {selectedColaborador.ativo ? 'Ativo' : 'Inativo'}
+                    </span>
+                  </div>
                 </div>
               </div>
-            </div>
-          )}
+            ) : null}
+          </aside>
         </div>
       </div>
-    </div>
+    </AppLayout>
   );
 }

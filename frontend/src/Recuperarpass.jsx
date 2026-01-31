@@ -72,116 +72,144 @@ export default function Recuperarpass() {
 	}
 
 	return (
-		<div className="recover-container">
-			<section className="recover-left" aria-label="Clinimolelos">
-				<div className="recover-left-inner">
-					<img
-						className="recover-left-logo"
-						src={logoClinimolelos}
-						alt="CLINIMOLELOS"
-						decoding="async"
-						loading="eager"
-						draggable="false"
-					/>
+		<div
+			className="position-fixed top-0 start-0 w-100 h-100 overflow-auto"
+			style={{ background: '#f4f1ec', zIndex: 999 }}
+		>
+			<div className="container-fluid h-100">
+				<div className="row g-0 h-100">
+					<section
+						className="col-lg-5 d-none d-lg-flex align-items-center justify-content-center bg-white border-end"
+						aria-label="Clinimolelos"
+					>
+						<div className="text-center" style={{ width: '100%', maxWidth: 420 }}>
+							<img
+								src={logoClinimolelos}
+								alt="CLINIMOLELOS"
+								decoding="async"
+								loading="eager"
+								draggable="false"
+								className="img-fluid"
+								style={{ maxWidth: 360 }}
+							/>
 
-					<p className="recover-left-tagline">
-						Aceda ao sistema clínico para gerir Horários,
-						Consultas, Pacientes e Faturação.
-					</p>
-				</div>
-			</section>
-
-			<section className="recover-right" aria-label="Recuperar palavra-passe">
-				<div className="recover-card">
-					<div className="recover-card-header">
-						<div className="recover-card-header-left">
-							<RefreshCcw className="recover-card-header-icon" />
-							<h2 className="recover-card-title">Recuperar Palavra-passe</h2>
-						</div>
-
-						<div className="recover-badge" aria-label="Segurança">
-							<ShieldCheck className="recover-badge-icon" aria-hidden="true" />
-							Segurança
-						</div>
-					</div>
-
-					<form className="recover-form" onSubmit={handleSubmit}>
-						{feedback ? (
-							<div
-								className="recover-alert"
-								role={feedbackVariant === 'error' ? 'alert' : 'status'}
-								aria-live={feedbackVariant === 'error' ? 'assertive' : 'polite'}
-							>
-								<Info className="recover-alert-icon" aria-hidden="true" />
-								<span>{feedback}</span>
-							</div>
-						) : null}
-
-						<div className="recover-instruction">
-							<Info className="recover-instruction-icon" aria-hidden="true" />
-							<p className="recover-instruction-text">
-								Introduza o seu e-mail para receber um link de redefinição.
+							<p className="mt-4 mb-0 text-muted fw-semibold" style={{ fontSize: 15, lineHeight: 1.45 }}>
+								Aceda ao sistema clínico para gerir Horários, Consultas, Pacientes e Faturação.
 							</p>
 						</div>
+					</section>
 
-						<label className="recover-label" htmlFor="recover-email">
-							E-mail associado à conta
-						</label>
-						<div className="recover-input-wrap">
-							<Mail className="recover-input-icon" aria-hidden="true" />
-							<input
-								id="recover-email"
-								type="email"
-								className="recover-input"
-								placeholder="nome@exemplo.com"
-								value={email}
-								onChange={(e) => setEmail(e.target.value)}
-								autoComplete="email"
-								required
-							/>
-						</div>
+					<section
+						className="col-12 col-lg-7 d-flex align-items-center justify-content-center p-3 p-lg-5"
+						aria-label="Recuperar palavra-passe"
+					>
+						<div
+							className="ui-card w-100"
+							style={{
+								maxWidth: 720,
+								background: '#fff',
+								boxShadow: '0 18px 45px rgba(16, 24, 40, 0.18)',
+							}}
+						>
+							<div className="d-flex align-items-center justify-content-between gap-3 border-bottom px-3 px-lg-4 py-3 flex-wrap">
+								<div className="d-inline-flex align-items-center gap-2">
+									<RefreshCcw style={{ width: 18, height: 18 }} aria-hidden="true" />
+									<h2 className="m-0 fw-bold" style={{ fontSize: 16 }}>
+										Recuperar Palavra-passe
+									</h2>
+								</div>
 
-						<div className="recover-alert" role="note">
-							<Info className="recover-alert-icon" aria-hidden="true" />
-							<span>
-								O link expira em 30 minutos. Verifique também a pasta de spam.
-							</span>
-						</div>
-
-						<div className="recover-actions">
-							<button
-								type="button"
-								className="recover-back"
-								onClick={() => navigate('/login')}
-							>
-								<ArrowLeft className="recover-back-icon" aria-hidden="true" />
-								Voltar a Entrar
-							</button>
-
-							<div className="recover-buttons">
-								<button className="recover-send" type="submit" disabled={isSubmitting}>
-									<Send className="recover-send-icon" aria-hidden="true" />
-									{isSubmitting ? 'A enviar…' : 'Enviar link'}
-								</button>
-
-								<button
-									type="button"
-									className="recover-code"
-									disabled={isSubmitting}
-									onClick={() => {
-										requestPasswordReset('code')
-									}}
-								>
-									<KeyRound className="recover-code-icon" aria-hidden="true" />
-									{isSubmitting ? 'A enviar…' : 'Redefinir via código'}
-								</button>
+								<div className="badge text-bg-light border text-dark d-inline-flex align-items-center gap-2 fw-semibold">
+									<ShieldCheck style={{ width: 14, height: 14, opacity: 0.85 }} aria-hidden="true" />
+									Segurança
+								</div>
 							</div>
-						</div>
 
-						<p className="recover-helper">Sem acesso ao e-mail?</p>
-					</form>
+							<form className="px-3 px-lg-4 py-3" onSubmit={handleSubmit}>
+								{feedback ? (
+									<div
+										className={`alert d-flex align-items-start gap-2 ${
+											feedbackVariant === 'error'
+												? 'alert-danger'
+												: feedbackVariant === 'success'
+													? 'alert-success'
+													: 'alert-info'
+										}`}
+										role={feedbackVariant === 'error' ? 'alert' : 'status'}
+										aria-live={feedbackVariant === 'error' ? 'assertive' : 'polite'}
+									>
+										<Info style={{ width: 18, height: 18, marginTop: 1 }} aria-hidden="true" />
+										<div>{feedback}</div>
+									</div>
+								) : null}
+
+								<div className="d-flex align-items-start gap-2 text-muted small fw-semibold mb-3">
+									<Info style={{ width: 16, height: 16, marginTop: 1, opacity: 0.85 }} aria-hidden="true" />
+									<p className="mb-0" style={{ lineHeight: 1.4 }}>
+										Introduza o seu e-mail para receber um link de redefinição.
+									</p>
+								</div>
+
+								<label className="form-label fw-bold" htmlFor="recover-email">
+									E-mail associado à conta
+								</label>
+								<div className="input-group mb-3">
+									<span className="input-group-text bg-white">
+										<Mail style={{ width: 18, height: 18, opacity: 0.85 }} aria-hidden="true" />
+									</span>
+									<input
+										id="recover-email"
+										type="email"
+										className="form-control"
+										placeholder="nome@exemplo.com"
+										value={email}
+										onChange={(e) => setEmail(e.target.value)}
+										autoComplete="email"
+										required
+									/>
+								</div>
+
+								<div className="alert alert-light border d-flex align-items-start gap-2" role="note">
+									<Info style={{ width: 18, height: 18, marginTop: 1, opacity: 0.85 }} aria-hidden="true" />
+									<div className="small fw-semibold text-muted">
+										O link expira em 30 minutos. Verifique também a pasta de spam.
+									</div>
+								</div>
+
+								<div className="d-flex align-items-center justify-content-between gap-3 flex-wrap mt-3">
+									<button type="button" className="btn btn-secondary" onClick={() => navigate('/login')}>
+										<ArrowLeft style={{ width: 16, height: 16 }} aria-hidden="true" />
+										Voltar a Entrar
+									</button>
+
+									<div className="d-flex align-items-center gap-2 flex-wrap">
+										<button className="btn btn-primary" type="submit" disabled={isSubmitting}>
+											<Send style={{ width: 16, height: 16 }} aria-hidden="true" />
+											{isSubmitting ? 'A enviar…' : 'Enviar link'}
+										</button>
+
+										<button
+											type="button"
+											className="btn btn-light"
+											disabled={isSubmitting}
+											onClick={() => {
+												requestPasswordReset('code')
+											}}
+										>
+											<KeyRound style={{ width: 16, height: 16 }} aria-hidden="true" />
+											{isSubmitting ? 'A enviar…' : 'Redefinir via código'}
+										</button>
+									</div>
+								</div>
+
+								<p className="mt-3 mb-0 text-center small text-muted fw-semibold">
+									Sem acesso ao e-mail?
+								</p>
+							</form>
+						</div>
+					</section>
 				</div>
-			</section>
+			</div>
 		</div>
 	)
 }

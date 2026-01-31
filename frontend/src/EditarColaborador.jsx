@@ -2,7 +2,7 @@ import React, { useMemo } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
 import AppLayout from './components/Layout/AppLayout'
-import './Colaboradores.css'
+import PageHeader from './components/UI/PageHeader'
 
 import ColaboradorForm from './components/Colaboradores/ColaboradorForm'
 import { getColaboradorById, patchColaborador } from './utils/colaboradoresStorage'
@@ -16,12 +16,12 @@ export default function EditarColaborador() {
 	if (!colaborador) {
 		return (
 			<AppLayout breadcrumb="Colaboradores > Editar" userName="Dra. Sofia Lima">
-				<div className="colaboradores-page">
-					<div className="colaborador-card">
-						<div className="colaborador-card-title">Colaborador não encontrado</div>
-						<div className="colaborador-card-footer">
-							<button type="button" className="colaboradores-btn" onClick={() => navigate('/colaboradores')}>
-								<ArrowLeft className="colaboradores-btn-icon" aria-hidden="true" />
+				<div className="ui-page">
+					<div className="ui-card p-3">
+						<div className="fw-bold">Colaborador não encontrado</div>
+						<div className="mt-3">
+							<button type="button" className="btn btn-secondary" onClick={() => navigate('/colaboradores')}>
+								<ArrowLeft size={16} aria-hidden="true" />
 								Voltar
 							</button>
 						</div>
@@ -36,19 +36,14 @@ export default function EditarColaborador() {
 			breadcrumb="Colaboradores > Editar"
 			userName="Dra. Sofia Lima"
 			actions={
-				<button type="button" className="colaboradores-btn" onClick={() => navigate(`/colaboradores/${colaborador.id}`)}>
-					<ArrowLeft className="colaboradores-btn-icon" aria-hidden="true" />
+				<button type="button" className="btn btn-secondary" onClick={() => navigate(`/colaboradores/${colaborador.id}`)}>
+					<ArrowLeft size={16} aria-hidden="true" />
 					Voltar ao detalhe
 				</button>
 			}
 		>
-			<div className="colaboradores-page">
-				<div className="colaborador-detail-header">
-					<div>
-						<h1 className="colaborador-detail-title">Editar Colaborador</h1>
-						<div className="colaborador-detail-sub">{colaborador.name} • {colaborador.id}</div>
-					</div>
-				</div>
+			<div className="ui-page">
+				<PageHeader title="Editar colaborador" subtitle={`${colaborador.name} • ${colaborador.id}`} />
 
 				<ColaboradorForm
 					initial={colaborador}

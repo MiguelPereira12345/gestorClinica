@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react'
 import './App.css'
 import { useNavigate, useParams } from 'react-router-dom'
 import AppLayout from './components/Layout/AppLayout'
+import PageHeader from './components/UI/PageHeader'
 import IdentificacaoPessoal from './components/EditarPaciente/IdentificacaoPessoal'
 import HistoricoMedico from './components/EditarPaciente/HistoricoMedico'
 import HistoricoDentario from './components/EditarPaciente/HistoricoDentario'
@@ -76,13 +77,15 @@ export default function EditarPaciente() {
 	if (!patient) {
 		return (
 			<AppLayout breadcrumb="Pacientes / Editar" userName="Dra. Sofia Lima">
-				<div className="patients-content">
-					<div className="patients-card" style={{ padding: 16 }}>
-						<h2 style={{ margin: 0 }}>Paciente não encontrado</h2>
-						<p style={{ marginTop: 8, marginBottom: 16, color: 'rgba(122,130,138,0.95)' }}>
+				<div className="ui-page">
+					<div className="ui-card p-3">
+						<h2 className="m-0" style={{ fontSize: 18, fontWeight: 800 }}>
+							Paciente não encontrado
+						</h2>
+						<p className="mt-2 mb-3" style={{ color: 'rgba(122,130,138,0.95)' }}>
 							Este paciente ainda não existe no registo local.
 						</p>
-						<button className="patient-btn-primary" type="button" onClick={() => navigate('/pacientes')}>
+						<button className="btn btn-primary" type="button" onClick={() => navigate('/pacientes')}>
 							Voltar à lista
 						</button>
 					</div>
@@ -93,27 +96,23 @@ export default function EditarPaciente() {
 
 	return (
 		<AppLayout breadcrumb={`Pacientes / ${patient.nome} / Editar`} userName="Dra. Sofia Lima">
-			<div className="patients-content">
-				<div className="patients-title-row">
-					<div className="patients-title">
-						<h1>Editar paciente</h1>
-					</div>
-					<div className="patients-title-actions">
-						<button className="patient-btn-secondary" type="button" onClick={() => navigate(`/pacientes/${patient.id}`)}>
-							Cancelar
-						</button>
-						<button
-							type="submit"
-							form="edit-patient-form"
-							className="patient-btn-primary"
-							disabled={saving}
-						>
-							{saving ? 'A guardar…' : 'Guardar'}
-						</button>
-					</div>
-				</div>
+			<div className="ui-page">
+				<PageHeader
+					title="Editar paciente"
+					subtitle={`${patient.nome} • ${patient.id}`}
+					actions={
+						<>
+							<button className="btn btn-secondary" type="button" onClick={() => navigate(`/pacientes/${patient.id}`)}>
+								Cancelar
+							</button>
+							<button type="submit" form="edit-patient-form" className="btn btn-primary" disabled={saving}>
+								{saving ? 'A guardar…' : 'Guardar'}
+							</button>
+						</>
+					}
+				/>
 
-				<form id="edit-patient-form" className="patient-form" onSubmit={onSubmit}>
+				<form id="edit-patient-form" className="d-grid gap-3" onSubmit={onSubmit}>
 					<IdentificacaoPessoal form={form} updateField={updateField} />
 
 					<HistoricoMedico form={form} updateField={updateField} />

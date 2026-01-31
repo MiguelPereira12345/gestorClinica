@@ -7,7 +7,6 @@ import {
 	Pencil,
 	Search,
 	Trash2,
-	Users,
 } from 'lucide-react'
 
 import Button from './components/UI/Button'
@@ -129,78 +128,77 @@ export default function Pacientes() {
 
 	return (
 		<AppLayout breadcrumb="Pacientes" userName="Dra. Sofia Lima">
-			<main className="patients-content" aria-label="Conteúdo">
-				<div className="ui-page">
-					<PageHeader
-						title="Pacientes"
-						subtitle="Pesquisa rápida, estado e ações numa lista consistente."
-						actions={
-							<>
-								<div className="patients-search">
-									<Search className="patients-search-icon" aria-hidden="true" />
-									<input
-										type="text"
-										className="patients-search-input"
-										placeholder="Pesquisar por nome, email ou ID"
-										value={query}
-										onChange={(e) => setQuery(e.target.value)}
-										aria-label="Pesquisar pacientes"
-									/>
-								</div>
-								<Button variant="primary" onClick={() => navigate('/pacientes/novo')}>
-									Adicionar paciente
-								</Button>
-							</>
-						}
-					/>
+			<div className="ui-page">
+				<PageHeader
+					title="Pacientes"
+					subtitle="Pesquisa rápida, estado e ações numa lista consistente."
+					actions={
+						<>
+							<div className="ui-search input-group" role="search" aria-label="Pesquisar pacientes">
+								<span className="input-group-text">
+									<Search size={16} aria-hidden="true" />
+								</span>
+								<input
+									type="text"
+									className="form-control"
+									placeholder="Pesquisar por nome, email ou ID"
+									value={query}
+									onChange={(e) => setQuery(e.target.value)}
+								/>
+							</div>
+							<Button variant="primary" onClick={() => navigate('/pacientes/novo')}>
+								Adicionar paciente
+							</Button>
+						</>
+					}
+				/>
 
-					<section className="patients-card ui-card" aria-label="Lista de pacientes">
-						<div className="patients-table-wrap ui-table-wrap">
-							<table className="patients-table ui-table">
-								<thead>
-									<tr>
-										<th>Nome</th>
-										<th>Email</th>
-										<th>Estado</th>
-										<th className="patients-actions-col ui-actions-col">
-											<span className="patients-actions-header">Ações</span>
-										</th>
-									</tr>
-								</thead>
-								<tbody>
-									{filtered.map((r) => (
-										<tr key={r.id}>
-											<td className="patients-name">{r.nome}</td>
-											<td className="patients-email">{r.email}</td>
-											<td>
-												<StatusBadge status={r.estado} />
-											</td>
-											<td className="patients-actions">
+				<section className="ui-card" aria-label="Lista de pacientes">
+					<div className="ui-table-wrap">
+						<table className="table ui-table">
+							<thead>
+								<tr>
+									<th>Nome</th>
+									<th>Email</th>
+									<th>Estado</th>
+									<th className="ui-actions-col">Ações</th>
+								</tr>
+							</thead>
+							<tbody>
+								{filtered.map((r) => (
+									<tr key={r.id}>
+										<td style={{ fontWeight: 700 }}>{r.nome}</td>
+										<td>{r.email}</td>
+										<td>
+											<StatusBadge status={r.estado} />
+										</td>
+										<td className="ui-actions-col">
+											<div className="ui-actions">
 												<button
-													className="patients-action"
 													type="button"
+													className="btn btn-light btn-sm"
 													onClick={() => {
 														if (!ensurePatientExists(r)) return
 														navigate(`/pacientes/${r.id}`)
 													}}
 												>
-													<Eye className="patients-action-icon" aria-hidden="true" />
+													<Eye size={14} aria-hidden="true" />
 													Ver
 												</button>
 												<button
-													className="patients-action"
 													type="button"
+													className="btn btn-light btn-sm"
 													onClick={() => {
 														if (!ensurePatientExists(r)) return
 														navigate(`/pacientes/${r.id}/editar`)
 													}}
 												>
-													<Pencil className="patients-action-icon" aria-hidden="true" />
+													<Pencil size={14} aria-hidden="true" />
 													Editar
 												</button>
 												<button
-													className="patients-action"
 													type="button"
+													className="btn btn-light btn-sm"
 													onClick={() => {
 														if (!ensurePatientExists(r)) return
 														const ok = window.confirm('Eliminar este paciente?')
@@ -209,18 +207,18 @@ export default function Pacientes() {
 														refreshStored()
 													}}
 												>
-													<Trash2 className="patients-action-icon" aria-hidden="true" />
+													<Trash2 size={14} aria-hidden="true" />
 													Eliminar
 												</button>
-											</td>
-										</tr>
-									))}
-								</tbody>
-							</table>
-						</div>
-					</section>
-				</div>
-			</main>
+											</div>
+									</td>
+								</tr>
+								))}
+							</tbody>
+						</table>
+					</div>
+				</section>
+			</div>
 		</AppLayout>
 	)
 }

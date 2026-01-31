@@ -2,7 +2,8 @@ import React, { useMemo } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
 import AppLayout from './components/Layout/AppLayout'
-import './Colaboradores.css'
+import PageHeader from './components/UI/PageHeader'
+import StatusBadge from './components/UI/StatusBadge'
 
 import { getColaboradorById } from './utils/colaboradoresStorage'
 
@@ -15,12 +16,12 @@ export default function DetalhesColaborador() {
 	if (!colaborador) {
 		return (
 			<AppLayout breadcrumb="Colaboradores > Detalhes" userName="Dra. Sofia Lima">
-				<div className="colaboradores-page">
-					<div className="colaborador-card">
-						<div className="colaborador-card-title">Colaborador não encontrado</div>
-						<div className="colaborador-card-footer">
-							<button type="button" className="colaboradores-btn" onClick={() => navigate('/colaboradores')}>
-								<ArrowLeft className="colaboradores-btn-icon" aria-hidden="true" />
+				<div className="ui-page">
+					<div className="ui-card p-3">
+						<div className="fw-bold">Colaborador não encontrado</div>
+						<div className="mt-3">
+							<button type="button" className="btn btn-secondary" onClick={() => navigate('/colaboradores')}>
+								<ArrowLeft size={16} aria-hidden="true" />
 								Voltar
 							</button>
 						</div>
@@ -35,66 +36,56 @@ export default function DetalhesColaborador() {
 			breadcrumb="Colaboradores > Detalhes"
 			userName="Dra. Sofia Lima"
 			actions={
-				<button type="button" className="colaboradores-btn" onClick={() => navigate('/colaboradores')}>
-					<ArrowLeft className="colaboradores-btn-icon" aria-hidden="true" />
+				<button type="button" className="btn btn-secondary" onClick={() => navigate('/colaboradores')}>
+					<ArrowLeft size={16} aria-hidden="true" />
 					Voltar
 				</button>
 			}
 		>
-			<div className="colaboradores-page">
-				<div className="colaborador-detail-header">
-					<div>
-						<h1 className="colaborador-detail-title">{colaborador.name}</h1>
-						<div className="colaborador-detail-sub">{colaborador.cargo} • {colaborador.id}</div>
-					</div>
-				</div>
+			<div className="ui-page">
+				<PageHeader title={colaborador.name} subtitle={`${colaborador.cargo} • ${colaborador.id}`} />
 
-				<div className="colaborador-grid">
-					<div className="colaborador-card">
-						<div className="colaborador-card-head">
-							<div>
-								<div className="colaborador-card-title">Informações Pessoais</div>
-								<div className="colaborador-card-sub">Dados do colaborador</div>
-							</div>
-						</div>
-						<div className="colaborador-fields">
-							<div className="colaborador-field-row">
-								<span className="colaborador-field-label">Nome</span>
-								<span className="colaborador-field-value">{colaborador.name}</span>
-							</div>
-							<div className="colaborador-field-row">
-								<span className="colaborador-field-label">Email</span>
-								<span className="colaborador-field-value">{colaborador.email}</span>
-							</div>
-							<div className="colaborador-field-row">
-								<span className="colaborador-field-label">Telefone</span>
-								<span className="colaborador-field-value">{colaborador.phone}</span>
-							</div>
-							<div className="colaborador-field-row">
-								<span className="colaborador-field-label">Cargo</span>
-								<span className="colaborador-field-value">{colaborador.cargo}</span>
-							</div>
-							<div className="colaborador-field-row">
-								<span className="colaborador-field-label">Status</span>
-								<span className="colaborador-field-value">{colaborador.status}</span>
+				<div className="row g-3">
+					<div className="col-lg-8">
+						<div className="ui-card p-3">
+							<div className="fw-bold">Informações Pessoais</div>
+							<div className="ui-meta mt-1">Dados do colaborador</div>
+
+							<div className="row g-3 mt-1">
+								<div className="col-md-6">
+									<div className="ui-meta">Nome</div>
+									<div className="fw-bold">{colaborador.name}</div>
+								</div>
+								<div className="col-md-6">
+									<div className="ui-meta">Email</div>
+									<div className="fw-bold">{colaborador.email}</div>
+								</div>
+								<div className="col-md-6">
+									<div className="ui-meta">Telefone</div>
+									<div className="fw-bold">{colaborador.phone}</div>
+								</div>
+								<div className="col-md-6">
+									<div className="ui-meta">Cargo</div>
+									<div className="fw-bold">{colaborador.cargo}</div>
+								</div>
+								<div className="col-md-6">
+									<div className="ui-meta">Estado</div>
+									<div className="mt-1">
+										<StatusBadge status={colaborador.status} />
+									</div>
+								</div>
 							</div>
 						</div>
 					</div>
 
-					<div className="colaborador-card">
-						<div className="colaborador-card-head">
-							<div>
-								<div className="colaborador-card-title">Ações</div>
+					<div className="col-lg-4">
+						<div className="ui-card p-3">
+							<div className="fw-bold">Ações</div>
+							<div className="mt-3">
+								<button type="button" className="btn btn-primary" onClick={() => navigate(`/colaboradores/${colaborador.id}/editar`)}>
+									Editar
+								</button>
 							</div>
-						</div>
-						<div className="colaborador-card-footer">
-							<button
-								type="button"
-								className="colaboradores-btn colaboradores-btn-primary"
-								onClick={() => navigate(`/colaboradores/${colaborador.id}/editar`)}
-							>
-								Editar
-							</button>
 						</div>
 					</div>
 				</div>

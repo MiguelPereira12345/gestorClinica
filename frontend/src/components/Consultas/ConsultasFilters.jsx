@@ -1,7 +1,6 @@
 import React from 'react'
 import { Search } from 'lucide-react'
 import { TIPO_MARCACAO } from '../../utils/consultasStorage'
-import Button from '../UI/Button'
 
 export default function ConsultasFilters({
 	filters,
@@ -11,30 +10,32 @@ export default function ConsultasFilters({
 	onSaveView,
 }) {
 	return (
-		<section className="consultas-filters-card" aria-label="Filtros">
-			<div className="consultas-filters-head">
+		<section className="ui-card p-3" aria-label="Filtros">
+			<div className="d-flex align-items-start justify-content-between gap-3 flex-wrap mb-3">
 				<div>
-					<div className="consultas-filters-title">Filtros</div>
-					<div className="consultas-filters-subtitle">Refine por paciente, profissional, data, estado e tipo.</div>
+					<div className="fw-bold">Filtros</div>
+					<div className="ui-meta">Refine por paciente, profissional, data, estado e tipo.</div>
 				</div>
-				<div className="consultas-filters-actions">
-					<Button variant="secondary" className="consultas-btn-light" onClick={onSaveView}>
+				<div className="d-inline-flex gap-2">
+					<button type="button" className="btn btn-light btn-sm" onClick={onSaveView}>
 						Guardar vista
-					</Button>
-					<Button variant="secondary" className="consultas-btn-light" onClick={onClear}>
+					</button>
+					<button type="button" className="btn btn-light btn-sm" onClick={onClear}>
 						Limpar
-					</Button>
+					</button>
 				</div>
 			</div>
 
-			<div className="consultas-filters-grid">
-				<div className="consultas-field">
-					<label className="consultas-label">Paciente</label>
-					<div className="consultas-input-wrap">
-						<Search className="consultas-input-icon" aria-hidden="true" />
+			<div className="row row-cols-1 row-cols-md-2 row-cols-lg-5 g-3">
+				<div className="col">
+					<label className="form-label">Paciente</label>
+					<div className="input-group">
+						<span className="input-group-text" aria-hidden="true">
+							<Search size={16} aria-hidden="true" />
+						</span>
 						<input
 							type="text"
-							className="consultas-input"
+							className="form-control"
 							placeholder="Nome do paciente"
 							value={filters.patient}
 							onChange={(e) => onChange({ ...filters, patient: e.target.value })}
@@ -42,10 +43,10 @@ export default function ConsultasFilters({
 					</div>
 				</div>
 
-				<div className="consultas-field">
-					<label className="consultas-label">Profissional</label>
+				<div className="col">
+					<label className="form-label">Profissional</label>
 					<select
-						className="consultas-select"
+						className="form-select"
 						value={filters.professional}
 						onChange={(e) => onChange({ ...filters, professional: e.target.value })}
 					>
@@ -58,20 +59,20 @@ export default function ConsultasFilters({
 					</select>
 				</div>
 
-				<div className="consultas-field">
-					<label className="consultas-label">Data</label>
+				<div className="col">
+					<label className="form-label">Data</label>
 					<input
 						type="date"
-						className="consultas-input consultas-input-date"
+						className="form-control"
 						value={filters.date}
 						onChange={(e) => onChange({ ...filters, date: e.target.value })}
 					/>
 				</div>
 
-				<div className="consultas-field">
-					<label className="consultas-label">Estado</label>
+				<div className="col">
+					<label className="form-label">Estado</label>
 					<select
-						className="consultas-select"
+						className="form-select"
 						value={filters.status}
 						onChange={(e) => onChange({ ...filters, status: e.target.value })}
 					>
@@ -82,10 +83,10 @@ export default function ConsultasFilters({
 					</select>
 				</div>
 
-				<div className="consultas-field">
-					<label className="consultas-label">Tipo de marcação</label>
+				<div className="col">
+					<label className="form-label">Tipo de marcação</label>
 					<select
-						className="consultas-select"
+						className="form-select"
 						value={filters.bookingType}
 						onChange={(e) => onChange({ ...filters, bookingType: e.target.value })}
 					>
@@ -101,3 +102,4 @@ export default function ConsultasFilters({
 		</section>
 	)
 }
+

@@ -1,5 +1,5 @@
 import React from 'react'
-import { X } from 'lucide-react'
+import { Search, X } from 'lucide-react'
 
 export default function ColaboradoresFilters({ filters, onChange, onClear }) {
 	const handleChange = (field, value) => {
@@ -7,44 +7,43 @@ export default function ColaboradoresFilters({ filters, onChange, onClear }) {
 	}
 
 	return (
-		<div className="colaboradores-filters-card">
-			<div className="colaboradores-filters-head">
+		<div className="ui-card p-3">
+			<div className="d-flex align-items-start justify-content-between gap-2 mb-3">
 				<div>
-					<div className="colaboradores-filters-title">Filtros</div>
-					<div className="colaboradores-filters-subtitle">Refine sua busca</div>
+					<div className="fw-bold">Filtros</div>
+					<div className="ui-meta">Refine a sua busca</div>
 				</div>
-				<div className="colaboradores-filters-actions">
-					<button
-						type="button"
-						className="colaboradores-btn colaboradores-btn-light"
-						onClick={onClear}
-					>
-						<X width="16" height="16" aria-hidden="true" />
+				<div className="d-inline-flex gap-2">
+					<button type="button" className="btn btn-light btn-sm" onClick={onClear}>
+						<X size={16} aria-hidden="true" />
 						Limpar
 					</button>
 				</div>
 			</div>
 
-			<div className="colaboradores-filters-grid">
-				<div className="colaboradores-field">
-					<label className="colaboradores-label">Nome</label>
-					<div className="colaboradores-input-wrap">
+			<div className="row g-3">
+				<div className="col-12 col-md-6 col-lg-5">
+					<label className="form-label">Nome</label>
+					<div className="input-group">
+						<span className="input-group-text">
+							<Search size={16} aria-hidden="true" />
+						</span>
 						<input
 							type="text"
 							placeholder="Buscar por nome..."
 							value={filters.name}
 							onChange={(e) => handleChange('name', e.target.value)}
-							className="colaboradores-input"
+							className="form-control"
 						/>
 					</div>
 				</div>
 
-				<div className="colaboradores-field">
-					<label className="colaboradores-label">Cargo</label>
+				<div className="col-12 col-md-6 col-lg-4">
+					<label className="form-label">Cargo</label>
 					<select
 						value={filters.specialty}
 						onChange={(e) => handleChange('specialty', e.target.value)}
-						className="colaboradores-select"
+						className="form-select"
 					>
 						<option value="">Todos</option>
 						<option value="admin">Admin</option>
@@ -53,21 +52,18 @@ export default function ColaboradoresFilters({ filters, onChange, onClear }) {
 					</select>
 				</div>
 
-				<div className="colaboradores-field">
-					<label className="colaboradores-label">Status</label>
+				<div className="col-12 col-md-6 col-lg-3">
+					<label className="form-label">Estado</label>
 					<select
 						value={filters.status}
 						onChange={(e) => handleChange('status', e.target.value)}
-						className="colaboradores-select"
+						className="form-select"
 					>
 						<option value="">Todos</option>
 						<option value="ativo">Ativo</option>
 						<option value="inativo">Inativo</option>
 					</select>
 				</div>
-
-				<div className="colaboradores-field"></div>
-				<div className="colaboradores-field"></div>
 			</div>
 		</div>
 	)

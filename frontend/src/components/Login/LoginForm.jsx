@@ -32,7 +32,7 @@ export default function LoginForm({ onSubmit }) {
       />
 
       <div style={{ height: '1rem' }} />
-      <button className="login-btn" type="submit">Entrar</button>
+      <button className="btn btn-primary" type="submit">Entrar</button>
     </form>
   )
 }

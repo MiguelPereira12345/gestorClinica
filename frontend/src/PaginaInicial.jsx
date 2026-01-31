@@ -95,31 +95,35 @@ export default function PaginaInicial() {
 	}
 	return (
 		<AppLayout breadcrumb="Painel" userName="Dra. Sofia Lima">
-			<section className="dashboard-content">
-					<div className="dashboard-actions" aria-label="Ações">
-						<button type="button" className="dashboard-btn dashboard-btn-ghost">
-							<span className="dashboard-btn-icon" aria-hidden="true">⟳</span>
-							Atualizar
-						</button>
-						<button 
-							type="button" 
-							className="dashboard-btn dashboard-btn-primary"
-							onClick={() => navigate('/agenda')}
-						>
-							<span className="dashboard-btn-icon" aria-hidden="true">＋</span>
-							Novo Agendamento
-						</button>
-					</div>
+			<section className="p-4" style={{ background: '#f6f6f7' }}>
+				<div className="d-flex justify-content-end gap-2 mb-3" aria-label="Ações">
+					<button type="button" className="btn btn-light">
+						<span className="me-2" aria-hidden="true">⟳</span>
+						Atualizar
+					</button>
+					<button type="button" className="btn btn-primary" onClick={() => navigate('/agenda')}>
+						<span className="me-2" aria-hidden="true">＋</span>
+						Novo Agendamento
+					</button>
+				</div>
 
-					<h2 className="dashboard-title">Área principal do dashboard</h2>
+				<h2 className="h6 fw-semibold text-dark mb-3">Área principal do dashboard</h2>
 
-					<div className="dashboard-grid">
+				<div className="row g-3">
+					<div className="col-12 col-lg-6">
 						<ResumoConsultas summary={summary} />
+					</div>
+					<div className="col-12 col-lg-6">
 						<TarefasAlertas tasks={tasks} />
+					</div>
+					<div className="col-12 col-lg-6">
 						<ProximasConsultas appointments={appointments} onSetStatus={setStatus} />
+					</div>
+					<div className="col-12 col-lg-6">
 						<Atalhos />
 					</div>
-				</section>
+				</div>
+			</section>
 		</AppLayout>
 	)
 }

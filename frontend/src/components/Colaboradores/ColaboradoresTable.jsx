@@ -1,60 +1,61 @@
 import React from 'react'
 import { Eye, Edit } from 'lucide-react'
+import StatusBadge from '../UI/StatusBadge'
 
 export default function ColaboradoresTable({ rows, onView, onEdit }) {
 	return (
-		<div className="colaboradores-table-card">
-			<div className="colaboradores-table-title">Lista de Colaboradores</div>
-			<div className="colaboradores-table-sub">Total: {rows.length} colaboradores</div>
+		<div className="ui-card p-3">
+			<div className="fw-bold">Lista de colaboradores</div>
+			<div className="ui-meta">Total: {rows.length} colaboradores</div>
 
-			<div className="colaboradores-table-wrap">
-				<table className="colaboradores-table">
+			<div className="ui-table-wrap mt-3">
+				<table className="ui-table">
 					<thead>
 						<tr>
 							<th>Nome</th>
 							<th>Email</th>
 							<th>Telefone</th>
 							<th>Cargo</th>
-							<th>Status</th>
-							<th className="colaboradores-actions-col">Ações</th>
+							<th>Estado</th>
+							<th className="ui-actions-col">Ações</th>
 						</tr>
 					</thead>
 					<tbody>
 						{rows.length === 0 ? (
-							<tr className="colaboradores-empty-row">
-								<td colSpan="6" style={{ textAlign: 'center', padding: '20px' }}>
+							<tr>
+								<td colSpan="6" className="ui-meta" style={{ textAlign: 'center', padding: '20px' }}>
 									Nenhum colaborador encontrado
 								</td>
 							</tr>
 						) : (
 							rows.map(colaborador => (
 								<tr key={colaborador.id}>
-									<td className="colaboradores-cell-strong">{colaborador.name}</td>
+									<td className="fw-bold">{colaborador.name}</td>
 									<td>{colaborador.email}</td>
 									<td>{colaborador.phone}</td>
 									<td>{colaborador.cargo}</td>
 									<td>
-										<span className={`colaborador-badge is-${colaborador.status}`}>
-											{colaborador.status === 'ativo' ? '✓ Ativo' : '✗ Inativo'}
-										</span>
+										<StatusBadge status={colaborador.status} />
 									</td>
-									<td className="colaboradores-actions-col">
-										<div className="colaboradores-actions">
+									<td className="ui-actions-col">
+										<div className="ui-actions">
 											<button
 												type="button"
-												className="colaboradores-action-btn"
+												className="btn btn-light btn-sm"
 												onClick={() => onView(colaborador)}
 												title="Ver detalhes"
 											>
-												<Eye className="colaboradores-action-icon" aria-hidden="true" />
+												<Eye size={14} aria-hidden="true" />
+												Ver
 											</button>
 											<button
 												type="button"
-												className="colaboradores-action-btn"
+												className="btn btn-light btn-sm"
 												onClick={() => onEdit(colaborador)}
 												title="Editar"
 											>
-												<Edit className="colaboradores-action-icon" aria-hidden="true" />
+												<Edit size={14} aria-hidden="true" />
+												Editar
 											</button>
 										</div>
 									</td>

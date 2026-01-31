@@ -49,6 +49,7 @@ function layoutOverlaps(items) {
 export default function ResourceDayCalendar({ date, resources = [], appointments = [] }) {
 	const totalHours = HOUR_END - HOUR_START + 1
 	const gridHeight = totalHours * HOUR_HEIGHT
+	const timeColWidth = 80
 
 	const perResource = useMemo(() => {
 		const d = new Date(date)
@@ -63,31 +64,50 @@ export default function ResourceDayCalendar({ date, resources = [], appointments
 	}, [appointments, date, resources])
 
 	return (
-		<div className="rc-root">
-			<div className="rc-header">
-				<div className="rc-time-col" />
-				<div className="rc-resources">
-					{resources.map((r) => (
-						<div key={r.id} className="rc-resource-col-header">
-							<span className="rc-resource-dot" style={{ background: r.color }} />
+		<div className="w-100">
+			<div className="d-flex border-bottom bg-light rounded-top-3">
+				<div className="flex-shrink-0 bg-white" style={{ width: timeColWidth }} />
+				<div className="d-flex flex-grow-1" style={{ minWidth: 0 }}>
+					{resources.map((r, idx) => (
+						<div
+							key={r.id}
+							className={
+								(idx === 0 ? '' : 'border-start ') +
+								'd-inline-flex align-items-center gap-2 px-3 py-2 fw-semibold text-truncate flex-grow-1'
+							}
+							style={{ minWidth: 0 }}
+							title={r.name}
+						>
+							<span
+								className="rounded-pill flex-shrink-0"
+								style={{ width: 10, height: 10, background: r.color }}
+							/>
 							{r.name}
 						</div>
 					))}
 				</div>
 			</div>
 
-			<div className="rc-body" style={{ height: gridHeight }}>
-				<div className="rc-time-col">
+			<div className="d-flex bg-white rounded-bottom-3 overflow-hidden" style={{ height: gridHeight }}>
+				<div className="flex-shrink-0 bg-white" style={{ width: timeColWidth }}>
 					{Array.from({ length: totalHours }).map((_, i) => (
-						<div key={i} className="rc-time-cell">
+						<div
+							key={i}
+							className="d-flex align-items-center border-bottom px-2 text-muted small"
+							style={{ height: HOUR_HEIGHT }}
+						>
 							{String(HOUR_START + i).padStart(2, '0')}:00
 						</div>
 					))}
 				</div>
 
-				<div className="rc-resources">
+				<div className="d-flex flex-grow-1" style={{ minWidth: 0 }}>
 					{perResource.map(({ resource, placed, maxCols }) => (
-						<div key={resource.id} className="rc-resource-col">
+						<div
+							key={resource.id}
+							className={(resources[0]?.id === resource.id ? '' : 'border-start ') + 'flex-grow-1 position-relative bg-white'}
+							style={{ minWidth: 0 }}
+						>
 							<div className="rc-grid" style={{ height: gridHeight }}>
 								{placed.map(({ appt, startMin, endMin, col }) => {
 									const minutesFromDayStart = startMin - HOUR_START * 60
@@ -109,7 +129,7 @@ export default function ResourceDayCalendar({ date, resources = [], appointments
 									return (
 										<div
 											key={appt.id}
-											className="rc-appointment"
+											className="position-absolute rounded-3 shadow-sm overflow-hidden border"
 											title={`${appt.paciente_nome} — ${appt.tipo_consulta}`}
 											style={{
 												top: `${top}px`,
@@ -117,10 +137,14 @@ export default function ResourceDayCalendar({ date, resources = [], appointments
 												background: appt.color || resource.color,
 												left: `calc(${leftPct}% + 8px)`,
 												width: `calc(${colWidthPct}% - 16px)`,
+												padding: '8px 10px',
+												color: '#053',
 											}}
 										>
-											<div className="rc-appointment-title">{appt.paciente_nome}</div>
-											<div className="rc-appointment-meta">
+											<div className="fw-bold" style={{ fontSize: 13 }}>
+												{appt.paciente_nome}
+											</div>
+											<div className="text-muted" style={{ fontSize: 11, marginTop: 2 }}>
 												{startStr}–{endStr}
 											</div>
 										</div>

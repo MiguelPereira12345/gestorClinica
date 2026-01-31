@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Plus } from 'lucide-react'
 import AppLayout from './components/Layout/AppLayout'
-import './Colaboradores.css'
+import PageHeader from './components/UI/PageHeader'
 
 import ColaboradoresFilters from './components/Colaboradores/ColaboradoresFilters'
 import ColaboradoresTable from './components/Colaboradores/ColaboradoresTable'
@@ -36,20 +36,16 @@ export default function ColaboradoresLista() {
 
 	return (
 		<AppLayout breadcrumb="Colaboradores > Lista" userName="Dra. Sofia Lima">
-			<div className="colaboradores-page">
-				<div className="colaboradores-title-row">
-					<h1 className="colaboradores-title">Colaboradores</h1>
-					<div className="colaboradores-title-actions">
-						<button
-							type="button"
-							className="colaboradores-btn colaboradores-btn-primary"
-							onClick={() => navigate('/colaboradores/novo')}
-						>
-							<Plus className="colaboradores-btn-icon" aria-hidden="true" />
+			<div className="ui-page">
+				<PageHeader
+					title="Colaboradores"
+					actions={
+						<button type="button" className="btn btn-primary" onClick={() => navigate('/colaboradores/novo')}>
+							<Plus size={16} aria-hidden="true" />
 							Adicionar Colaborador
 						</button>
-					</div>
-				</div>
+					}
+				/>
 
 				<ColaboradoresFilters
 					filters={filters}
@@ -60,8 +56,8 @@ export default function ColaboradoresLista() {
 					onClear={onClear}
 				/>
 
-				<div className="colaboradores-meta-row">
-					<div>Mostrando {startIdx}–{endIdx} de {result.total} colaboradores</div>
+				<div className="d-flex align-items-center justify-content-between gap-2 my-2">
+					<div className="ui-meta">Mostrando {startIdx}–{endIdx} de {result.total} colaboradores</div>
 					<Pagination
 						page={result.page}
 						maxPage={result.maxPage}

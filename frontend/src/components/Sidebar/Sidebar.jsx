@@ -57,7 +57,7 @@ export default function Sidebar() {
         </nav>
       </div>
 
-      <button type="button" className="sidebar-logout" onClick={handleLogout}>
+      <button type="button" className="btn btn-light sidebar-logout" onClick={handleLogout}>
         Terminar Sessão
       </button>
     </aside>

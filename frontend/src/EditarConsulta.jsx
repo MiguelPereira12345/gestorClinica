@@ -2,7 +2,6 @@ import React, { useMemo } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
 import AppLayout from './components/Layout/AppLayout'
-import './Consultas.css'
 
 import ConsultaForm from './components/Consultas/ConsultaForm'
 import { appendHistory, ensureConsultaStored, getConsultaById, patchConsulta } from './utils/consultasStorage'
@@ -20,12 +19,12 @@ export default function EditarConsulta() {
 	if (!consulta) {
 		return (
 			<AppLayout breadcrumb="Consultas > Editar" userName="Dra. Sofia Lima">
-				<div className="consultas-page">
-					<div className="consulta-card">
-						<div className="consulta-card-title">Consulta não encontrada</div>
-						<div className="consulta-card-footer">
-							<button type="button" className="consultas-btn" onClick={() => navigate('/consultas')}>
-								<ArrowLeft className="consultas-btn-icon" aria-hidden="true" />
+				<div className="ui-page">
+					<div className="ui-card p-3">
+						<div className="fw-bold">Consulta não encontrada</div>
+						<div className="d-flex justify-content-start mt-3">
+							<button type="button" className="btn btn-secondary" onClick={() => navigate('/consultas')}>
+								<ArrowLeft size={16} aria-hidden="true" />
 								Voltar
 							</button>
 						</div>
@@ -40,17 +39,17 @@ export default function EditarConsulta() {
 			breadcrumb="Consultas > Editar"
 			userName="Dra. Sofia Lima"
 			actions={
-				<button type="button" className="consultas-btn" onClick={() => navigate(`/consultas/${consulta.id}`)}>
-					<ArrowLeft className="consultas-btn-icon" aria-hidden="true" />
+					<button type="button" className="btn btn-secondary" onClick={() => navigate(`/consultas/${consulta.id}`)}>
+					<ArrowLeft size={16} aria-hidden="true" />
 					Voltar ao detalhe
 				</button>
 			}
 		>
-			<div className="consultas-page">
-				<div className="consulta-detail-header">
+			<div className="ui-page">
+				<div className="ui-page-header">
 					<div>
-						<h1 className="consulta-detail-title">Editar Consulta</h1>
-						<div className="consulta-detail-sub">{consulta.patientName} • {consulta.id}</div>
+						<h1 className="ui-page-title">Editar Consulta</h1>
+						<div className="ui-page-subtitle">{consulta.patientName} • {consulta.id}</div>
 					</div>
 				</div>
 
@@ -68,3 +67,4 @@ export default function EditarConsulta() {
 		</AppLayout>
 	)
 }
+

@@ -1,5 +1,4 @@
 import React, { useState } from 'react'
-import { X } from 'lucide-react'
 
 export default function ColaboradorForm({ initial, submitLabel, onCancel, onSubmit }) {
 	const [form, setForm] = useState(initial || {
@@ -21,50 +20,50 @@ export default function ColaboradorForm({ initial, submitLabel, onCancel, onSubm
 	}
 
 	return (
-		<form onSubmit={handleSubmit} className="colaborador-card">
-			<div className="colaborador-form-grid">
-				<div className="colaborador-form-field">
-					<label className="colaborador-form-label">Nome Completo</label>
+		<form onSubmit={handleSubmit} className="ui-card p-3">
+			<div className="row g-3">
+				<div className="col-12 col-md-6">
+					<label className="form-label">Nome Completo</label>
 					<input
 						type="text"
 						name="name"
 						value={form.name}
 						onChange={handleChange}
-						className="colaborador-form-input"
+						className="form-control"
 						required
 					/>
 				</div>
 
-				<div className="colaborador-form-field">
-					<label className="colaborador-form-label">Email</label>
+				<div className="col-12 col-md-6">
+					<label className="form-label">Email</label>
 					<input
 						type="email"
 						name="email"
 						value={form.email}
 						onChange={handleChange}
-						className="colaborador-form-input"
+						className="form-control"
 						required
 					/>
 				</div>
 
-				<div className="colaborador-form-field">
-					<label className="colaborador-form-label">Telefone</label>
+				<div className="col-12 col-md-6">
+					<label className="form-label">Telefone</label>
 					<input
 						type="tel"
 						name="phone"
 						value={form.phone}
 						onChange={handleChange}
-						className="colaborador-form-input"
+						className="form-control"
 					/>
 				</div>
 
-				<div className="colaborador-form-field">
-					<label className="colaborador-form-label">Cargo</label>
+				<div className="col-12 col-md-6">
+					<label className="form-label">Cargo</label>
 					<select
 						name="cargo"
 						value={form.cargo}
 						onChange={handleChange}
-						className="colaborador-form-select"
+						className="form-select"
 					>
 						<option value="">Selecione um cargo</option>
 						<option value="admin">Admin</option>
@@ -73,13 +72,13 @@ export default function ColaboradorForm({ initial, submitLabel, onCancel, onSubm
 					</select>
 				</div>
 
-				<div className="colaborador-form-field">
-					<label className="colaborador-form-label">Status</label>
+				<div className="col-12 col-md-6">
+					<label className="form-label">Estado</label>
 					<select
 						name="status"
 						value={form.status}
 						onChange={handleChange}
-						className="colaborador-form-select"
+						className="form-select"
 					>
 						<option value="ativo">Ativo</option>
 						<option value="inativo">Inativo</option>
@@ -87,11 +86,11 @@ export default function ColaboradorForm({ initial, submitLabel, onCancel, onSubm
 				</div>
 			</div>
 
-			<div className="colaborador-form-actions">
-				<button type="button" className="colaboradores-btn" onClick={onCancel}>
+			<div className="d-flex justify-content-end gap-2 mt-3">
+				<button type="button" className="btn btn-secondary" onClick={onCancel}>
 					Cancelar
 				</button>
-				<button type="submit" className="colaboradores-btn colaboradores-btn-primary">
+				<button type="submit" className="btn btn-primary">
 					{submitLabel}
 				</button>
 			</div>

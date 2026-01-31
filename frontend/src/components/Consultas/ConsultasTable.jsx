@@ -25,12 +25,14 @@ export default function ConsultasTable({ rows, onView, onEdit, onSetStatus }) {
 	}, [])
 
 	return (
-		<section className="consultas-table-card ui-card" aria-label="Lista de Consultas">
-			<div className="consultas-table-title">Lista de Consultas</div>
-			<div className="consultas-table-sub">Resultados ordenados por data e hora</div>
+		<section className="ui-card p-3" aria-label="Lista de Consultas">
+			<div className="mb-2">
+				<div className="fw-bold">Lista de Consultas</div>
+				<div className="ui-meta">Resultados ordenados por data e hora</div>
+			</div>
 
-			<div className="consultas-table-wrap ui-table-wrap">
-				<table className="consultas-table ui-table">
+			<div className="ui-table-wrap">
+				<table className="table ui-table">
 					<thead>
 						<tr>
 							<th>Paciente</th>
@@ -38,93 +40,95 @@ export default function ConsultasTable({ rows, onView, onEdit, onSetStatus }) {
 							<th>Especialidade</th>
 							<th>Data &amp; Hora</th>
 							<th>Estado</th>
-							<th className="consultas-actions-col ui-actions-col">Ações</th>
+							<th className="ui-actions-col">Ações</th>
 						</tr>
 					</thead>
 					<tbody>
 						{rows.length === 0 ? (
-							<tr className="consultas-empty-row">
+							<tr>
 								<td colSpan={6}>Sem resultados para os filtros selecionados.</td>
 							</tr>
 						) : (
 							rows.map((c) => (
 								<tr key={c.id}>
-									<td className="consultas-cell-strong">{c.patientName || '—'}</td>
+									<td className="fw-bold">{c.patientName || '—'}</td>
 									<td>{c.medicoName || '—'}</td>
 									<td>{c.specialty || '—'}</td>
-									<td className="consultas-datetime">
-										<div className="consultas-dt-date">{formatDatePT(c.startISO)}</div>
-										<div className="consultas-dt-time">{formatTimePT(c.startISO)}</div>
+									<td>
+										<div className="d-flex flex-column">
+											<div className="fw-semibold">{formatDatePT(c.startISO)}</div>
+											<small className="text-muted">{formatTimePT(c.startISO)}</small>
+										</div>
 									</td>
 									<td>
 										<StatusBadge status={c.bookingStatus} />
 									</td>
-									<td className="consultas-actions">
-										<button type="button" className="consultas-action-btn" onClick={() => onView?.(c)}>
-											<Eye className="consultas-action-icon" aria-hidden="true" />
-											Ver
-										</button>
-										<button type="button" className="consultas-action-btn" onClick={() => onEdit?.(c)}>
-											<Pencil className="consultas-action-icon" aria-hidden="true" />
-											Editar
-										</button>
-
-										<div className="consultas-actions-dropdown">
-											<button
-												type="button"
-												className="consultas-action-btn consultas-dropdown-trigger"
-												aria-haspopup="menu"
-												aria-expanded={openId === c.id}
-												onClick={() => setOpenId((prev) => (prev === c.id ? null : c.id))}
-											>
-												Estado
-												<ChevronDown className="consultas-action-icon" aria-hidden="true" />
+										<td className="ui-actions">
+											<button type="button" className="btn btn-light btn-sm" onClick={() => onView?.(c)}>
+												<Eye size={14} aria-hidden="true" />
+												Ver
+											</button>
+											<button type="button" className="btn btn-light btn-sm" onClick={() => onEdit?.(c)}>
+												<Pencil size={14} aria-hidden="true" />
+												Editar
 											</button>
 
-											{openId === c.id ? (
-												<div className="consultas-dropdown-menu" role="menu">
-													<button
-														type="button"
-														className="consultas-dropdown-item"
-														role="menuitem"
-														onClick={() => {
-															setOpenId(null)
-															onSetStatus?.(c, 'confirmada')
-														}}
-													>
-														<Check className="consultas-action-icon" aria-hidden="true" />
-														Confirmar
-													</button>
+											<div className="consultas-actions-dropdown dropdown">
+												<button
+													type="button"
+													className="btn btn-light btn-sm"
+													aria-haspopup="menu"
+													aria-expanded={openId === c.id}
+													onClick={() => setOpenId((prev) => (prev === c.id ? null : c.id))}
+												>
+													Estado
+													<ChevronDown size={14} aria-hidden="true" />
+												</button>
 
-													<button
-														type="button"
-														className="consultas-dropdown-item"
-														role="menuitem"
-														onClick={() => {
-															setOpenId(null)
-															onSetStatus?.(c, 'a_confirmar')
+												{openId === c.id ? (
+													<div className="dropdown-menu dropdown-menu-end show" role="menu">
+														<button
+															type="button"
+															className="dropdown-item"
+															role="menuitem"
+															onClick={() => {
+																setOpenId(null)
+																onSetStatus?.(c, 'confirmada')
 														}}
-													>
-														<Clock className="consultas-action-icon" aria-hidden="true" />
-														Pendente
-													</button>
+														>
+															<Check size={14} aria-hidden="true" />
+															Confirmar
+														</button>
 
-													<button
-														type="button"
-														className="consultas-dropdown-item"
-														role="menuitem"
-														onClick={() => {
-															setOpenId(null)
-															onSetStatus?.(c, 'cancelada')
+														<button
+															type="button"
+															className="dropdown-item"
+															role="menuitem"
+															onClick={() => {
+																setOpenId(null)
+																onSetStatus?.(c, 'a_confirmar')
 														}}
-													>
-														<X className="consultas-action-icon" aria-hidden="true" />
-														Cancelar
-													</button>
-												</div>
-											) : null}
-										</div>
-									</td>
+														>
+															<Clock size={14} aria-hidden="true" />
+															Pendente
+														</button>
+
+														<button
+															type="button"
+															className="dropdown-item"
+															role="menuitem"
+															onClick={() => {
+																setOpenId(null)
+																onSetStatus?.(c, 'cancelada')
+														}}
+														>
+															<X size={14} aria-hidden="true" />
+															Cancelar
+														</button>
+													</div>
+												) : null}
+											</div>
+										</td>
 								</tr>
 							))
 						)}
@@ -134,3 +138,4 @@ export default function ConsultasTable({ rows, onView, onEdit, onSetStatus }) {
 		</section>
 	)
 }
+

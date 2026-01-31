@@ -46,110 +46,134 @@ export default function Login() {
 	}
 
 	return (
-		<div className="login-container">
-			<section className="login-left" aria-label="Clinimolelos">
-				<div className="login-left-inner">
-					<img
-						className="login-left-logo"
-						src={logoClinimolelos}
-						alt="CLINIMOLELOS"
-						decoding="async"
-						loading="eager"
-						draggable="false"
-					/>
+		<div
+			className="position-fixed top-0 start-0 w-100 h-100 overflow-auto"
+			style={{ background: '#f4f1ec', zIndex: 999 }}
+		>
+			<div className="container-fluid h-100">
+				<div className="row g-0 h-100">
+					<section
+						className="col-lg-5 d-none d-lg-flex align-items-center justify-content-center bg-white border-end"
+						aria-label="Clinimolelos"
+					>
+						<div className="text-center" style={{ width: '100%', maxWidth: 420 }}>
+							<img
+								src={logoClinimolelos}
+								alt="CLINIMOLELOS"
+								decoding="async"
+								loading="eager"
+								draggable="false"
+								className="img-fluid"
+								style={{ maxWidth: 360 }}
+							/>
 
-					<p className="login-left-tagline">
-						Aceda ao sistema clínico para gerir Horários,
-						Consultas, Pacientes e Faturação.
-					</p>
-				</div>
-			</section>
+							<p className="mt-4 mb-0 text-muted fw-semibold" style={{ fontSize: 15, lineHeight: 1.45 }}>
+								Aceda ao sistema clínico para gerir Horários, Consultas, Pacientes e Faturação.
+							</p>
+						</div>
+					</section>
 
-			<section className="login-right" aria-label="Entrar">
-				<div className="login-card">
-					<div className="login-card-header">
-						<LogIn className="login-card-header-icon" />
-						<h2 className="login-card-title">Entrar na Conta</h2>
-					</div>
-
-					<form className="login-form" onSubmit={handleSubmit}>
-						{error ? (
-							<div className="recover-alert" role="alert" aria-live="assertive">
-								<Info className="recover-alert-icon" aria-hidden="true" />
-								<span>{error}</span>
+					<section
+						className="col-12 col-lg-7 d-flex align-items-center justify-content-center p-3 p-lg-5"
+						aria-label="Entrar"
+					>
+						<div
+							className="ui-card w-100"
+							style={{
+								maxWidth: 620,
+								background: '#fff',
+								boxShadow: '0 18px 45px rgba(16, 24, 40, 0.18)',
+							}}
+						>
+							<div className="d-flex align-items-center gap-2 border-bottom px-3 px-lg-4 py-3">
+								<LogIn style={{ width: 18, height: 18 }} aria-hidden="true" />
+								<h2 className="m-0 fw-bold" style={{ fontSize: 16 }}>
+									Entrar na Conta
+								</h2>
 							</div>
-						) : null}
 
-						<label className="login-label" htmlFor="login-email">
-							E-mail
-						</label>
-						<div className="login-input-wrap">
-							<Mail className="login-input-icon" aria-hidden="true" />
-							<input
-								id="login-email"
-								type="email"
-								className="login-input"
-								placeholder="nome@exemplo.com"
-								value={email}
-								onChange={(e) => setEmail(e.target.value)}
-								autoComplete="email"
-								required
-							/>
-						</div>
+							<form className="px-3 px-lg-4 py-3" onSubmit={handleSubmit}>
+								{error ? (
+									<div className="alert alert-danger d-flex align-items-start gap-2" role="alert" aria-live="assertive">
+										<Info style={{ width: 18, height: 18, marginTop: 1 }} aria-hidden="true" />
+										<div>{error}</div>
+									</div>
+								) : null}
 
-						<label className="login-label" htmlFor="login-password">
-							Palavra-passe
-						</label>
-						<div className="login-input-wrap">
-							<Lock className="login-input-icon" aria-hidden="true" />
-							<input
-								id="login-password"
-								type="password"
-								className="login-input"
-								placeholder="••••••••"
-								value={password}
-								onChange={(e) => setPassword(e.target.value)}
-								autoComplete="current-password"
-								required
-							/>
-						</div>
+								<label className="form-label fw-bold" htmlFor="login-email">
+									E-mail
+								</label>
+								<div className="input-group mb-3">
+									<span className="input-group-text bg-white">
+										<Mail style={{ width: 18, height: 18, opacity: 0.85 }} aria-hidden="true" />
+									</span>
+									<input
+										id="login-email"
+										type="email"
+										className="form-control"
+										placeholder="nome@exemplo.com"
+										value={email}
+										onChange={(e) => setEmail(e.target.value)}
+										autoComplete="email"
+										required
+									/>
+								</div>
 
-						<div className="login-actions">
-							<button
-								className="login-forgot"
-								type="button"
-								onClick={() => navigate('/recuperar-palavra-passe')}
-							>
-								<RefreshCcw className="login-forgot-icon" aria-hidden="true" />
-								<span>
-									Recuperar
-									<br />
+								<label className="form-label fw-bold" htmlFor="login-password">
 									Palavra-passe
-								</span>
-							</button>
+								</label>
+								<div className="input-group mb-3">
+									<span className="input-group-text bg-white">
+										<Lock style={{ width: 18, height: 18, opacity: 0.85 }} aria-hidden="true" />
+									</span>
+									<input
+										id="login-password"
+										type="password"
+										className="form-control"
+										placeholder="••••••••"
+										value={password}
+										onChange={(e) => setPassword(e.target.value)}
+										autoComplete="current-password"
+										required
+									/>
+								</div>
 
-							<button className="login-primary" type="submit" disabled={isSubmitting}>
-								<LogIn className="login-primary-icon" aria-hidden="true" />
-								{isSubmitting ? 'A entrar…' : 'Entrar'}
-							</button>
+								<div className="d-flex align-items-center justify-content-between gap-3 flex-wrap mt-3">
+									<button
+										className="btn btn-link p-0 text-decoration-none text-dark fw-semibold d-inline-flex align-items-center gap-2"
+										type="button"
+										onClick={() => navigate('/recuperar-palavra-passe')}
+									>
+										<RefreshCcw style={{ width: 16, height: 16, opacity: 0.8 }} aria-hidden="true" />
+										<span className="lh-sm text-start">
+											Recuperar
+											<br />
+											Palavra-passe
+										</span>
+									</button>
+
+									<button className="btn btn-primary" type="submit" disabled={isSubmitting}>
+										<LogIn style={{ width: 16, height: 16 }} aria-hidden="true" />
+										{isSubmitting ? 'A entrar…' : 'Entrar'}
+									</button>
+								</div>
+
+								<hr className="my-3" />
+
+								<div className="d-flex align-items-center justify-content-between gap-3 flex-wrap">
+									<div className="text-muted fw-semibold" style={{ fontSize: 13 }}>
+										Ainda não tens conta?
+									</div>
+									<button className="btn btn-secondary" type="button" onClick={() => navigate('/registar')}>
+										<UserPlus style={{ width: 16, height: 16 }} aria-hidden="true" />
+										Criar Conta
+									</button>
+								</div>
+							</form>
 						</div>
-
-						<div className="login-divider" role="separator" />
-
-						<div className="login-secondary">
-							<div className="login-secondary-text">Ainda não te conta?</div>
-							<button
-								className="login-secondary-button"
-								type="button"
-								onClick={() => navigate('/registar')}
-							>
-								<UserPlus className="login-secondary-icon" aria-hidden="true" />
-								Criar Conta
-							</button>
-						</div>
-					</form>
+					</section>
 				</div>
-			</section>
+			</div>
 		</div>
 	)
 }
