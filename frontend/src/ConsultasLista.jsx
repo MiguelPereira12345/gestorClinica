@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Download, Plus } from 'lucide-react'
+import { Plus } from 'lucide-react'
 import AppLayout from './components/Layout/AppLayout'
 import './Consultas.css'
 
@@ -8,21 +8,11 @@ import ConsultasFilters from './components/Consultas/ConsultasFilters'
 import ConsultasTable from './components/Consultas/ConsultasTable'
 import Pagination from './components/Consultas/Pagination'
 
-import { exportConsultasToCSV, listConsultas } from './utils/consultasStorage'
+import { listConsultas } from './utils/consultasStorage'
 import { PROFESSIONALS } from './utils/consultasLookups'
 
 const DEFAULT_PAGE_SIZE = 5
 const VIEWS_KEY = 'gestorClinica.consultas.vistas'
-
-function downloadTextFile(filename, content, mimeType) {
-	const blob = new Blob([content], { type: mimeType })
-	const url = URL.createObjectURL(blob)
-	const a = document.createElement('a')
-	a.href = url
-	a.download = filename
-	a.click()
-	URL.revokeObjectURL(url)
-}
 
 export default function ConsultasLista() {
 	const navigate = useNavigate()
@@ -42,12 +32,6 @@ export default function ConsultasLista() {
 
 	const startIdx = result.total === 0 ? 0 : (result.page - 1) * result.pageSize + 1
 	const endIdx = result.total === 0 ? 0 : startIdx + result.items.length - 1
-
-	function onExport() {
-		const all = listConsultas({ filters, page: 1, pageSize: 10000 })
-		const csv = exportConsultasToCSV(all.items)
-		downloadTextFile(`consultas_${new Date().toISOString().slice(0, 10)}.csv`, csv, 'text/csv;charset=utf-8')
-	}
 
 	function onSaveView() {
 		const name = window.prompt('Nome da vista (ex: “Consultas de hoje”)')
@@ -71,10 +55,6 @@ export default function ConsultasLista() {
 				<div className="consultas-title-row">
 					<h1 className="consultas-title">Consultas Marcadas</h1>
 					<div className="consultas-title-actions">
-						<button type="button" className="consultas-btn" onClick={onExport}>
-							<Download className="consultas-btn-icon" aria-hidden="true" />
-							Exportar
-						</button>
 						<button
 							type="button"
 							className="consultas-btn consultas-btn-primary"

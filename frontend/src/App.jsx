@@ -17,6 +17,10 @@ import ConsultasLista from './ConsultasLista'
 import VerConsulta from './VerConsulta'
 import EditarConsulta from './EditarConsulta'
 import NovaConsulta from './NovaConsulta'
+import ColaboradoresLista from './ColaboradoresLista'
+import DetalhesColaborador from './DetalhesColaborador'
+import EditarColaborador from './EditarColaborador'
+import NovoColaborador from './NovoColaborador'
 
 function App() {
   return (
@@ -40,6 +44,10 @@ function App() {
         <Route path="/consultas/:id/editar" element={<EditarConsulta />} />
         <Route path="/ver-exames" element={<VerExames />} />
         <Route path="/editar-detalhes" element={<EditarDetalhes />} />
+        <Route path="/colaboradores" element={<ColaboradoresLista />} />
+        <Route path="/colaboradores/novo" element={<NovoColaborador />} />
+        <Route path="/colaboradores/:id" element={<DetalhesColaborador />} />
+        <Route path="/colaboradores/:id/editar" element={<EditarColaborador />} />
         <Route path="/" element={<Navigate to="/login" replace />} />
       </Routes>
     </div>

@@ -1,0 +1,462 @@
+/* Colaboradores (Lista/Detalhe/Editar) — fiel ao estilo global (Figma) */
+
+.colaboradores-page {
+	max-width: 1160px;
+	margin: 0 auto;
+}
+
+.colaboradores-title-row {
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	gap: 18px;
+	margin: 8px 0 18px;
+}
+
+.colaboradores-title {
+	margin: 0;
+	font-size: 20px;
+	font-weight: 700;
+	color: #1e2a35;
+}
+
+.colaboradores-title-actions {
+	display: inline-flex;
+	align-items: center;
+	gap: 10px;
+}
+
+.colaboradores-btn {
+	border: 1px solid rgba(30, 42, 53, 0.12);
+	background: rgba(255, 255, 255, 0.85);
+	color: #1e2a35;
+	padding: 10px 12px;
+	border-radius: 10px;
+	font-weight: 700;
+	cursor: pointer;
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.colaboradores-btn:hover {
+	filter: brightness(0.99);
+}
+
+.colaboradores-btn-primary {
+	border: 1px solid rgba(184, 148, 49, 0.35);
+	background: var(--ui-gold);
+	color: #ffffff;
+}
+
+.colaboradores-btn-light {
+	background: rgba(255, 255, 255, 0.70);
+}
+
+.colaboradores-btn-icon {
+	width: 16px;
+	height: 16px;
+}
+
+/* Filters */
+
+.colaboradores-filters-card {
+	background: rgba(255, 255, 255, 0.85);
+	border: 1px solid rgba(30, 42, 53, 0.10);
+	border-radius: 12px;
+	padding: 16px 16px 14px;
+}
+
+.colaboradores-filters-head {
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	gap: 14px;
+	margin-bottom: 12px;
+}
+
+.colaboradores-filters-title {
+	font-weight: 800;
+	font-size: 14px;
+	color: #1e2a35;
+}
+
+.colaboradores-filters-subtitle {
+	color: var(--ui-muted);
+	font-size: 12px;
+	font-weight: 600;
+	margin-top: 2px;
+}
+
+.colaboradores-filters-actions {
+	display: inline-flex;
+	gap: 10px;
+}
+
+.colaboradores-filters-grid {
+	display: grid;
+	grid-template-columns: repeat(5, minmax(0, 1fr));
+	gap: 12px;
+}
+
+.colaboradores-field {
+	min-width: 0;
+}
+
+.colaboradores-label {
+	display: block;
+	font-size: 12px;
+	font-weight: 700;
+	color: #1e2a35;
+	margin-bottom: 6px;
+}
+
+.colaboradores-input-wrap {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	border: 1px solid rgba(30, 42, 53, 0.12);
+	background: rgba(255, 255, 255, 0.88);
+	padding: 10px 12px;
+	border-radius: 10px;
+}
+
+.colaboradores-input-icon {
+	width: 16px;
+	height: 16px;
+	color: rgba(30, 42, 53, 0.55);
+}
+
+.colaboradores-input {
+	width: 100%;
+	border: 0;
+	outline: none;
+	background: transparent;
+	font-weight: 600;
+	font-size: 13px;
+	color: #1e2a35;
+}
+
+.colaboradores-select {
+	width: 100%;
+	border: 1px solid rgba(30, 42, 53, 0.12);
+	background: rgba(255, 255, 255, 0.88);
+	padding: 10px 12px;
+	border-radius: 10px;
+	font-weight: 600;
+	font-size: 13px;
+	color: #1e2a35;
+	outline: none;
+}
+
+/* Table */
+
+.colaboradores-meta-row {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	margin: 12px 0 10px;
+	color: var(--ui-muted);
+	font-size: 12px;
+	font-weight: 600;
+}
+
+.colaboradores-table-card {
+	background: rgba(255, 255, 255, 0.90);
+	border: 1px solid rgba(30, 42, 53, 0.10);
+	border-radius: 12px;
+	padding: 14px 16px 10px;
+}
+
+.colaboradores-table-title {
+	font-size: 13px;
+	font-weight: 800;
+	color: #1e2a35;
+}
+
+.colaboradores-table-sub {
+	font-size: 12px;
+	font-weight: 600;
+	color: var(--ui-muted);
+	margin-top: 2px;
+}
+
+.colaboradores-table-wrap {
+	overflow: auto;
+	margin-top: 10px;
+}
+
+.colaboradores-table {
+	width: 100%;
+	border-collapse: collapse;
+	min-width: 860px;
+}
+
+.colaboradores-table th {
+	text-align: left;
+	padding: 12px 10px;
+	font-size: 12px;
+	font-weight: 800;
+	color: rgba(30, 42, 53, 0.65);
+	border-bottom: 1px solid rgba(30, 42, 53, 0.10);
+}
+
+.colaboradores-table td {
+	padding: 12px 10px;
+	font-size: 13px;
+	font-weight: 600;
+	color: #1e2a35;
+	border-bottom: 1px solid rgba(30, 42, 53, 0.08);
+	vertical-align: middle;
+}
+
+.colaboradores-cell-strong {
+	font-weight: 800;
+}
+
+.colaboradores-actions-col {
+	text-align: right;
+}
+
+.colaboradores-actions {
+	display: flex;
+	justify-content: flex-end;
+	gap: 10px;
+}
+
+.colaboradores-action-btn {
+	border: 1px solid rgba(30, 42, 53, 0.12);
+	background: rgba(245, 245, 245, 0.65);
+	border-radius: 10px;
+	padding: 8px 10px;
+	font-weight: 700;
+	font-size: 12px;
+	cursor: pointer;
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	color: #1e2a35;
+}
+
+.colaboradores-action-icon {
+	width: 14px;
+	height: 14px;
+}
+
+.colaboradores-empty-row td {
+	color: rgba(30, 42, 53, 0.55);
+}
+
+/* Badges (Status) */
+
+.colaborador-badge {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	padding: 6px 10px;
+	border-radius: 8px;
+	font-size: 12px;
+	font-weight: 800;
+	color: #ffffff;
+	white-space: nowrap;
+}
+
+.colaborador-badge.is-ativo {
+	background: #1f7a4d;
+}
+
+.colaborador-badge.is-inativo {
+	background: #c53a3a;
+}
+
+/* Pagination */
+
+.colaboradores-pagination {
+	display: inline-flex;
+	align-items: center;
+	gap: 10px;
+}
+
+.colaboradores-page-btn {
+	border: 1px solid rgba(30, 42, 53, 0.12);
+	background: rgba(255, 255, 255, 0.85);
+	border-radius: 10px;
+	padding: 8px 10px;
+	font-weight: 700;
+	font-size: 12px;
+	cursor: pointer;
+}
+
+.colaboradores-page-btn:disabled {
+	opacity: 0.55;
+	cursor: not-allowed;
+}
+
+.colaboradores-page-meta {
+	font-size: 12px;
+	font-weight: 700;
+	color: rgba(30, 42, 53, 0.60);
+}
+
+/* Detail / Cards */
+
+.colaborador-detail-header {
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	gap: 18px;
+	margin: 8px 0 14px;
+}
+
+.colaborador-detail-title {
+	font-size: 18px;
+	font-weight: 800;
+	color: #1e2a35;
+	margin: 0;
+}
+
+.colaborador-detail-sub {
+	margin-top: 2px;
+	font-size: 12px;
+	font-weight: 700;
+	color: rgba(30, 42, 53, 0.55);
+}
+
+.colaborador-grid {
+	display: grid;
+	grid-template-columns: 1.15fr 0.85fr;
+	gap: 16px;
+	margin-top: 14px;
+}
+
+.colaborador-card {
+	background: rgba(255, 255, 255, 0.90);
+	border: 1px solid rgba(30, 42, 53, 0.10);
+	border-radius: 12px;
+	padding: 14px 16px;
+}
+
+.colaborador-card-head {
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	gap: 12px;
+	margin-bottom: 10px;
+}
+
+.colaborador-card-title {
+	font-size: 13px;
+	font-weight: 800;
+	color: #1e2a35;
+}
+
+.colaborador-card-sub {
+	font-size: 12px;
+	font-weight: 600;
+	color: rgba(30, 42, 53, 0.55);
+	margin-top: 2px;
+}
+
+.colaborador-fields {
+	display: grid;
+	grid-template-columns: 1fr;
+	gap: 10px;
+}
+
+.colaborador-field-row {
+	display: grid;
+	grid-template-columns: 150px 1fr;
+	gap: 14px;
+	align-items: baseline;
+	border-top: 1px solid rgba(30, 42, 53, 0.08);
+	padding-top: 10px;
+}
+
+.colaborador-field-row:first-child {
+	border-top: 0;
+	padding-top: 0;
+}
+
+.colaborador-field-label {
+	font-size: 11px;
+	font-weight: 800;
+	color: rgba(30, 42, 53, 0.55);
+}
+
+.colaborador-field-value {
+	font-size: 13px;
+	font-weight: 700;
+	color: #1e2a35;
+}
+
+.colaborador-card-footer {
+	margin-top: 10px;
+	display: flex;
+	justify-content: flex-start;
+}
+
+.colaborador-grid-bottom {
+	display: grid;
+	grid-template-columns: 1fr 0.65fr;
+	gap: 16px;
+	margin-top: 16px;
+}
+
+/* Forms (Editar/Nova) */
+
+.colaborador-form-grid {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 12px;
+}
+
+.colaborador-form-field {
+	min-width: 0;
+}
+
+.colaborador-form-label {
+	display: block;
+	font-size: 12px;
+	font-weight: 800;
+	color: #1e2a35;
+	margin: 0 0 6px;
+}
+
+.colaborador-form-input,
+.colaborador-form-select,
+.colaborador-form-textarea {
+	width: 100%;
+	border: 1px solid rgba(30, 42, 53, 0.12);
+	background: rgba(255, 255, 255, 0.88);
+	padding: 10px 12px;
+	border-radius: 10px;
+	font-weight: 600;
+	font-size: 13px;
+	color: #1e2a35;
+	outline: none;
+	box-sizing: border-box;
+}
+
+.colaborador-form-textarea {
+	resize: vertical;
+	min-height: 92px;
+}
+
+.colaborador-form-actions {
+	display: flex;
+	gap: 10px;
+	justify-content: flex-end;
+	margin-top: 12px;
+}
+
+@media (max-width: 1100px) {
+	.colaboradores-filters-grid {
+		grid-template-columns: 1fr 1fr;
+	}
+	.colaborador-grid,
+	.colaborador-grid-bottom,
+	.colaborador-form-grid {
+		grid-template-columns: 1fr;
+	}
+}
