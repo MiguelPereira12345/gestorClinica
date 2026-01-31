@@ -1,6 +1,10 @@
 import React, { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import AppLayout from './components/Layout/AppLayout'
+import ResumoConsultas from './components/PaginaInicial/ResumoConsultas'
+import TarefasAlertas from './components/PaginaInicial/TarefasAlertas'
+import ProximasConsultas from './components/PaginaInicial/ProximasConsultas'
+import Atalhos from './components/PaginaInicial/Atalhos'
 import './App.css'
 
 export default function PaginaInicial() {
@@ -107,161 +111,16 @@ export default function PaginaInicial() {
 						</button>
 					</div>
 
-
-{/*adicionar calendário funcional para ver as consultas do dia */}
-
 					<h2 className="dashboard-title">Área principal do dashboard</h2>
 
 					<div className="dashboard-grid">
-						<section className="dashboard-card" aria-label="Resumo de Consultas de Hoje">
-							<div className="dashboard-card-header">
-								<h3 className="dashboard-card-title">Resumo de Consultas de Hoje</h3>
-							</div>
-							<div className="dashboard-stats">
-								<div className="dashboard-stat">
-									<div className="dashboard-stat-label">Agendadas</div>
-									<div className="dashboard-stat-value">{summary.total}</div>
-								</div>
-								<div className="dashboard-stat">
-									<div className="dashboard-stat-label">Em andamento</div>
-									<div className="dashboard-stat-value">{summary.confirmed}</div>
-								</div>
-								<div className="dashboard-stat">
-									<div className="dashboard-stat-label">Concluídas</div>
-									<div className="dashboard-stat-value">{summary.inProgress}</div>
-								</div>
-							</div>
-						</section>
-
-						<section className="dashboard-card" aria-label="Próximas Consultas">
-							<div className="dashboard-card-header dashboard-card-header-row">
-								<h3 className="dashboard-card-title">Próximas Consultas</h3>
-								<button
-									type="button"
-									className="dashboard-btn dashboard-btn-light"
-									onClick={() => navigate('/agenda')}
-								>
-									<span className="dashboard-btn-icon" aria-hidden="true">🗓</span>
-									Ver agenda
-								</button>
-							</div>
-
-							<div className="dashboard-list" role="list">
-								{appointments.slice(0, 6).map((a) => (
-									<div key={a.id} className="dashboard-list-item" role="listitem">
-										<div className="dashboard-list-left">
-											<div className="dashboard-list-title">{a.paciente}</div>
-											<div className="dashboard-list-sub">
-												{a.inicio}–{a.fim} • {a.medico} • {a.tipo}
-											</div>
-										</div>
-
-										<div className="dashboard-list-right">
-											<span
-												className={`dashboard-badge${
-													a.estado === 'Confirmada'
-														? ' is-ok'
-														: a.estado === 'Em atraso'
-															? ' is-warn'
-															: ' is-muted'
-												}`}
-											>
-												{a.estado}
-											</span>
-
-											<div className="dashboard-item-actions">
-												<button
-													className="dashboard-action-btn"
-													type="button"
-													onClick={() => setStatus(a.id, 'Confirmada')}
-												>
-													Confirmar
-												</button>
-												<button
-													className="dashboard-action-btn"
-													type="button"
-													onClick={() => navigate('/agenda')}
-												>
-													Reagendar
-												</button>
-												<button
-													className="dashboard-action-btn"
-													type="button"
-													onClick={() => navigate('/editar-detalhes')}
-												>
-													Abrir ficha
-												</button>
-											</div>
-									</div>
-								</div>
-							))}
-							</div>
-						</section>
-					</div>
-
-					<div className="dashboard-grid dashboard-grid-secondary">
-						<section className="dashboard-card" aria-label="Tarefas e Alertas">
-							<div className="dashboard-card-header dashboard-card-header-row">
-								<h3 className="dashboard-card-title">Tarefas / Alertas</h3>
-								<button
-									type="button"
-									className="dashboard-btn dashboard-btn-ghost"
-									onClick={() => navigate('/pacientes')}
-								>
-									Ver pacientes
-								</button>
-							</div>
-
-							<div className="dashboard-list" role="list">
-								{tasks.map((t) => (
-									<div key={t.id} className="dashboard-list-item" role="listitem">
-										<div className="dashboard-list-left">
-											<div className="dashboard-list-title">{t.titulo}</div>
-											<div className="dashboard-list-sub">{t.detalhe}</div>
-										</div>
-
-										<div className="dashboard-list-right">
-											<span
-												className={`dashboard-badge${
-													t.severidade === 'danger'
-														? ' is-danger'
-														: t.severidade === 'warning'
-															? ' is-warn'
-															: ' is-info'
-												}`}
-											>
-												{t.tipo === 'alert' ? 'Alerta' : 'Tarefa'}
-											</span>
-										</div>
-									</div>
-								))}
-							</div>
-						</section>
-
-						<section className="dashboard-card" aria-label="Atalhos">
-							<div className="dashboard-card-header">
-								<h3 className="dashboard-card-title">Atalhos</h3>
-							</div>
-							<div className="dashboard-shortcuts">
-								<button type="button" className="dashboard-shortcut" onClick={() => navigate('/agenda')}>
-									Novo agendamento
-								</button>
-								<button type="button" className="dashboard-shortcut" onClick={() => navigate('/registar')}>
-									Novo paciente
-								</button>
-								<button type="button" className="dashboard-shortcut" onClick={() => navigate('/pacientes')}>
-									Pesquisar pacientes
-								</button>
-								<button type="button" className="dashboard-shortcut" onClick={() => navigate('/editar-detalhes')}>
-									Abrir ficha
-								</button>
-							</div>
-						</section>
+						<ResumoConsultas summary={summary} />
+						<TarefasAlertas tasks={tasks} />
+						<ProximasConsultas appointments={appointments} onSetStatus={setStatus} />
+						<Atalhos />
 					</div>
 				</section>
 		</AppLayout>
 	)
-	{/*adicionem uma tabela de pacientes para levar a editardetalhes,
-	mas uma ligada a bd, criem nos componentes não façam tudo aqui que fica enorme */}
 }
 
