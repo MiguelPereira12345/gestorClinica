@@ -43,8 +43,8 @@ controller.listar_consultas = async (req, res) => {
     const consultas = await Consulta.findAll({
       where: {
         data_consulta: {
-          [sequelize.Sequelize.Op.gte]: dataLimite.toISOString().split('T')[0],
-          [sequelize.Sequelize.Op.lte]: dataAtual.toISOString().split('T')[0]
+          [sequelize.Op.gte]: dataLimite.toISOString().split('T')[0],
+          [sequelize.Op.lte]: dataAtual.toISOString().split('T')[0]
         }
       },
       order: [['data_consulta', 'DESC'], ['hora', 'DESC']]
@@ -224,7 +224,7 @@ controller.editar_consulta = async (req, res) => {
   }
 };
 
-//CANCELAR CONSULTA +ATCH (até 48h)
+//CANCELAR CONSULTA ATE (até 48h)
 controller.cancelar_consulta = async (req, res) => {
   try {
     const { id_consulta } = req.params;
