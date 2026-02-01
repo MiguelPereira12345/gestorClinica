@@ -1,7 +1,7 @@
 import React from 'react'
 import { useNavigate } from 'react-router-dom'
 
-export default function ProximasConsultas({ appointments, onSetStatus }) {
+export default function ProximasConsultas({ appointments }) {
 	const navigate = useNavigate()
 
 	const getStatusStyle = (status) => {
@@ -64,18 +64,6 @@ export default function ProximasConsultas({ appointments, onSetStatus }) {
 							>
 								{a.estado}
 							</span>
-
-							<div className="d-flex flex-wrap gap-2 justify-content-end">
-								<button className="btn btn-light btn-sm" type="button" onClick={() => onSetStatus(a.id, 'Confirmada')}>
-									Confirmar
-								</button>
-								<button className="btn btn-light btn-sm" type="button" onClick={() => navigate('/agenda')}>
-									Reagendar
-								</button>
-								<button className="btn btn-light btn-sm" type="button" onClick={() => navigate('/editar-detalhes')}>
-									Abrir ficha
-								</button>
-							</div>
 						</div>
 					</div>
 				))}

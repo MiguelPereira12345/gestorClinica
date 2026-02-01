@@ -132,7 +132,8 @@ export function getAppointmentsForDay({ date, medicoId }) {
 	})
 }
 
-export function isSlotFree({ date, medicoId, startHHMM, durationMin }) {
+
+export function isSlotFree({ date, medicoId, startHHMM, durationMin, excludeAppointmentId }) {
 	const day = new Date(date)
 	const [h, m] = startHHMM.split(':').map(Number)
 	day.setHours(h, m || 0, 0, 0)
@@ -143,6 +144,7 @@ export function isSlotFree({ date, medicoId, startHHMM, durationMin }) {
 
 	const appts = getAppointmentsForDay({ date, medicoId })
 	for (const a of appts) {
+		if (excludeAppointmentId && a?.id === excludeAppointmentId) continue
 		const as = new Date(a.startISO).getTime()
 		const ae = new Date(a.endISO).getTime()
 		if (overlap(s, e, as, ae)) return false
@@ -150,7 +152,8 @@ export function isSlotFree({ date, medicoId, startHHMM, durationMin }) {
 	return true
 }
 
-export function listAvailableSlots({ date, medicoId, durationMin, limit = 6, stepMin = 15 }) {
+
+export function listAvailableSlots({ date, medicoId, durationMin, limit = 6, stepMin = 15, excludeAppointmentId }) {
 	const { status, intervals } = getClinicIntervalsForDate({ date, medicoId })
 	if (status === 'closed' || status === 'holiday') return { status, slots: [] }
 
@@ -160,7 +163,7 @@ export function listAvailableSlots({ date, medicoId, durationMin, limit = 6, ste
 		const endM = toMinutes(interval.end)
 		for (let t = startM; t + durationMin <= endM; t += stepMin) {
 			const hhmm = fromMinutes(t)
-			if (isSlotFree({ date, medicoId, startHHMM: hhmm, durationMin })) {
+			if (isSlotFree({ date, medicoId, startHHMM: hhmm, durationMin, excludeAppointmentId })) {
 				slots.push(hhmm)
 				if (slots.length >= limit) return { status, slots }
 			}
@@ -198,6 +201,7 @@ export function buildAppointmentRecord({
 	patientId,
 	patientName,
 	dependentName,
+	treatmentPlanId,
 	notes,
 	specialty,
 	medicoId,
@@ -222,6 +226,7 @@ export function buildAppointmentRecord({
 		patientId,
 		patientName,
 		dependentName: dependentName || '',
+		treatmentPlanId: treatmentPlanId ? String(treatmentPlanId) : '',
 		notes: notes || '',
 		specialty: specialty || '',
 		medicoId,

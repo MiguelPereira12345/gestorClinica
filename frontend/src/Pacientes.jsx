@@ -18,6 +18,9 @@ import {
 	buildPatientRecordFromForm,
 	createEmptyPatientForm,
 	loadPatients,
+	getDependentsOf,
+	getEffectivePhone,
+	matchesNameOrPhone,
 	removePatient,
 	upsertPatient,
 } from './utils/patientStorage'
@@ -30,7 +33,8 @@ export default function Pacientes() {
 		return parsed.map((p) => ({
 			id: p.id,
 			nome: p.nome,
-			email: p.email || '',
+			telefone: p.telefone || p?.data?.contactoTelefone || '',
+			responsavelId: p.responsavelId || p?.data?.responsavelId || null,
 			estado: p.estado || 'Ativo',
 		}))
 	})
@@ -42,26 +46,30 @@ export default function Pacientes() {
 			{
 				id: 'P001',
 				nome: 'Maria Gonzalez',
-				email: 'maria.gonzalez@example.com',
+				telefone: '912 345 678',
 				estado: 'Ativo',
+				responsavelId: null,
 			},
 			{
 				id: 'P002',
 				nome: 'Liam Chen',
-				email: 'liam.chen@example.com',
+				telefone: '913 222 111',
 				estado: 'Inativo',
+				responsavelId: null,
 			},
 			{
 				id: 'P003',
 				nome: 'Sofia Martins',
-				email: 'sofia.martins@example.com',
+				telefone: '914 000 999',
 				estado: 'Ativo',
+				responsavelId: null,
 			},
 			{
 				id: 'P004',
 				nome: 'Noah Patel',
-				email: 'noah.patel@example.com',
+				telefone: '915 123 456',
 				estado: 'Ativo',
+				responsavelId: null,
 			},
 		],
 		[],
@@ -73,7 +81,8 @@ export default function Pacientes() {
 			parsed.map((p) => ({
 				id: p.id,
 				nome: p.nome,
-				email: p.email || '',
+				telefone: p.telefone || p?.data?.contactoTelefone || '',
+				responsavelId: p.responsavelId || p?.data?.responsavelId || null,
 				estado: p.estado || 'Ativo',
 			})),
 		)
@@ -92,7 +101,8 @@ export default function Pacientes() {
 
 		const form = createEmptyPatientForm()
 		form.nomeCompleto = row.nome
-		form.contactoEmail = row.email
+		form.contactoTelefone = row.telefone || ''
+		form.contactoEmail = ''
 
 		const patient = buildPatientRecordFromForm({
 			id: row.id,
@@ -116,16 +126,19 @@ export default function Pacientes() {
 	}, [storedRows, rows])
 
 	const filtered = useMemo(() => {
-		const q = query.trim().toLowerCase()
+		const q = query.trim()
 		if (!q) return allRows
-		return allRows.filter((r) => {
-			return (
-				r.nome.toLowerCase().includes(q) ||
-				r.email.toLowerCase().includes(q) ||
-				r.id.toLowerCase().includes(q)
-			)
-		})
+		return allRows.filter((r) => matchesNameOrPhone(r, q, allRows) || String(r.id || '').toLowerCase().includes(q.toLowerCase()))
 	}, [query, allRows])
+
+	function dependentsCountFor(row) {
+		if (row?.responsavelId) return 0
+		return getDependentsOf(row.id, allRows).length
+	}
+
+	function effectivePhoneFor(row) {
+		return getEffectivePhone(row, allRows)
+	}
 
 	return (
 		<AppLayout breadcrumb="Pacientes" userName="Dra. Sofia Lima">
@@ -142,7 +155,7 @@ export default function Pacientes() {
 								<input
 									type="text"
 									className="form-control"
-									placeholder="Pesquisar por nome, email ou ID"
+									placeholder="Pesquisar por nome, telefone ou ID"
 									value={query}
 									onChange={(e) => setQuery(e.target.value)}
 								/>
@@ -164,8 +177,8 @@ export default function Pacientes() {
 							<thead>
 								<tr>
 									<th>Nome</th>
-									<th>Email</th>
-									<th>Estado</th>
+									<th>Telefone</th>
+									<th>Dependentes</th>
 									<th className="ui-actions-col">Ações</th>
 								</tr>
 							</thead>
@@ -173,12 +186,24 @@ export default function Pacientes() {
 								{filtered.map((r) => (
 									<tr key={r.id}>
 										<td style={{ fontWeight: 700 }}>{r.nome}</td>
-										<td>{r.email}</td>
-										<td>
-											<StatusBadge status={r.estado} />
-										</td>
+										<td>{effectivePhoneFor(r) || '—'}</td>
+										<td>{dependentsCountFor(r)}</td>
 										<td className="ui-actions-col">
 											<div className="ui-actions">
+												<button
+													type="button"
+													className="btn btn-light btn-sm"
+													onClick={() => {
+														if (!ensurePatientExists(r)) return
+														const baseId = r.responsavelId || r.id
+														navigate(`/pacientes/${baseId}/dependente/novo`)
+													}}
+													disabled={!!r.responsavelId}
+													title={r.responsavelId ? 'Adicionar dependentes no responsável' : 'Adicionar dependente'}
+												>
+													<Plus size={14} aria-hidden="true" />
+																	Dependente
+												</button>
 												<button
 													type="button"
 													className="btn btn-light btn-sm"

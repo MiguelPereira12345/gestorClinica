@@ -1,16 +1,35 @@
 import React, { useMemo, useState } from 'react'
 import './App.css'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import AppLayout from './components/Layout/AppLayout'
 import PageHeader from './components/UI/PageHeader'
-import { buildPatientRecordFromForm, createEmptyPatientForm, upsertPatient } from './utils/patientStorage'
+import {
+	buildPatientRecordFromForm,
+	createEmptyPatientForm,
+	getPatientById,
+	upsertPatient,
+} from './utils/patientStorage'
 
-export default function AdicionarPaciente() {
+export default function AdicionarDependente() {
 	const navigate = useNavigate()
+	const { id: responsavelId } = useParams()
+
+	const responsavel = useMemo(() => (responsavelId ? getPatientById(responsavelId) : null), [responsavelId])
+	const responsavelTelefone = useMemo(
+		() => (responsavel?.telefone || responsavel?.data?.contactoTelefone || '').trim(),
+		[responsavel]
+	)
+
 	const [files, setFiles] = useState([])
 	const [saving, setSaving] = useState(false)
-
-	const [form, setForm] = useState(() => createEmptyPatientForm())
+	const [form, setForm] = useState(() => {
+		const base = createEmptyPatientForm()
+		base.responsavelId = responsavelId || ''
+		if (!base.contactoTelefone && responsavelTelefone) {
+			base.contactoTelefone = responsavelTelefone
+		}
+		return base
+	})
 
 	const fileNames = useMemo(() => files.map((f) => f.name), [files])
 
@@ -29,7 +48,7 @@ export default function AdicionarPaciente() {
 
 		const nome = form.nomeCompleto.trim()
 		if (!nome) {
-			alert('Por favor, preenche o Nome completo.')
+			alert('Por favor, preenche o Nome completo do dependente.')
 			return
 		}
 
@@ -41,40 +60,61 @@ export default function AdicionarPaciente() {
 
 		setSaving(true)
 		try {
-			const patient = buildPatientRecordFromForm({
-				form,
+			const next = buildPatientRecordFromForm({
+				form: {
+					...form,
+					responsavelId: responsavelId || '',
+				},
 				anexosClinicos: fileNames,
 			})
-			upsertPatient(patient)
-			navigate(`/pacientes/${patient.id}`)
+			upsertPatient(next)
+			navigate(`/pacientes/${next.id}`)
 		} finally {
 			setSaving(false)
 		}
 	}
 
+	if (!responsavelId || !responsavel) {
+		return (
+			<AppLayout breadcrumb="Pacientes / Dependente" userName="Dra. Sofia Lima">
+				<div className="ui-page">
+					<div className="ui-card p-3">
+						<h2 className="m-0" style={{ fontSize: 18, fontWeight: 800 }}>
+							Responsável não encontrado
+						</h2>
+						<p className="mt-2 mb-3" style={{ color: 'rgba(122,130,138,0.95)' }}>
+							Abre um paciente existente e usa “+ Dependente”.
+						</p>
+						<button className="btn btn-primary" type="button" onClick={() => navigate('/pacientes')}>
+							Voltar à lista
+						</button>
+					</div>
+				</div>
+			</AppLayout>
+		)
+	}
+
 	return (
-		<AppLayout breadcrumb="Pacientes / Adicionar" userName="Dra. Sofia Lima">
+		<AppLayout breadcrumb={`Pacientes / ${responsavel.nome} / Adicionar dependente`} userName="Dra. Sofia Lima">
 			<div className="ui-page">
 				<PageHeader
-					title="Adicionar paciente"
+					title="Adicionar dependente"
+					subtitle={`Responsável: ${responsavel.nome}${responsavelTelefone ? ` • ${responsavelTelefone}` : ''}`}
 					actions={
 						<>
 							<button type="button" className="btn btn-secondary" onClick={() => navigate('/pacientes')}>
 								Cancelar
 							</button>
-							<button type="submit" form="add-patient-form" className="btn btn-primary" disabled={saving}>
+							<button type="submit" form="add-dependent-form" className="btn btn-primary" disabled={saving}>
 								{saving ? 'A guardar…' : 'Guardar'}
 							</button>
 						</>
 					}
 				/>
 
-				<form id="add-patient-form" className="d-grid gap-3" onSubmit={onSubmit}>
+				<form id="add-dependent-form" className="d-grid gap-3" onSubmit={onSubmit}>
 					<details className="ui-card p-3 patient-details" open>
-						<summary
-							className="fw-bold"
-							style={{ color: 'rgba(30, 42, 53, 0.92)' }}
-						>
+						<summary className="fw-bold" style={{ color: 'rgba(30, 42, 53, 0.92)' }}>
 							Registo dos Pacientes — Identificação Pessoal
 						</summary>
 						<div className="row g-3 mt-2">
@@ -309,8 +349,8 @@ export default function AdicionarPaciente() {
 
 							<div className="col-12">
 								<div className="form-check">
-									<input className="form-check-input" type="checkbox" checked={form.bruxismo} onChange={(e) => updateField('bruxismo', e.target.checked)} id="add-patient-bruxismo" />
-									<label className="form-check-label" htmlFor="add-patient-bruxismo" style={{ fontSize: 13, fontWeight: 800, color: 'rgba(122, 130, 138, 0.95)' }}>
+									<input className="form-check-input" type="checkbox" checked={form.bruxismo} onChange={(e) => updateField('bruxismo', e.target.checked)} id="add-dependent-bruxismo" />
+									<label className="form-check-label" htmlFor="add-dependent-bruxismo" style={{ fontSize: 13, fontWeight: 800, color: 'rgba(122, 130, 138, 0.95)' }}>
 										Bruxismo (aperto/ranger)
 									</label>
 								</div>

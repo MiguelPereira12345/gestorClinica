@@ -1,10 +1,11 @@
 import React, { useMemo } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
 import AppLayout from './components/Layout/AppLayout'
 
 import ConsultaForm from './components/Consultas/ConsultaForm'
 import { createConsulta } from './utils/consultasStorage'
+import { appendTreatmentPlanHistory } from './utils/treatmentPlansStorage'
 
 function defaultInitial() {
 	const now = new Date()
@@ -29,36 +30,62 @@ function defaultInitial() {
 
 export default function NovaConsulta() {
 	const navigate = useNavigate()
-	const initial = useMemo(() => defaultInitial(), [])
+	const location = useLocation()
+	const prefill = location.state?.prefill || null
+	const fromTreatmentPlanId = location.state?.fromTreatmentPlanId || null
+	const initial = useMemo(() => {
+		const base = defaultInitial()
+		if (!prefill) return base
+		return {
+			...base,
+			patientId: prefill.patientId || base.patientId,
+			patientName: prefill.patientName || base.patientName,
+			firstVisitReason: prefill.firstVisitReason || base.firstVisitReason,
+		}
+	}, [prefill])
 
 	return (
 		<AppLayout
 			breadcrumb="Consultas > Nova"
 			userName="Dra. Sofia Lima"
 			actions={
-					<button type="button" className="btn btn-secondary" onClick={() => navigate('/consultas')}>
+				<button type="button" className="btn btn-secondary" onClick={() => navigate('/consultas')}>
 					<ArrowLeft size={16} aria-hidden="true" />
 					Voltar à lista
 				</button>
 			}
 		>
-			<div className="ui-page">
-				<div className="ui-page-header">
-					<div>
-						<h1 className="ui-page-title">Adicionar Consulta</h1>
-						<div className="ui-page-subtitle">Criação rápida conforme Figma e requisitos.</div>
+			<div className="container-fluid py-3">
+				<div className="row justify-content-center">
+					<div className="col-12 col-xl-10 col-xxl-9">
+						<div className="mb-3">
+							<h1 className="h4 mb-1">Adicionar Consulta</h1>
+							<div className="text-muted">Criação rápida conforme Figma e requisitos.</div>
+						</div>
+
+						<ConsultaForm
+							initial={initial}
+							submitLabel="Criar consulta"
+							onCancel={() => navigate('/consultas')}
+							onSubmit={(payload) => {
+									const treatmentPlanId = fromTreatmentPlanId ? String(fromTreatmentPlanId) : ''
+									const created = createConsulta({
+										...payload,
+										treatmentPlanId,
+									})
+									if (treatmentPlanId) {
+										appendTreatmentPlanHistory(treatmentPlanId, {
+											type: 'session',
+											title: 'Sessão marcada',
+											note: `${created.startISO?.slice(0, 16) || ''} • ${created.medicoName || ''}`.trim(),
+											meta: { consultaId: created.id, startISO: created.startISO },
+										})
+									}
+								navigate(`/consultas/${created.id}`)
+							}}
+						/>
 					</div>
 				</div>
-
-				<ConsultaForm
-					initial={initial}
-					submitLabel="Criar consulta"
-					onCancel={() => navigate('/consultas')}
-					onSubmit={(payload) => {
-						const created = createConsulta(payload)
-						navigate(`/consultas/${created.id}`)
-					}}
-				/>
 			</div>
 		</AppLayout>
 	)

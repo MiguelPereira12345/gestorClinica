@@ -77,7 +77,16 @@ export default function ConsultasTable({ rows, onView, onEdit, onSetStatus }) {
 						) : (
 							rows.map((c) => (
 								<tr key={c.id}>
-									<td className="fw-bold">{c.patientName || '—'}</td>
+									<td className="fw-bold">
+										{c.dependentName ? (
+											<div className="d-flex flex-column">
+												<span>{c.dependentName}</span>
+												{c.patientName ? <small className="text-muted fw-normal">Responsável: {c.patientName}</small> : null}
+											</div>
+										) : (
+											c.patientName || '—'
+										)}
+									</td>
 									<td>{c.medicoName || '—'}</td>
 									<td>{c.specialty || '—'}</td>
 									<td>

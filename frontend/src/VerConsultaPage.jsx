@@ -153,7 +153,7 @@ export default function VerConsultaPage() {
 			<div className="ui-page">
 				<div className="ui-page-header">
 					<div>
-						<h1 className="ui-page-title">{consulta.patientName || 'Consulta'}</h1>
+						<h1 className="ui-page-title">{(consulta.dependentName || consulta.patientName) || 'Consulta'}</h1>
 						<div className="ui-page-subtitle">{subtitle}</div>
 					</div>
 				</div>
@@ -171,7 +171,12 @@ export default function VerConsultaPage() {
 
 							<div className="row g-2 align-items-baseline py-2 border-top">
 								<div className="col-5 col-md-4"><div className="ui-meta">Paciente</div></div>
-								<div className="col"><div className="fw-semibold">{consulta.patientName || '—'}</div></div>
+								<div className="col">
+									<div className="fw-semibold">{consulta.dependentName || consulta.patientName || '—'}</div>
+									{consulta.dependentName && consulta.patientName ? (
+										<div className="text-muted small">Responsável: {consulta.patientName}</div>
+									) : null}
+								</div>
 							</div>
 							<div className="row g-2 align-items-baseline py-2 border-top">
 								<div className="col-5 col-md-4"><div className="ui-meta">Profissional</div></div>
@@ -311,7 +316,10 @@ export default function VerConsultaPage() {
 							<div className="row g-3">
 								<div className="col-md-6">
 									<label className="form-label">Paciente</label>
-									<input className="form-control" value={consulta.patientName || ''} readOnly />
+									<input className="form-control" value={(consulta.dependentName || consulta.patientName) || ''} readOnly />
+									{consulta.dependentName && consulta.patientName ? (
+										<div className="form-text">Responsável: {consulta.patientName}</div>
+									) : null}
 								</div>
 								<div className="col-md-6">
 									<label className="form-label">Profissional</label>
@@ -333,7 +341,9 @@ export default function VerConsultaPage() {
 								className="btn btn-primary"
 								onClick={() =>
 									openPresenceDeclaration({
-										patientName: consulta.patientName,
+												patientName: consulta.dependentName
+													? `${consulta.dependentName}${consulta.patientName ? ` (Dependente de ${consulta.patientName})` : ' (Dependente)'}`
+													: consulta.patientName,
 										professionalName: consulta.medicoName,
 										dateStr: formatDatePT(consulta.startISO),
 										entryTime: presenceEntryTime,
@@ -346,31 +356,7 @@ export default function VerConsultaPage() {
 					</section>
 					</div>
 
-					<div className="col-12 col-lg-5">
-						<section className="ui-card p-3" aria-label="Resumo de Faturação">
-							<div className="mb-2">
-								<div className="fw-bold">Resumo de Faturação</div>
-								<div className="ui-meta">Informação para cobrança</div>
-							</div>
 
-							<div className="row g-2 align-items-baseline py-2 border-top">
-								<div className="col-5"><div className="ui-meta">Serviço</div></div>
-								<div className="col"><div className="fw-semibold">{billing?.service || '—'}</div></div>
-							</div>
-							<div className="row g-2 align-items-baseline py-2 border-top">
-								<div className="col-5"><div className="ui-meta">Pagador</div></div>
-								<div className="col"><div className="fw-semibold">{billing?.payer || '—'}</div></div>
-							</div>
-							<div className="row g-2 align-items-baseline py-2 border-top">
-								<div className="col-5"><div className="ui-meta">Estado</div></div>
-								<div className="col"><div className="fw-semibold">{billing?.state || '—'}</div></div>
-							</div>
-							<div className="row g-2 align-items-baseline py-2 border-top">
-								<div className="col-5"><div className="ui-meta">Valor</div></div>
-								<div className="col"><div className="fw-semibold">{billing ? formatMoneyEUR(billing.amount) : '—'}</div></div>
-							</div>
-						</section>
-					</div>
 				</div>
 			</div>
 		</AppLayout>

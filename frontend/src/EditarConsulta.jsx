@@ -49,7 +49,7 @@ export default function EditarConsulta() {
 				<div className="ui-page-header">
 					<div>
 						<h1 className="ui-page-title">Editar Consulta</h1>
-						<div className="ui-page-subtitle">{consulta.patientName} • {consulta.id}</div>
+						<div className="ui-page-subtitle">{(consulta.dependentName || consulta.patientName) || 'Consulta'} • {consulta.id}</div>
 					</div>
 				</div>
 

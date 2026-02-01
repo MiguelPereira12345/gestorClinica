@@ -1,5 +1,16 @@
 const STORAGE_KEY = 'gestorClinica.pacientes'
 
+function normalizePhone(value) {
+	if (!value) return ''
+	return String(value)
+		.trim()
+		.replace(/[^0-9+]/g, '')
+}
+
+function phoneDigits(value) {
+	return normalizePhone(value).replace(/\D/g, '')
+}
+
 function safeParse(json) {
 	try {
 		return JSON.parse(json)
@@ -20,6 +31,38 @@ export function savePatients(patients) {
 
 export function getPatientById(id) {
 	return loadPatients().find((p) => p?.id === id) || null
+}
+
+export function getEffectivePhone(patient, allPatients = null) {
+	if (!patient) return ''
+	const own = patient?.telefone || patient?.data?.contactoTelefone || ''
+	if (own && String(own).trim()) return String(own).trim()
+	const responsavelId = patient?.responsavelId || patient?.data?.responsavelId
+	if (!responsavelId) return ''
+	const list = Array.isArray(allPatients) ? allPatients : loadPatients()
+	const responsavel = list.find((p) => p?.id === responsavelId)
+	const inherited = responsavel?.telefone || responsavel?.data?.contactoTelefone || ''
+	return inherited ? String(inherited).trim() : ''
+}
+
+export function getDependentsOf(responsavelId, allPatients = null) {
+	const list = Array.isArray(allPatients) ? allPatients : loadPatients()
+	return list.filter((p) => (p?.responsavelId || p?.data?.responsavelId) === responsavelId)
+}
+
+export function matchesNameOrPhone(patient, query, allPatients = null) {
+	const q = String(query || '').trim()
+	if (!q) return true
+	const qLower = q.toLowerCase()
+
+	const nome = String(patient?.nome || '').toLowerCase()
+	if (nome.includes(qLower)) return true
+
+	const qDigits = phoneDigits(q)
+	if (!qDigits) return false
+	const effective = getEffectivePhone(patient, allPatients)
+	const effectiveDigits = phoneDigits(effective)
+	return effectiveDigits.includes(qDigits)
 }
 
 export function upsertPatient(patient) {
@@ -61,6 +104,7 @@ export function createEmptyPatientForm() {
 		endereco: '',
 		contactoTelefone: '',
 		contactoEmail: '',
+		responsavelId: '',
 		numeroUtente: '',
 		nif: '',
 		subsistemasSaude: '',
@@ -110,6 +154,8 @@ export function patientToForm(patient) {
 		// manter compatibilidade com o que guardamos na criação
 		nomeCompleto: data.nomeCompleto || patient?.nome || base.nomeCompleto,
 		contactoEmail: data.contactoEmail || patient?.email || base.contactoEmail,
+		contactoTelefone: data.contactoTelefone || patient?.telefone || base.contactoTelefone,
+		responsavelId: data.responsavelId || patient?.responsavelId || base.responsavelId,
 	}
 }
 
@@ -123,16 +169,21 @@ export function buildPatientRecordFromForm({
 	const now = new Date().toISOString()
 	const nome = (form?.nomeCompleto || '').trim()
 	const email = (form?.contactoEmail || '').trim()
+	const telefone = (form?.contactoTelefone || '').trim()
+	const responsavelId = (form?.responsavelId || '').trim()
 
 	return {
 		id: id || `P${Date.now()}`,
 		nome,
-		email,
+		telefone: telefone || '',
+		email: email || '',
+		responsavelId: responsavelId || null,
 		estado: estado || 'Ativo',
 		createdAt: createdAt || now,
 		updatedAt: now,
 		data: {
 			...form,
+			responsavelId: responsavelId || null,
 			anexosClinicos: Array.isArray(anexosClinicos) ? anexosClinicos : [],
 		},
 	}

@@ -1,8 +1,43 @@
-import React, { useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { CONSULTA_STATUS, DURACOES_MIN, TIPO_MARCACAO } from '../../utils/consultasStorage'
 import { combineDateAndTimeToISO, toInputDate, toInputTime } from '../../utils/dateTime'
 import { ESPECIALIDADES, PROFESSIONALS } from '../../utils/consultasLookups'
+import { listAvailableSlots } from '../../utils/appointmentStorage'
+import { loadPatients } from '../../utils/patientStorage'
+
+const SAMPLE_PATIENTS = [
+	{ id: 'P001', nome: 'Maria Gonzalez', telefone: '912 345 678' },
+	{ id: 'P002', nome: 'Liam Chen', telefone: '913 222 111' },
+	{ id: 'P003', nome: 'Sofia Martins', telefone: '914 000 999' },
+	{ id: 'P004', nome: 'Noah Patel', telefone: '915 123 456' },
+]
+
+function normalizePatient(p) {
+	return {
+		id: p?.id,
+		nome: p?.nome,
+		responsavelId: p?.responsavelId || p?.data?.responsavelId || null,
+		telefone: p?.telefone || p?.data?.contactoTelefone || '',
+	}
+}
+
+function normalizeText(value) {
+	return String(value || '')
+		.normalize('NFD')
+		.replace(/[\u0300-\u036f]/g, '')
+		.toLowerCase()
+		.trim()
+}
+
+function digitsOnly(value) {
+	return String(value || '').replace(/\D+/g, '')
+}
+
+function parseInputDateToLocalDate(dateStr) {
+	const [y, m, d] = String(dateStr || '').split('-').map(Number)
+	if (!y || !m || !d) return null
+	return new Date(y, m - 1, d)
+}
 
 function getProfessionalById(id) {
 	return PROFESSIONALS.find((p) => String(p.id) === String(id)) || null
@@ -14,10 +49,17 @@ export default function ConsultaForm({
 	onSubmit,
 	onCancel,
 }) {
-	const navigate = useNavigate()
+	const patientInputRef = useRef(null)
+	const patientPopoverRef = useRef(null)
+	const timeButtonRef = useRef(null)
+	const timePopoverRef = useRef(null)
+
 	const [form, setForm] = useState(() => ({
 		patientId: initial?.patientId || '',
 		patientName: initial?.patientName || '',
+		forDependent: Boolean(initial?.dependentName),
+		dependentId: '',
+		dependentName: initial?.dependentName || '',
 		medicoId: String(initial?.medicoId || ''),
 		medicoName: initial?.medicoName || '',
 		specialty: initial?.specialty || 'Clínica Geral',
@@ -30,24 +72,144 @@ export default function ConsultaForm({
 		notes: initial?.notes || '',
 	}))
 	const [error, setError] = useState('')
+	const [showPatientResults, setShowPatientResults] = useState(false)
+	const [showTimeResults, setShowTimeResults] = useState(false)
 
 	const professionalOptions = useMemo(() => PROFESSIONALS, [])
+
+	const patients = useMemo(() => {
+		const stored = loadPatients().map(normalizePatient)
+		const map = new Map()
+		for (const p of [...stored, ...SAMPLE_PATIENTS]) {
+			if (!p?.id) continue
+			map.set(p.id, p)
+		}
+		return Array.from(map.values())
+	}, [])
+
+	const patientResults = useMemo(() => {
+		const qText = normalizeText(form.patientName)
+		const qDigits = digitsOnly(form.patientName)
+		if (!qText && !qDigits) return []
+		const scored = []
+		for (const p of patients) {
+			const nameNorm = normalizeText(p.nome)
+			const idNorm = normalizeText(p.id)
+			const phoneRaw = String(p.telefone || '')
+			const phoneNorm = normalizeText(phoneRaw)
+			const phoneDigits = digitsOnly(phoneRaw)
+			const hay = `${nameNorm} ${idNorm} ${phoneNorm} ${phoneDigits}`
+
+			const matchesText = qText ? hay.includes(qText) : false
+			const matchesDigits = qDigits ? phoneDigits.includes(qDigits) || idNorm.includes(qDigits) : false
+			if (!matchesText && !matchesDigits) continue
+
+			let score = 50
+			if (qDigits && phoneDigits.startsWith(qDigits)) score = 95
+			else if (qText && idNorm === qText) score = 100
+			else if (qText && nameNorm.startsWith(qText)) score = 80
+			else if (qText && idNorm.startsWith(qText)) score = 70
+			scored.push({ p, score })
+		}
+		scored.sort((a, b) => b.score - a.score)
+		return scored.slice(0, 8).map((x) => x.p)
+	}, [form.patientName, patients])
 
 	function update(patch) {
 		setForm((prev) => ({ ...prev, ...patch }))
 		setError('')
 	}
 
+	function pickPatient(p) {
+		update({
+			patientName: p.nome || '',
+			patientId: p.id || '',
+			dependentId: '',
+			dependentName: '',
+		})
+		setShowPatientResults(false)
+	}
+
+	const dependentsForSelectedPatient = useMemo(() => {
+		const responsavelId = String(form.patientId || '').trim()
+		if (!responsavelId) return []
+		return patients
+			.filter((p) => String(p?.responsavelId || '') === responsavelId)
+			.sort((a, b) => String(a?.nome || '').localeCompare(String(b?.nome || ''), 'pt-PT'))
+	}, [form.patientId, patients])
+
+	useEffect(() => {
+		if (!form.forDependent) return
+		if (!form.patientId) return
+		if (form.dependentId) return
+		if (!form.dependentName) return
+		const target = normalizeText(form.dependentName)
+		if (!target) return
+		const match = dependentsForSelectedPatient.find((d) => normalizeText(d?.nome) === target)
+		if (!match?.id) return
+		setForm((prev) => ({ ...prev, dependentId: match.id }))
+	}, [dependentsForSelectedPatient, form.dependentId, form.dependentName, form.forDependent, form.patientId])
+
+	useEffect(() => {
+		function onMouseDown(e) {
+			const pop = patientPopoverRef.current
+			const input = patientInputRef.current
+			if (!pop || !input) return
+			if (pop.contains(e.target) || input.contains(e.target)) return
+			setShowPatientResults(false)
+		}
+		window.addEventListener('mousedown', onMouseDown)
+		return () => window.removeEventListener('mousedown', onMouseDown)
+	}, [])
+
+	useEffect(() => {
+		function onMouseDown(e) {
+			const pop = timePopoverRef.current
+			const btn = timeButtonRef.current
+			if (!pop || !btn) return
+			if (pop.contains(e.target) || btn.contains(e.target)) return
+			setShowTimeResults(false)
+		}
+		window.addEventListener('mousedown', onMouseDown)
+		return () => window.removeEventListener('mousedown', onMouseDown)
+	}, [])
+
 	function validate() {
 		if (!String(form.patientName || '').trim()) return 'Indica o paciente.'
 		if (!String(form.medicoId || '').trim()) return 'Seleciona um profissional.'
 		if (!String(form.specialty || '').trim()) return 'Seleciona a especialidade.'
+		if (form.forDependent) {
+			if (!String(form.patientId || '').trim()) return 'Seleciona um paciente da lista para poderes escolher o dependente.'
+			if (!String(form.dependentId || '').trim()) return 'Seleciona o dependente.'
+		}
 		if (!form.date) return 'Seleciona a data.'
-		if (!form.time) return 'Seleciona a hora.'
+		if (!form.time) return 'Seleciona a hora (apenas horários disponíveis).'
 		const startISO = combineDateAndTimeToISO(form.date, form.time)
 		if (!startISO) return 'Data/hora inválida.'
 		return ''
 	}
+
+	const availableTimes = useMemo(() => {
+		const day = parseInputDateToLocalDate(form.date)
+		const medicoId = Number(form.medicoId)
+		if (!day || !Number.isFinite(medicoId) || !medicoId) return []
+		const res = listAvailableSlots({
+			date: day,
+			medicoId,
+			durationMin: Number(form.durationMin || 30),
+			limit: 200,
+			stepMin: 15,
+			excludeAppointmentId: initial?.id,
+		})
+		return Array.isArray(res?.slots) ? res.slots : []
+	}, [form.date, form.durationMin, form.medicoId, initial?.id])
+
+	useEffect(() => {
+		if (!form.time) return
+		if (availableTimes.includes(form.time)) return
+		// if the current time isn't available for the selected day/professional/duration, clear it
+		setForm((prev) => ({ ...prev, time: '' }))
+	}, [availableTimes, form.time])
 
 	function submit() {
 		const v = validate()
@@ -60,6 +222,7 @@ export default function ConsultaForm({
 		const payload = {
 			patientId: String(form.patientId || '').trim() || undefined,
 			patientName: String(form.patientName || '').trim(),
+			dependentName: form.forDependent ? String(form.dependentName || '').trim() : '',
 			medicoId: Number(form.medicoId),
 			medicoName: prof?.name || form.medicoName || 'Profissional',
 			specialty: form.specialty,
@@ -76,40 +239,98 @@ export default function ConsultaForm({
 	}
 
 	return (
-		<section className="ui-card p-3" aria-label="Formulário de consulta">
-			<div className="mb-3">
-				<div className="fw-bold">Dados da Consulta</div>
-				<div className="ui-meta">Preenche a informação conforme o processo clínico.</div>
-			</div>
-
-			<div className="row g-3">
-				<div className="col-md-6">
-					<label className="form-label">Paciente</label>
-					<input
-						className="form-control"
-						placeholder="Nome do paciente"
-						value={form.patientName}
-						onChange={(e) => update({ patientName: e.target.value })}
-					/>
+		<section className="card shadow-sm" aria-label="Formulário de consulta">
+			<div className="card-body">
+				<div className="mb-3">
+					<h5 className="card-title mb-1">Dados da Consulta</h5>
+					<div className="text-muted small">Preenche a informação conforme o processo clínico.</div>
 				</div>
 
-				<div className="col-md-6">
-					<label className="form-label">ID do paciente (opcional)</label>
-					<div className="d-flex gap-2">
+			<div className="row g-3">
+				<div className="col-12">
+					<label className="form-label">Paciente</label>
+					<div className="position-relative">
 						<input
+							ref={patientInputRef}
 							className="form-control"
-							placeholder="Ex: P001"
-							value={form.patientId}
-							onChange={(e) => update({ patientId: e.target.value })}
+							placeholder="Pesquisar por nome, telefone ou ID"
+							value={form.patientName}
+							onChange={(e) => {
+								update({ patientName: e.target.value, patientId: '', dependentId: '', dependentName: '' })
+								setShowPatientResults(true)
+							}}
+							onFocus={() => setShowPatientResults(true)}
+							autoComplete="off"
 						/>
-						<button
-							type="button"
-							className="btn btn-light"
-							onClick={() => navigate('/pacientes/novo')}
-						>
-							Criar paciente
-						</button>
+						{showPatientResults && patientResults.length ? (
+							<div ref={patientPopoverRef} className="dropdown-menu show w-100 p-0" role="listbox">
+								{patientResults.map((p) => (
+									<button key={p.id} type="button" className="dropdown-item py-2" onClick={() => pickPatient(p)}>
+										<div className="fw-semibold">{p.nome}</div>
+										<div className="text-muted small">
+											{p.id}
+											{p.telefone ? ` • ${p.telefone}` : ''}
+										</div>
+									</button>
+								))}
+							</div>
+						) : null}
 					</div>
+				</div>
+
+				<div className="col-12">
+					<div className="form-check form-switch">
+						<input
+							className="form-check-input"
+							type="checkbox"
+							role="switch"
+							id="consultaForDependent"
+							checked={Boolean(form.forDependent)}
+							onChange={(e) => {
+								const checked = e.target.checked
+								update({
+									forDependent: checked,
+									dependentId: '',
+									dependentName: '',
+								})
+							}}
+						/>
+						<label className="form-check-label" htmlFor="consultaForDependent">
+							Consulta para dependente
+						</label>
+					</div>
+
+					{form.forDependent ? (
+						<div className="mt-2">
+							<label className="form-label">Dependente</label>
+							{!String(form.patientId || '').trim() ? (
+								<div className="alert alert-warning py-2 mb-0" role="alert">
+									Seleciona primeiro um paciente na pesquisa para listar os dependentes.
+								</div>
+							) : dependentsForSelectedPatient.length === 0 ? (
+								<div className="alert alert-warning py-2 mb-0" role="alert">
+									Este paciente não tem dependentes registados.
+								</div>
+							) : (
+								<select
+									className="form-select"
+									value={form.dependentId}
+									onChange={(e) => {
+										const depId = e.target.value
+										const dep = dependentsForSelectedPatient.find((d) => String(d.id) === String(depId))
+										update({ dependentId: depId, dependentName: dep?.nome || '' })
+									}}
+								>
+									<option value="">Selecione</option>
+									{dependentsForSelectedPatient.map((d) => (
+										<option key={d.id} value={d.id}>
+											{d.nome}
+										</option>
+									))}
+								</select>
+							)}
+						</div>
+					) : null}
 				</div>
 
 				<div className="col-md-6">
@@ -155,12 +376,54 @@ export default function ConsultaForm({
 
 				<div className="col-md-6">
 					<label className="form-label">Hora</label>
-					<input
-						type="time"
-						className="form-control"
-						value={form.time}
-						onChange={(e) => update({ time: e.target.value })}
-					/>
+					<div className="position-relative">
+						<button
+							ref={timeButtonRef}
+							type="button"
+							className="form-select text-start"
+							disabled={!form.date || !String(form.medicoId || '').trim()}
+							aria-haspopup="listbox"
+							aria-expanded={showTimeResults}
+							onClick={() => setShowTimeResults((v) => !v)}
+						>
+							{form.time || 'Selecione'}
+						</button>
+
+						{showTimeResults ? (
+							<div
+								ref={timePopoverRef}
+								className="dropdown-menu show w-100 p-0"
+								role="listbox"
+								style={{ top: '100%', left: 0, right: 0, maxHeight: 280, overflowY: 'auto' }}
+							>
+								{availableTimes.length ? (
+									availableTimes.map((t) => (
+										<button
+											key={t}
+											type="button"
+											className={`dropdown-item py-2 ${form.time === t ? 'active' : ''}`}
+											onClick={() => {
+												update({ time: t })
+												setShowTimeResults(false)
+											}}
+										>
+											{t}
+										</button>
+									))
+								) : (
+									<div className="px-3 py-2 text-muted small">Sem horários disponíveis.</div>
+								)}
+							</div>
+						) : null}
+					</div>
+
+					{form.date && String(form.medicoId || '').trim() ? (
+						availableTimes.length ? null : (
+							<div className="form-text text-danger">Sem horários disponíveis para este dia/duração.</div>
+						)
+					) : (
+						<div className="form-text">Seleciona primeiro a data e o profissional.</div>
+					)}
 				</div>
 
 				<div className="col-md-6">
@@ -193,24 +456,11 @@ export default function ConsultaForm({
 					</select>
 				</div>
 
-				<div className="col-md-6">
-					<label className="form-label">Estado</label>
-					<select
-						className="form-select"
-						value={form.bookingStatus}
-						onChange={(e) => update({ bookingStatus: e.target.value })}
-					>
-						{CONSULTA_STATUS.map((s) => (
-							<option key={s.id} value={s.id}>
-								{s.label}
-							</option>
-						))}
-					</select>
-				</div>
+
 			</div>
 
 			<div className="mt-3">
-				<label className="form-label">Razão da primeira visita</label>
+				<label className="form-label">Razão da consulta</label>
 				<textarea
 					className="form-control"
 					rows={2}
@@ -242,6 +492,7 @@ export default function ConsultaForm({
 				<button type="button" className="btn btn-primary" onClick={submit}>
 					{submitLabel}
 				</button>
+			</div>
 			</div>
 		</section>
 	)

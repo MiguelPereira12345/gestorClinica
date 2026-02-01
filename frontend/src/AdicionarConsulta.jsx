@@ -16,10 +16,10 @@ import {
 import { loadPatients } from './utils/patientStorage'
 
 const SAMPLE_PATIENTS = [
-	{ id: 'P001', nome: 'Maria Gonzalez', email: 'maria.gonzalez@example.com' },
-	{ id: 'P002', nome: 'Liam Chen', email: 'liam.chen@example.com' },
-	{ id: 'P003', nome: 'Sofia Martins', email: 'sofia.martins@example.com' },
-	{ id: 'P004', nome: 'Noah Patel', email: 'noah.patel@example.com' },
+	{ id: 'P001', nome: 'Maria Gonzalez', telefone: '912 345 678' },
+	{ id: 'P002', nome: 'Liam Chen', telefone: '913 222 111' },
+	{ id: 'P003', nome: 'Sofia Martins', telefone: '914 000 999' },
+	{ id: 'P004', nome: 'Noah Patel', telefone: '915 123 456' },
 ]
 
 const APPOINTMENT_TYPES = [
@@ -75,6 +75,7 @@ export default function AdicionarConsulta() {
 	const [typeId, setTypeId] = useState(APPOINTMENT_TYPES[0]?.id)
 	const [professionalId, setProfessionalId] = useState('any') // any | number
 	const [bookingStatus, setBookingStatus] = useState('a_confirmar') // confirmada | a_confirmar
+	const [firstVisitReason, setFirstVisitReason] = useState('')
 	const [notes, setNotes] = useState('')
 	const [notesExpanded, setNotesExpanded] = useState(false)
 
@@ -82,7 +83,11 @@ export default function AdicionarConsulta() {
 	const [error, setError] = useState('')
 
 	const patients = useMemo(() => {
-		const stored = loadPatients().map((p) => ({ id: p.id, nome: p.nome, email: p.email || '' }))
+		const stored = loadPatients().map((p) => ({
+			id: p.id,
+			nome: p.nome,
+			telefone: p.telefone || p?.data?.contactoTelefone || '',
+		}))
 		const map = new Map()
 		for (const p of [...stored, ...SAMPLE_PATIENTS]) map.set(p.id, p)
 		return Array.from(map.values())
@@ -96,7 +101,7 @@ export default function AdicionarConsulta() {
 		if (!q) return []
 		const scored = []
 		for (const p of patients) {
-			const hay = `${p.nome} ${p.id} ${p.email || ''}`.toLowerCase()
+			const hay = `${p.nome} ${p.id} ${p.telefone || ''}`.toLowerCase()
 			if (!hay.includes(q)) continue
 			const score = p.id.toLowerCase() === q ? 100 : p.nome.toLowerCase().startsWith(q) ? 80 : 50
 			scored.push({ p, score })
@@ -222,10 +227,11 @@ export default function AdicionarConsulta() {
 			'',
 			`Paciente: ${selectedPatient.nome} (${selectedPatient.id})`,
 			`Motivo: ${selectedType.label} (${durationMin} min)`,
+			firstVisitReason ? `Razão: ${firstVisitReason}` : null,
 			`Quando: ${formatSlotLabel(selectedSlot.date, selectedSlot.hhmm)}`,
 			`Profissional: ${medicoName}`,
 			`Estado: ${bookingStatus === 'confirmada' ? 'Confirmada' : 'A confirmar'}`,
-		].join('\n')
+		].filter(Boolean).join('\n')
 
 		if (!window.confirm(confirmText)) return
 
@@ -239,7 +245,7 @@ export default function AdicionarConsulta() {
 			medicoName,
 			bookingType: 'vaga',
 			bookingStatus,
-			firstVisitReason: '',
+			firstVisitReason: (firstVisitReason || '').trim(),
 			isReschedule: false,
 			isNoShow: false,
 			durationMin,
@@ -322,16 +328,17 @@ export default function AdicionarConsulta() {
 				</button>
 			}
 		>
-			<div className="ui-page" aria-label="Marcar consulta">
+			<div className="container-fluid py-3" aria-label="Marcar consulta">
 				<div className="row g-3">
 					<section className="col-12 col-lg-4" aria-label="Formulário">
 						<div className="mcx-sticky-lg">
-							<div className="ui-card p-3">
-								<div className="fw-bold">Marcar consulta</div>
+							<div className="card shadow-sm">
+								<div className="card-body">
+									<h5 className="card-title mb-3">Marcar consulta</h5>
 
-								<div className="mt-3">
-									<label className="form-label" htmlFor="patient-search">Paciente</label>
-									<div className="d-flex gap-2 align-items-start">
+									<div className="mb-3">
+										<label className="form-label" htmlFor="patient-search">Paciente</label>
+										<div className="d-flex gap-2 align-items-start">
 										<div className="position-relative flex-grow-1">
 											<input
 												id="patient-search"
@@ -345,7 +352,7 @@ export default function AdicionarConsulta() {
 													setError('')
 												}}
 												onFocus={() => setShowPatientResults(true)}
-												placeholder="Pesquisar por nome, ID ou email (atalho: /)"
+													placeholder="Pesquisar por nome, ID ou telefone (atalho: /)"
 												autoComplete="off"
 											/>
 											{showPatientResults && patientResults.length ? (
@@ -353,7 +360,7 @@ export default function AdicionarConsulta() {
 													{patientResults.map((p) => (
 														<button key={p.id} type="button" className="dropdown-item py-2" onClick={() => pickPatient(p)}>
 															<div className="fw-semibold">{p.nome}</div>
-															<div className="ui-meta">{p.id}{p.email ? ` • ${p.email}` : ''}</div>
+																<div className="text-muted small">{p.id}{p.telefone ? ` • ${p.telefone}` : ''}</div>
 														</button>
 													))}
 												</div>
@@ -364,13 +371,14 @@ export default function AdicionarConsulta() {
 										</button>
 									</div>
 									{selectedPatient ? (
-										<div className="mt-2 p-2 rounded border border-success border-opacity-25 bg-success bg-opacity-10">
-											Selecionado: <strong>{selectedPatient.nome}</strong> <span className="ui-meta">({selectedPatient.id})</span>
+										<div className="alert alert-success py-2 mt-2 mb-0" role="status">
+											Selecionado: <strong>{selectedPatient.nome}</strong>{' '}
+											<span className="text-muted">({selectedPatient.id})</span>
 										</div>
 									) : null}
 								</div>
 
-								<div className="mt-3">
+								<div className="mb-3">
 									<label className="form-label">Tipo/Motivo</label>
 									<select className="form-select" value={typeId} onChange={(e) => setTypeId(e.target.value)}>
 										{APPOINTMENT_TYPES.map((t) => (
@@ -381,7 +389,7 @@ export default function AdicionarConsulta() {
 									</select>
 								</div>
 
-								<div className="mt-3">
+								<div className="mb-3">
 									<label className="form-label">Profissional</label>
 									<select className="form-select" value={professionalId} onChange={(e) => setProfessionalId(e.target.value)}>
 										<option value="any">Qualquer (mais rápido)</option>
@@ -393,7 +401,7 @@ export default function AdicionarConsulta() {
 									</select>
 								</div>
 
-								<div className="mt-3">
+								<div className="mb-3">
 									<label className="form-label">Estado</label>
 									<div className="btn-group w-100" role="group" aria-label="Estado">
 										<button
@@ -413,7 +421,19 @@ export default function AdicionarConsulta() {
 									</div>
 								</div>
 
-								<div className="mt-3">
+								<div className="mb-3">
+									<label className="form-label" htmlFor="reason">Razão da consulta</label>
+									<textarea
+										id="reason"
+										className="form-control"
+										rows={2}
+										value={firstVisitReason}
+										onChange={(e) => setFirstVisitReason(e.target.value)}
+										placeholder="Ex.: dor, revisão, acompanhamento…"
+									/>
+								</div>
+
+								<div className="mb-3">
 									<div className="d-flex align-items-center justify-content-between gap-2">
 										<label className="form-label mb-0" htmlFor="notes">Notas</label>
 										<button type="button" className="btn btn-link p-0" onClick={() => setNotesExpanded((v) => !v)}>
@@ -430,20 +450,22 @@ export default function AdicionarConsulta() {
 									/>
 								</div>
 
-								<div className="mt-3">
+								<div className="mb-0">
 									{selectedSlot ? (
-										<div className="p-2 rounded border bg-light">
-											<div className="fw-bold mb-1">Horário escolhido</div>
-											<div className="d-flex gap-2 flex-wrap align-items-baseline">
-												<strong>{formatSlotLabel(selectedSlot.date, selectedSlot.hhmm)}</strong>
-												<span className="ui-meta">• {resources.find((r) => r.id === selectedSlot.medicoId)?.name || 'Profissional'}</span>
+										<div className="card bg-light border-0">
+											<div className="card-body py-2">
+												<div className="fw-bold mb-1">Horário escolhido</div>
+												<div className="d-flex gap-2 flex-wrap align-items-baseline">
+													<strong>{formatSlotLabel(selectedSlot.date, selectedSlot.hhmm)}</strong>
+													<span className="text-muted">• {resources.find((r) => r.id === selectedSlot.medicoId)?.name || 'Profissional'}</span>
+												</div>
+												<button type="button" className="btn btn-link p-0" onClick={() => setSelectedSlot(null)}>
+													Limpar (Esc)
+												</button>
 											</div>
-											<button type="button" className="btn btn-link p-0" onClick={() => setSelectedSlot(null)}>
-												Limpar (Esc)
-											</button>
 										</div>
 									) : (
-										<div className="ui-meta">Dica: escolhe o horário na coluna da direita (1 clique).</div>
+										<div className="text-muted small">Dica: escolhe o horário na coluna da direita (1 clique).</div>
 									)}
 								</div>
 
@@ -452,28 +474,34 @@ export default function AdicionarConsulta() {
 										{error}
 									</div>
 								) : null}
+								</div>
 							</div>
 
 							<div className="mcx-sticky-bottom mt-3">
-								<button type="button" className="btn btn-primary w-100" onClick={submit}>
-									Marcar consulta
-								</button>
-								<div className="ui-meta d-flex flex-wrap gap-2 mt-2">
-									<span>/ pesquisar paciente</span>
-									<span>Ctrl+Enter marcar</span>
-									<span>Alt+N novo paciente</span>
+								<div className="card shadow-sm">
+									<div className="card-body">
+										<button type="button" className="btn btn-primary w-100" onClick={submit}>
+											Marcar consulta
+										</button>
+										<div className="text-muted small d-flex flex-wrap gap-2 mt-2">
+											<span>/ pesquisar paciente</span>
+											<span>Ctrl+Enter marcar</span>
+											<span>Alt+N novo paciente</span>
+										</div>
+									</div>
 								</div>
 							</div>
 						</div>
 					</section>
 
 					<aside className="col-12 col-lg-8" aria-label="Disponibilidade">
-						<div className="ui-card p-3">
-							<div className="d-flex justify-content-between align-items-start gap-2 flex-wrap mb-3">
-								<div>
-									<div className="fw-bold">Disponibilidade</div>
-									<div className="ui-meta">Sem inserir hora manualmente — escolhe um slot.</div>
-								</div>
+						<div className="card shadow-sm">
+							<div className="card-body">
+								<div className="d-flex justify-content-between align-items-start gap-2 flex-wrap mb-3">
+									<div>
+										<h5 className="card-title mb-1">Disponibilidade</h5>
+										<div className="text-muted small">Sem inserir hora manualmente — escolhe um slot.</div>
+									</div>
 								<div className="btn-group" role="tablist" aria-label="Modo de disponibilidade">
 									<button
 										type="button"
@@ -513,7 +541,7 @@ export default function AdicionarConsulta() {
 										}}
 										getDayMeta={getDayMeta}
 									/>
-									<div className="ui-meta mt-2">Dias a cinzento: sem horários para o tipo/duração atual.</div>
+										<div className="text-muted small mt-2">Dias a cinzento: sem horários para o tipo/duração atual.</div>
 								</div>
 
 								<div className="col-12 col-md-7">
@@ -544,7 +572,7 @@ export default function AdicionarConsulta() {
 													})}
 												</div>
 											) : (
-												<div className="ui-meta">Sem horários nos próximos dias para este tipo/duração.</div>
+													<div className="text-muted small">Sem horários nos próximos dias para este tipo/duração.</div>
 											)}
 										</>
 									) : (
@@ -563,7 +591,7 @@ export default function AdicionarConsulta() {
 												))}
 											</div>
 											{professionalId === 'any' ? (
-												<div className="ui-meta">Escolhe um profissional acima para ver os slots.</div>
+													<div className="text-muted small">Escolhe um profissional acima para ver os slots.</div>
 											) : (
 												(() => {
 													const pid = Number(professionalId)
@@ -589,13 +617,14 @@ export default function AdicionarConsulta() {
 															))}
 														</div>
 													) : (
-														<div className="ui-meta">Sem horários neste dia para este tipo/duração.</div>
+															<div className="text-muted small">Sem horários neste dia para este tipo/duração.</div>
 													)
 												})()
 											)}
 										</>
 									)}
 								</div>
+							</div>
 							</div>
 						</div>
 					</aside>

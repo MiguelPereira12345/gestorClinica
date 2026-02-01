@@ -242,6 +242,7 @@ export function createConsulta(payload) {
 		patientId: payload?.patientId || '',
 		patientName: payload?.patientName || '',
 		dependentName: payload?.dependentName || '',
+		treatmentPlanId: payload?.treatmentPlanId || '',
 		notes: payload?.notes || '',
 		specialty: payload?.specialty || '',
 		medicoId: Number(payload?.medicoId || 0) || 0,

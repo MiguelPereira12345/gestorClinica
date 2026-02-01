@@ -7,10 +7,10 @@ import Recuperarpass from './Recuperarpass'
 import Pacientes from './Pacientes'
 import PaginaInicial from './PaginaInicial'
 import Agenda from './Agenda'
-import AdicionarConsulta from './AdicionarConsulta'
 import EditarDetalhes from './EditarDetalhes'
 import VerExames from './VerExames'
 import AdicionarPaciente from './AdicionarPaciente'
+import AdicionarDependente from './AdicionarDependente'
 import VerPaciente from './VerPaciente'
 import EditarPaciente from './EditarPaciente'
 import ConsultasLista from './ConsultasLista'
@@ -21,6 +21,7 @@ import ColaboradoresLista from './ColaboradoresLista'
 import DetalhesColaborador from './DetalhesColaborador'
 import EditarColaborador from './EditarColaborador'
 import NovoColaborador from './NovoColaborador'
+import PlanosTratamento from './PlanosTratamento'
 
 function App() {
   return (
@@ -33,13 +34,16 @@ function App() {
         <Route path="/recuperar-palavra-passe" element={<Recuperarpass />} />
         <Route path="/pacientes" element={<Pacientes />} />
         <Route path="/pacientes/novo" element={<AdicionarPaciente />} />
+        <Route path="/pacientes/:id/dependente/novo" element={<AdicionarDependente />} />
         <Route path="/pacientes/:id" element={<VerPaciente />} />
         <Route path="/pacientes/:id/editar" element={<EditarPaciente />} />
+        <Route path="/pacientes/:id/planos" element={<PlanosTratamento />} />
         <Route path="/pagina-inicial" element={<PaginaInicial />} />
         <Route path="/agenda" element={<Agenda />} />
-        <Route path="/agenda/consultas/novo" element={<AdicionarConsulta />} />
+        <Route path="/agenda/consultas/novo" element={<Navigate to="/consultas/nova" replace />} />
         <Route path="/consultas" element={<ConsultasLista />} />
         <Route path="/consultas/nova" element={<NovaConsulta />} />
+        <Route path="/planos" element={<PlanosTratamento />} />
         <Route path="/consultas/:id" element={<VerConsulta />} />
         <Route path="/consultas/:id/editar" element={<EditarConsulta />} />
         <Route path="/ver-exames" element={<VerExames />} />

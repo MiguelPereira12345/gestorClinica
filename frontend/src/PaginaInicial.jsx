@@ -1,8 +1,10 @@
 import React, { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { Plus, RefreshCw } from 'lucide-react'
 import AppLayout from './components/Layout/AppLayout'
+import PageHeader from './components/UI/PageHeader'
+import Button from './components/UI/Button'
 import ResumoConsultas from './components/PaginaInicial/ResumoConsultas'
-import TarefasAlertas from './components/PaginaInicial/TarefasAlertas'
 import ProximasConsultas from './components/PaginaInicial/ProximasConsultas'
 import Atalhos from './components/PaginaInicial/Atalhos'
 import './App.css'
@@ -12,7 +14,7 @@ export default function PaginaInicial() {
 	const [appointments, setAppointments] = useState(() => [
 		{
 			id: 'a1',
-				paciente: 'Paciente',
+			paciente: 'Paciente',
 			medico: 'Dra. Sofia Lima',
 			tipo: 'Check-up',
 			inicio: '09:30',
@@ -48,40 +50,6 @@ export default function PaginaInicial() {
 		},
 	])
 
-	const tasks = useMemo(
-		() => [
-			{
-				id: 't1',
-				tipo: 'alert',
-				severidade: 'warning',
-				titulo: '3 consultas por confirmar',
-				detalhe: 'Confirmar antes do início da manhã',
-			},
-			{
-				id: 't2',
-				tipo: 'alert',
-				severidade: 'danger',
-				titulo: '1 consentimento RGPD em falta',
-					detalhe: 'Paciente: —',
-			},
-			{
-				id: 't3',
-				tipo: 'task',
-				severidade: 'info',
-				titulo: '2 exames por anexar',
-				detalhe: 'Associar anexos ao episódio clínico',
-			},
-			{
-				id: 't4',
-				tipo: 'task',
-				severidade: 'info',
-				titulo: '1 pagamento pendente',
-				detalhe: 'Verificar no final do dia',
-			},
-		],
-		[],
-	)
-
 	const summary = useMemo(() => {
 		const total = appointments.length
 		const confirmed = appointments.filter((a) => a.estado === 'Confirmada').length
@@ -95,35 +63,38 @@ export default function PaginaInicial() {
 	}
 	return (
 		<AppLayout breadcrumb="Painel" userName="Dra. Sofia Lima">
-			<section className="p-4" style={{ background: '#f6f6f7' }}>
-				<div className="d-flex justify-content-end gap-2 mb-3" aria-label="Ações">
-					<button type="button" className="btn btn-light">
-						<span className="me-2" aria-hidden="true">⟳</span>
-						Atualizar
-					</button>
-					<button type="button" className="btn btn-primary" onClick={() => navigate('/agenda')}>
-						<span className="me-2" aria-hidden="true">＋</span>
-						Novo Agendamento
-					</button>
-				</div>
+			<div className="ui-page">
+				<PageHeader
+					title="Painel"
+					subtitle={null}
+					actions={
+						<>
+							<Button variant="light" leftIcon={<RefreshCw size={16} aria-hidden="true" />}>
+								Atualizar
+							</Button>
+							<Button
+								variant="primary"
+								leftIcon={<Plus size={16} aria-hidden="true" />}
+								onClick={() => navigate('/agenda')}
+							>
+								Novo Agendamento
+							</Button>
+						</>
+					}
+				/>
 
-				<h2 className="h6 fw-semibold text-dark mb-3">Área principal do dashboard</h2>
-
-				<div className="row g-3">
+				<div className="row g-3 align-items-start">
 					<div className="col-12 col-lg-6">
-						<ResumoConsultas summary={summary} />
+						<div className="d-flex flex-column gap-3">
+							<ResumoConsultas summary={summary} />
+							<Atalhos />
+						</div>
 					</div>
 					<div className="col-12 col-lg-6">
-						<TarefasAlertas tasks={tasks} />
-					</div>
-					<div className="col-12 col-lg-6">
-						<ProximasConsultas appointments={appointments} onSetStatus={setStatus} />
-					</div>
-					<div className="col-12 col-lg-6">
-						<Atalhos />
+						<ProximasConsultas appointments={appointments} />
 					</div>
 				</div>
-			</section>
+			</div>
 		</AppLayout>
 	)
 }

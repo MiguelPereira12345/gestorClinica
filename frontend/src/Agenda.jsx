@@ -207,7 +207,7 @@ export default function Agenda() {
           actions={
             <Button
               variant="primary"
-              onClick={() => navigate('/agenda/consultas/novo')}
+              onClick={() => navigate('/consultas/nova')}
               leftIcon={<Plus size={16} aria-hidden="true" />}
             >
               Adicionar Consulta

@@ -3,7 +3,7 @@ import './App.css'
 import { useNavigate, useParams } from 'react-router-dom'
 import AppLayout from './components/Layout/AppLayout'
 import PageHeader from './components/UI/PageHeader'
-import { getPatientById } from './utils/patientStorage'
+import { getDependentsOf, getEffectivePhone, getPatientById, loadPatients } from './utils/patientStorage'
 
 function Field({ label, value }) {
 	return (
@@ -26,7 +26,12 @@ export default function VerPaciente() {
 	const { id } = useParams()
 
 	const patient = useMemo(() => (id ? getPatientById(id) : null), [id])
+	const allPatients = useMemo(() => loadPatients(), [])
 	const data = patient?.data || {}
+	const responsavelId = patient?.responsavelId || data?.responsavelId || null
+	const responsavel = useMemo(() => (responsavelId ? allPatients.find((p) => p?.id === responsavelId) : null), [responsavelId, allPatients])
+	const dependentes = useMemo(() => (patient ? getDependentsOf(patient.id, allPatients) : []), [patient, allPatients])
+	const effectivePhone = useMemo(() => (patient ? getEffectivePhone(patient, allPatients) : ''), [patient, allPatients])
 
 	if (!patient) {
 		return (
@@ -59,12 +64,39 @@ export default function VerPaciente() {
 							<button className="btn btn-secondary" type="button" onClick={() => navigate('/pacientes')}>
 								Voltar à lista
 							</button>
+							<button className="btn btn-light" type="button" onClick={() => navigate(`/pacientes/${patient.id}/planos`)}>
+								Planos
+							</button>
 							<button className="btn btn-primary" type="button" onClick={() => navigate(`/pacientes/${patient.id}/editar`)}>
 								Editar
 							</button>
 						</>
 					}
 				/>
+
+				{responsavelId ? (
+					<section className="ui-card p-3 mb-3" aria-label="Responsável">
+						<h2 className="m-0 mb-2" style={{ fontSize: 16, fontWeight: 900, color: 'rgba(30, 42, 53, 0.92)' }}>
+							Responsável
+						</h2>
+						<div className="d-flex flex-wrap gap-2 align-items-center">
+							<div className="form-text" style={{ margin: 0 }}>
+								{responsavel ? (
+									<>
+										{responsavel.nome} • {(responsavel.telefone || responsavel?.data?.contactoTelefone) || '—'}
+									</>
+								) : (
+									<>ID: {responsavelId}</>
+								)}
+							</div>
+							{responsavel ? (
+								<button className="btn btn-light btn-sm" type="button" onClick={() => navigate(`/pacientes/${responsavel.id}`)}>
+									Abrir ficha do responsável
+								</button>
+							) : null}
+						</div>
+					</section>
+				) : null}
 
 				<section className="ui-card p-3 mb-3" aria-label="Identificação pessoal">
 					<h2 className="m-0 mb-3" style={{ fontSize: 16, fontWeight: 900, color: 'rgba(30, 42, 53, 0.92)' }}>
@@ -75,7 +107,10 @@ export default function VerPaciente() {
 						<Field label="Data de nascimento" value={data.dataNascimento} />
 						<Field label="Sexo" value={data.sexo} />
 						<Field label="Endereço" value={data.endereco} />
-						<Field label="Contacto (telefone)" value={data.contactoTelefone} />
+						<Field
+							label={responsavelId ? 'Contacto (telefone) — efetivo' : 'Contacto (telefone)'}
+							value={effectivePhone || data.contactoTelefone}
+						/>
 						<Field label="Contacto (email)" value={data.contactoEmail || patient.email} />
 						<Field label="Nº de utente" value={data.numeroUtente} />
 						<Field label="NIF" value={data.nif} />
@@ -84,6 +119,49 @@ export default function VerPaciente() {
 						<Field label="Profissão" value={data.profissao} />
 					</div>
 				</section>
+
+				{!responsavelId ? (
+					<section className="ui-card p-3 mb-3" aria-label="Dependentes">
+						<div className="d-flex align-items-center justify-content-between gap-2 flex-wrap">
+							<h2 className="m-0" style={{ fontSize: 16, fontWeight: 900, color: 'rgba(30, 42, 53, 0.92)' }}>
+								Dependentes ({dependentes.length})
+							</h2>
+							<button className="btn btn-primary btn-sm" type="button" onClick={() => navigate(`/pacientes/${patient.id}/dependente/novo`)}>
+								+ Dependente
+							</button>
+						</div>
+						{dependentes.length ? (
+							<div className="mt-3 ui-table-wrap">
+								<table className="table ui-table">
+									<thead>
+										<tr>
+											<th>Nome</th>
+											<th>Telefone</th>
+											<th>Estado</th>
+											<th className="ui-actions-col">Ações</th>
+										</tr>
+									</thead>
+									<tbody>
+										{dependentes.map((d) => (
+											<tr key={d.id}>
+												<td style={{ fontWeight: 700 }}>{d.nome}</td>
+												<td>{getEffectivePhone(d, allPatients) || '—'}</td>
+												<td>{d.estado || 'Ativo'}</td>
+												<td className="ui-actions-col">
+													<button className="btn btn-light btn-sm" type="button" onClick={() => navigate(`/pacientes/${d.id}`)}>
+														Abrir
+													</button>
+												</td>
+											</tr>
+										))}
+									</tbody>
+								</table>
+							</div>
+						) : (
+							<div className="form-text mt-2">Sem dependentes associados.</div>
+						)}
+					</section>
+				) : null}
 
 				<section className="ui-card p-3 mb-3" aria-label="Histórico médico geral">
 					<h2 className="m-0 mb-3" style={{ fontSize: 16, fontWeight: 900, color: 'rgba(30, 42, 53, 0.92)' }}>
