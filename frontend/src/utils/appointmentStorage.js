@@ -154,12 +154,21 @@ export function listAvailableSlots({ date, medicoId, durationMin, limit = 6, ste
 	const { status, intervals } = getClinicIntervalsForDate({ date, medicoId })
 	if (status === 'closed' || status === 'holiday') return { status, slots: [] }
 
+	const now = new Date()
 	const slots = []
 	for (const interval of intervals) {
 		const startM = toMinutes(interval.start)
 		const endM = toMinutes(interval.end)
 		for (let t = startM; t + durationMin <= endM; t += stepMin) {
 			const hhmm = fromMinutes(t)
+			
+			// Verificar se o horário não está no passado
+			const slotDate = new Date(date)
+			const [h, m] = hhmm.split(':').map(Number)
+			slotDate.setHours(h, m || 0, 0, 0)
+			
+			if (slotDate < now) continue 
+			
 			if (isSlotFree({ date, medicoId, startHHMM: hhmm, durationMin })) {
 				slots.push(hhmm)
 				if (slots.length >= limit) return { status, slots }

@@ -46,6 +46,12 @@ export default function ConsultaForm({
 		if (!form.time) return 'Seleciona a hora.'
 		const startISO = combineDateAndTimeToISO(form.date, form.time)
 		if (!startISO) return 'Data/hora inválida.'
+		
+		// Verificar se a data/hora não está no passado
+		const consultaDate = new Date(startISO)
+		const now = new Date()
+		if (consultaDate < now) return 'Não é possível criar consultas no passado.'
+		
 		return ''
 	}
 

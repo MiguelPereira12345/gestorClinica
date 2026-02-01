@@ -6,10 +6,47 @@ const { Consulta } = models;
 
 const controller = {};
 
-//GET CONSULTAS
+// Validar hora no formato HH:MM entre 09:00 e 19:00
+const validarHora = (hora) => {
+  if (!hora) return false;
+  
+  const regexHora = /^([0-9]{2}):([0-9]{2})$/;
+  if (!regexHora.test(hora)) {
+    return false; 
+  }
+
+  const [horaNum, minutoNum] = hora.split(':').map(Number);
+  
+  // Validar hora entre 09:00 e 19:00 
+  if (horaNum < 9 || horaNum > 19) {
+    return false;
+  }
+  if (horaNum === 19 && minutoNum !== 0) {
+    return false;
+  }
+
+  // Validar minutos
+  if (minutoNum < 0 || minutoNum > 59) {
+    return false;
+  }
+
+  return true;
+};
+
+//GET CONSULTAS - Últimos 2 meses para evitar crash do pc 
 controller.listar_consultas = async (req, res) => {
   try {
+    const dataAtual = new Date();
+    const dataLimite = new Date();
+    dataLimite.setMonth(dataLimite.getMonth() - 2);
+
     const consultas = await Consulta.findAll({
+      where: {
+        data_consulta: {
+          [sequelize.Sequelize.Op.gte]: dataLimite.toISOString().split('T')[0],
+          [sequelize.Sequelize.Op.lte]: dataAtual.toISOString().split('T')[0]
+        }
+      },
       order: [['data_consulta', 'DESC'], ['hora', 'DESC']]
     });
 
@@ -20,8 +57,7 @@ controller.listar_consultas = async (req, res) => {
   } catch (error) {
     console.error('Erro ao listar consultas:', error);
     return res.status(500).json({ 
-      message: 'Erro do servidor',
-      error: error.message
+      message: 'Não foi possível listar as consultas'
     });
   }
 };
@@ -46,8 +82,7 @@ controller.obter_consulta = async (req, res) => {
   } catch (error) {
     console.error('Erro ao obter consulta:', error);
     return res.status(500).json({ 
-      message: 'Erro do servidor',
-      error: error.message
+      message: 'Não foi possível obter a consulta'
     });
   }
 };
@@ -60,14 +95,36 @@ controller.criar_consulta = async (req, res) => {
       tipo_de_marcacao,
       status,
       data_consulta,
-      id,
+      id,  // ID do paciente (FK para utilizador) - associado por nome e data de nascimento
       hora,
     } = req.body;
 
     // Validação dos campos obrigatórios
-    if (!data_consulta || !hora) {
+    if (!data_consulta || !hora || !id) {
       return res.status(400).json({ 
-        message: 'Campos obrigatórios: data_consulta, hora' 
+        message: 'Campos obrigatórios: data_consulta, hora, id (paciente)' 
+      });
+    }
+
+    // Validação - hora entre 09:00 e 19:00 usando função utilitária
+    if (!validarHora(hora)) {
+      return res.status(400).json({ 
+        message: 'Hora inválida. Consultório aberto entre 09:00 e 19:00. Formato: HH:MM' 
+      });
+    }
+
+    // Validação não permitir consultas no passado
+    const dataConsulta = new Date(`${data_consulta}T${hora}`);
+    if (Number.isNaN(dataConsulta.getTime())) {
+      return res.status(400).json({ 
+        message: 'Data ou hora inválida' 
+      });
+    }
+
+    const agora = new Date();
+    if (dataConsulta < agora) {
+      return res.status(400).json({ 
+        message: 'Não é possível criar consultas no passado' 
       });
     }
 
@@ -77,7 +134,7 @@ controller.criar_consulta = async (req, res) => {
       tipo_de_marcacao: tipo_de_marcacao || null,
       status: status || 'Pendente',
       data_consulta,
-      id: id || null,
+      id,
       hora,
     });
 
@@ -88,8 +145,7 @@ controller.criar_consulta = async (req, res) => {
   } catch (error) {
     console.error('Erro ao criar consulta:', error);
     return res.status(500).json({ 
-      message: 'Erro do servidor',
-      error: error.message
+      message: 'Não foi possível criar a consulta'
     });
   }
 };
@@ -116,6 +172,34 @@ controller.editar_consulta = async (req, res) => {
       });
     }
 
+    // não permitir editar consultas no passado
+    if (data_consulta !== undefined || hora !== undefined) {
+      const dataParaValidar = data_consulta || consulta.data_consulta;
+      const horaParaValidar = hora || consulta.hora;
+      
+      // Validação - hora entre 09:00 e 19:00 usando função utilitária
+      if (horaParaValidar && !validarHora(horaParaValidar)) {
+        return res.status(400).json({ 
+          message: 'Hora inválida. Consultório aberto entre 09:00 e 19:00. Formato: HH:MM' 
+        });
+      }
+      
+      const dataConsulta = new Date(`${dataParaValidar}T${horaParaValidar}`);
+      
+      if (Number.isNaN(dataConsulta.getTime())) {
+        return res.status(400).json({ 
+          message: 'Data ou hora inválida' 
+        });
+      }
+
+      const agora = new Date();
+      if (dataConsulta < agora) {
+        return res.status(400).json({ 
+          message: 'Não é possível editar consultas no passado' 
+        });
+      }
+    }
+
     // Atualiza os campos fornecidos
     const updatedData = {};
     if (id_medico !== undefined) updatedData.id_medico = id_medico;
@@ -135,8 +219,7 @@ controller.editar_consulta = async (req, res) => {
   } catch (error) {
     console.error('Erro ao editar consulta:', error);
     return res.status(500).json({ 
-      message: 'Erro do servidor',
-      error: error.message
+      message: 'Não foi possível atualizar a consulta'
     });
   }
 };
@@ -171,7 +254,7 @@ controller.cancelar_consulta = async (req, res) => {
     return res.status(200).json({ message: 'Consulta cancelada com sucesso', consulta });
   } catch (error) {
     console.error('Erro ao cancelar consulta:', error);
-    return res.status(500).json({ message: 'Erro do servidor', error: error.message });
+    return res.status(500).json({ message: 'Não foi possível cancelar a consulta' });
   }
 };
 
@@ -182,9 +265,9 @@ controller.remarcar_consulta = async (req, res) => {
     const { data_consulta, hora } = req.body;
 
     // Validação dos campos obrigatórios
-    if (!data_consulta || !hora) {
+    if (!data_consulta) {
       return res.status(400).json({ 
-        message: 'Campos obrigatórios: data da consulta e hora' 
+        message: 'Campo obrigatório: data da consulta' 
       });
     }
 
@@ -193,27 +276,49 @@ controller.remarcar_consulta = async (req, res) => {
       return res.status(404).json({ message: 'Consulta não encontrada' });
     }
 
-    // Validar 
-    const novaData = new Date(`${data_consulta}T${hora}`);
+    // Validar que a consulta não está cancelada
+    if (consulta.status === 'Cancelada') {
+      return res.status(400).json({ 
+        message: 'Não é possível remarcar uma consulta cancelada' 
+      });
+    }
+
+    // Se hora é fornecida, validar intervalo 09:00-19:00
+    if (hora && !validarHora(hora)) {
+      return res.status(400).json({ 
+        message: 'Hora inválida. Consultório aberto entre 09:00 e 19:00. Formato: HH:MM' 
+      });
+    }
+
+    // Validar data
+    const novaData = new Date(`${data_consulta}T${hora || '00:00'}`);
     if (Number.isNaN(novaData.getTime())) {
       return res.status(400).json({ message: 'Data ou hora inválida' });
     }
 
-    // Atualiza para nova data/hora e coloca status Pendente (aguarda aprovação do gestor)
+    // Lógica: Confirmada se hora se mantém igual à original E não há marcações, caso contrário Pendente
+    const horaMantida = hora && hora === consulta.hora;
+    const novoStatus = (horaMantida && !consulta.tipo_de_marcacao) ? 'Confirmada' : 'Pendente';
+    const mensagem = novoStatus === 'Confirmada'
+      ? 'Consulta remarcada com sucesso e confirmada.'
+      : 'Consulta remarcada com sucesso. Aguarda aprovação do gestor.';
+
     await consulta.update({ 
       data_consulta, 
-      hora,
-      status: 'Pendente' 
+      hora: hora || null,
+      status: novoStatus 
     });
     await consulta.reload();
 
     return res.status(200).json({ 
-      message: 'Consulta remarcada com sucesso. Aguarda aprovação do gestor.', 
+      message: mensagem, 
       consulta 
     });
   } catch (error) {
     console.error('Erro ao remarcar consulta:', error);
-    return res.status(500).json({ message: 'Erro do servidor', error: error.message });
+    return res.status(500).json({ 
+      message: 'Não foi possível remarcar a consulta'
+    });
   }
 };
 
