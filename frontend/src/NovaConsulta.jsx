@@ -34,6 +34,7 @@ export default function NovaConsulta() {
 	const [saving, setSaving] = useState(false)
 	const prefill = location.state?.prefill || null
 	const fromTreatmentPlanId = location.state?.fromTreatmentPlanId || null
+	const returnTo = location.state?.returnTo || null
 	const initial = useMemo(() => {
 		const base = defaultInitial()
 		if (!prefill) return base
@@ -50,7 +51,17 @@ export default function NovaConsulta() {
 			breadcrumb="Consultas > Nova"
 			userName="Dra. Sofia Lima"
 			actions={
-				<button type="button" className="btn btn-secondary" onClick={() => navigate('/consultas')}>
+				<button
+					type="button"
+					className="btn btn-secondary"
+					onClick={() => {
+						if (returnTo?.pathname) {
+							navigate(returnTo.pathname, { state: returnTo.state || null })
+							return
+						}
+						navigate('/consultas')
+					}}
+				>
 					<ArrowLeft size={16} aria-hidden="true" />
 					Voltar à lista
 				</button>
@@ -67,7 +78,13 @@ export default function NovaConsulta() {
 						<ConsultaForm
 							initial={initial}
 							submitLabel="Criar consulta"
-							onCancel={() => navigate('/consultas')}
+							onCancel={() => {
+								if (returnTo?.pathname) {
+									navigate(returnTo.pathname, { state: returnTo.state || null })
+									return
+								}
+								navigate('/consultas')
+							}}
 							onSubmit={(payload) => {
 								void (async () => {
 									if (saving) return
@@ -85,6 +102,10 @@ export default function NovaConsulta() {
 												note: `${created.startISO?.slice(0, 16) || ''} • ${created.medicoName || ''}`.trim(),
 												meta: { consultaId: created.id, startISO: created.startISO },
 											})
+										}
+										if (returnTo?.pathname) {
+											navigate(returnTo.pathname, { state: returnTo.state || null })
+											return
 										}
 										navigate(`/consultas/${created.id}`)
 									} catch (e) {

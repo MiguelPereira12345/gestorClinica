@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { isValidName, isValidPhone, sanitizeName, sanitizePhone } from '../../utils/validation'
 
 function normalizeCargoValue(value) {
 	const v = String(value || '').trim().toLowerCase()
@@ -15,7 +16,7 @@ function normalizeCargoValue(value) {
 }
 
 export default function ColaboradorForm({ initial, submitLabel, onCancel, onSubmit }) {
-	const isEdit = Boolean(initial?.id)
+	const isEdit = Boolean(initial?.id || initial?.id_utilizador || initial?.idUtilizador || initial?.userId)
 	const [form, setForm] = useState(initial || {
 		name: '',
 		email: '',
@@ -32,11 +33,27 @@ export default function ColaboradorForm({ initial, submitLabel, onCancel, onSubm
 			setForm((prev) => ({ ...prev, cargo: normalizeCargoValue(value) }))
 			return
 		}
+		if (name === 'name') {
+			setForm((prev) => ({ ...prev, name: sanitizeName(value) }))
+			return
+		}
+		if (name === 'phone') {
+			setForm((prev) => ({ ...prev, phone: sanitizePhone(value) }))
+			return
+		}
 		setForm(prev => ({ ...prev, [name]: value }))
 	}
 
 	const handleSubmit = (e) => {
 		e.preventDefault()
+		if (!isValidName(form.name)) {
+			window.alert('Nome inválido (não pode conter números).')
+			return
+		}
+		if (!isValidPhone(form.phone)) {
+			window.alert('Telefone inválido (use apenas dígitos; mínimo 9).')
+			return
+		}
 		if (!String(form.cargo || '').trim()) {
 			window.alert('Cargo em falta')
 			return

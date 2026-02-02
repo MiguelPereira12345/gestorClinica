@@ -22,6 +22,8 @@ import {
 
 import { uploadClinicalFile } from './utils/clinicalFilesApi'
 
+import { isValidName, isValidNif, isValidNumeroUtente, isValidPhone, sanitizeDigits, sanitizeName, sanitizePhone } from './utils/validation'
+
 import { syncPatientsFromApi } from './utils/dataSync'
 
 export default function EditarPaciente() {
@@ -57,9 +59,31 @@ export default function EditarPaciente() {
 		if (saving) return
 		if (!patient || !id) return
 
-		const nome = form.nomeCompleto.trim()
-		if (!nome) {
-			alert('Por favor, preenche o Nome completo.')
+		const nome = sanitizeName(form.nomeCompleto).trim()
+		updateField('nomeCompleto', nome)
+		if (!isValidName(nome)) {
+			alert('Nome inválido (não pode conter números).')
+			return
+		}
+
+		const telefone = sanitizePhone(form.contactoTelefone).trim()
+		updateField('contactoTelefone', telefone)
+		if (telefone && !isValidPhone(telefone)) {
+			alert('Telefone inválido (use apenas dígitos; mínimo 9).')
+			return
+		}
+
+		const numeroUtente = sanitizeDigits(form.numeroUtente, { maxDigits: 9 })
+		updateField('numeroUtente', numeroUtente)
+		if (!isValidNumeroUtente(numeroUtente)) {
+			alert('Nº de utente inválido (máx. 9 dígitos).')
+			return
+		}
+
+		const nif = sanitizeDigits(form.nif, { maxDigits: 9 })
+		updateField('nif', nif)
+		if (!isValidNif(nif)) {
+			alert('NIF inválido (obrigatório e com 9 dígitos).')
 			return
 		}
 

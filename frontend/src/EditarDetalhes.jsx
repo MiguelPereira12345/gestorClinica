@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import AppLayout from './components/Layout/AppLayout'
 import PageHeader from './components/UI/PageHeader'
 import Informacao from './components/Detalhes/Informacao'
@@ -6,15 +7,17 @@ import Exames from './components/Detalhes/Exames'
 import AnexosClinicos from './components/Detalhes/AnexosClinicos'
 import RGPDConsentimentos from './components/Detalhes/RGPDConsentimentos'
 import './App.css'
+import { isValidName, isValidNif, isValidNumeroUtente, isValidPhone, sanitizeDigits, sanitizeName, sanitizePhone } from './utils/validation'
 
 export default function EditarDetalhes(){
+  const navigate = useNavigate()
   const [isEditing, setIsEditing] = useState(false)
   const [patientData, setPatientData] = useState({
     nomeCompleto: 'João Pedro da Silva',
     dataNascimento: '14/02/1986',
     numeroUtente: '123456789',
-    nif: '245 998 120',
-    telefone: '+351 915 222 333',
+    nif: '245998120',
+    telefone: '+351915222333',
     email: 'joao.silva@example.com',
     dataRegisto: '10/03/2023'
   })
@@ -24,9 +27,40 @@ export default function EditarDetalhes(){
   }
 
   const handleSave = () => {
+    const nome = sanitizeName(patientData.nomeCompleto).trim()
+    const telefone = sanitizePhone(patientData.telefone).trim()
+    const numeroUtente = sanitizeDigits(patientData.numeroUtente, { maxDigits: 9 })
+    const nif = sanitizeDigits(patientData.nif, { maxDigits: 9 })
+
+    if (!isValidName(nome)) {
+      window.alert('Nome inválido. Use apenas letras e espaços.')
+      return
+    }
+    if (!isValidPhone(telefone)) {
+      window.alert('Telefone inválido. Indica um número com 9 a 15 dígitos.')
+      return
+    }
+    if (!isValidNumeroUtente(numeroUtente)) {
+      window.alert('Nº de utente inválido. Máximo 9 dígitos.')
+      return
+    }
+    if (!isValidNif(nif)) {
+      window.alert('NIF inválido. Tem de ter exatamente 9 dígitos.')
+      return
+    }
+
+    const cleaned = {
+      ...patientData,
+      nomeCompleto: nome,
+      telefone,
+      numeroUtente,
+      nif,
+    }
+
+    setPatientData(cleaned)
     setIsEditing(false)
-    // Aqui pode adicionar a lógica para guardar os dados no backend
-    console.log('Dados guardados:', patientData)
+    // Placeholder: esta página ainda é mock (sem backend). Mantemos o log só para debug.
+    console.log('Dados guardados:', cleaned)
   }
 
   const handleCancel = () => {
@@ -45,7 +79,7 @@ export default function EditarDetalhes(){
     <AppLayout breadcrumb="Pacientes > João Pedro da Silva > Detalhes" userName="Dra. Sofia Lima">
       <div className="ui-page" style={{ padding: '20px 40px' }}>
         <div className="mb-3">
-          <button className="btn btn-light" type="button">
+          <button className="btn btn-light" type="button" onClick={() => navigate('/pacientes')}>
             RGPD / Consentimentos
           </button>
         </div>
@@ -54,7 +88,7 @@ export default function EditarDetalhes(){
           title="Ficha do Paciente"
           actions={
             <>
-              <button className="btn btn-secondary" type="button">
+              <button className="btn btn-secondary" type="button" onClick={() => navigate('/pacientes')}>
                 Voltar à Lista
               </button>
               {!isEditing ? (

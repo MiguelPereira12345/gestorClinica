@@ -6,6 +6,7 @@ import PageHeader from './components/UI/PageHeader'
 import { buildPatientRecordFromForm, createEmptyPatientForm, upsertPatient, createPacienteApi } from './utils/patientStorage'
 import { syncPatientsFromApi } from './utils/dataSync'
 import { uploadClinicalFile } from './utils/clinicalFilesApi'
+import { isValidName, isValidNif, isValidNumeroUtente, isValidPhone, sanitizeDigits, sanitizeName, sanitizePhone } from './utils/validation'
 
 export default function AdicionarPaciente() {
 	const navigate = useNavigate()
@@ -17,6 +18,22 @@ export default function AdicionarPaciente() {
 	const fileNames = useMemo(() => files.map((f) => f.name), [files])
 
 	function updateField(name, value) {
+		if (name === 'nomeCompleto') {
+			setForm((prev) => ({ ...prev, [name]: sanitizeName(value) }))
+			return
+		}
+		if (name === 'contactoTelefone') {
+			setForm((prev) => ({ ...prev, [name]: sanitizePhone(value) }))
+			return
+		}
+		if (name === 'numeroUtente') {
+			setForm((prev) => ({ ...prev, [name]: sanitizeDigits(value, { maxDigits: 9 }) }))
+			return
+		}
+		if (name === 'nif') {
+			setForm((prev) => ({ ...prev, [name]: sanitizeDigits(value, { maxDigits: 9 }) }))
+			return
+		}
 		setForm((prev) => ({ ...prev, [name]: value }))
 	}
 
@@ -29,15 +46,31 @@ export default function AdicionarPaciente() {
 		e.preventDefault()
 		if (saving) return
 
-		const nome = form.nomeCompleto.trim()
-		if (!nome) {
+		const nome = sanitizeName(form.nomeCompleto).trim()
+		updateField('nomeCompleto', nome)
+		if (!isValidName(nome)) {
 			alert('Por favor, preenche o Nome completo.')
 			return
 		}
 
-		const telefone = form.contactoTelefone.trim()
-		if (!telefone) {
+		const telefone = sanitizePhone(form.contactoTelefone).trim()
+		updateField('contactoTelefone', telefone)
+		if (!isValidPhone(telefone)) {
 			alert('Por favor, preenche o Contacto (telefone).')
+			return
+		}
+
+		const numeroUtente = sanitizeDigits(form.numeroUtente, { maxDigits: 9 })
+		updateField('numeroUtente', numeroUtente)
+		if (!isValidNumeroUtente(numeroUtente)) {
+			alert('Nº de utente inválido (máx. 9 dígitos).')
+			return
+		}
+
+		const nif = sanitizeDigits(form.nif, { maxDigits: 9 })
+		updateField('nif', nif)
+		if (!isValidNif(nif)) {
+			alert('NIF inválido (obrigatório e com 9 dígitos).')
 			return
 		}
 
@@ -162,7 +195,7 @@ export default function AdicionarPaciente() {
 								<label className="form-label" style={{ fontSize: 13, fontWeight: 800, color: 'rgba(122, 130, 138, 0.95)' }}>
 									Contacto (telefone) *
 								</label>
-								<input className="form-control" type="tel" value={form.contactoTelefone} onChange={(e) => updateField('contactoTelefone', e.target.value)} placeholder="Ex: 912 345 678" required />
+								<input className="form-control" type="tel" value={form.contactoTelefone} onChange={(e) => updateField('contactoTelefone', e.target.value)} placeholder="Ex: 912345678" required />
 							</div>
 
 							<div className="col-12 col-md-6">
@@ -190,14 +223,14 @@ export default function AdicionarPaciente() {
 								<label className="form-label" style={{ fontSize: 13, fontWeight: 800, color: 'rgba(122, 130, 138, 0.95)' }}>
 									Nº de utente (se aplicável)
 								</label>
-								<input className="form-control" type="text" value={form.numeroUtente} onChange={(e) => updateField('numeroUtente', e.target.value)} />
+								<input className="form-control" type="text" inputMode="numeric" value={form.numeroUtente} onChange={(e) => updateField('numeroUtente', e.target.value)} maxLength={9} />
 							</div>
 
 							<div className="col-12 col-md-6">
 								<label className="form-label" style={{ fontSize: 13, fontWeight: 800, color: 'rgba(122, 130, 138, 0.95)' }}>
-									NIF
+									NIF *
 								</label>
-								<input className="form-control" type="text" value={form.nif} onChange={(e) => updateField('nif', e.target.value)} />
+								<input className="form-control" type="text" inputMode="numeric" value={form.nif} onChange={(e) => updateField('nif', e.target.value)} maxLength={9} required />
 							</div>
 
 							<div className="col-12">

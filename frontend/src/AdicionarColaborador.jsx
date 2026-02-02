@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AppLayout from './components/Layout/AppLayout';
+import { isValidName, isValidPhone, sanitizeName, sanitizePhone } from './utils/validation';
 
 export default function AdicionarColaborador() {
   const navigate = useNavigate(); // Initialize useNavigate
@@ -22,18 +23,44 @@ export default function AdicionarColaborador() {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+
+    let nextValue = value;
+    if (name === 'nome') nextValue = sanitizeName(value);
+    if (name === 'telefone') nextValue = sanitizePhone(value);
+
+    setFormData(prev => ({ ...prev, [name]: nextValue }));
   };
 
   const handleAddColaborador = () => {
-    if (!formData.nome || !formData.email) {
+    const nome = sanitizeName(formData.nome).trim();
+    const email = String(formData.email || '').trim();
+    const telefone = sanitizePhone(formData.telefone).trim();
+
+    if (!nome || !email) {
       setError('Nome e email são obrigatórios');
       return;
     }
 
+    if (!isValidName(nome)) {
+      setError('Nome inválido. Use apenas letras e espaços.');
+      return;
+    }
+
+    if (telefone && !isValidPhone(telefone)) {
+      setError('Telefone inválido. Indica um número com 9 a 15 dígitos.');
+      return;
+    }
+
+    const nextFormData = {
+      ...formData,
+      nome,
+      email,
+      telefone,
+    };
+
     const novoColaborador = {
       id: Date.now(),
-      ...formData,
+      ...nextFormData,
     };
 
     setColaboradores(prev => [novoColaborador, ...prev]);
@@ -116,7 +143,9 @@ export default function AdicionarColaborador() {
                     value={formData.telefone}
                     onChange={handleInputChange}
                     className="form-control"
-                    placeholder="(00) 00000-0000"
+                    placeholder="Ex: 912345678"
+                    inputMode="tel"
+                    maxLength={16}
                   />
                 </div>
               </div>

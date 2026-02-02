@@ -1,4 +1,5 @@
 import React from 'react'
+import { sanitizeDigits, sanitizeName, sanitizePhone } from '../../utils/validation'
 
 export default function IdentificacaoPessoal({ form, updateField }) {
 	return (
@@ -11,7 +12,7 @@ export default function IdentificacaoPessoal({ form, updateField }) {
 					<label className="form-label" style={{ fontSize: 13, fontWeight: 800, color: 'rgba(122, 130, 138, 0.95)' }}>
 						Nome completo *
 					</label>
-					<input className="form-control" type="text" value={form.nomeCompleto} onChange={(e) => updateField('nomeCompleto', e.target.value)} required />
+					<input className="form-control" type="text" value={form.nomeCompleto} onChange={(e) => updateField('nomeCompleto', sanitizeName(e.target.value))} required />
 				</div>
 
 				<div className="col-12 col-md-6">
@@ -45,7 +46,7 @@ export default function IdentificacaoPessoal({ form, updateField }) {
 					<label className="form-label" style={{ fontSize: 13, fontWeight: 800, color: 'rgba(122, 130, 138, 0.95)' }}>
 						Contacto (telefone)
 					</label>
-					<input className="form-control" type="tel" value={form.contactoTelefone} onChange={(e) => updateField('contactoTelefone', e.target.value)} />
+					<input className="form-control" type="tel" value={form.contactoTelefone} onChange={(e) => updateField('contactoTelefone', sanitizePhone(e.target.value))} />
 				</div>
 
 				<div className="col-12 col-md-6">
@@ -59,14 +60,14 @@ export default function IdentificacaoPessoal({ form, updateField }) {
 					<label className="form-label" style={{ fontSize: 13, fontWeight: 800, color: 'rgba(122, 130, 138, 0.95)' }}>
 						Nº de utente (se aplicável)
 					</label>
-					<input className="form-control" type="text" value={form.numeroUtente} onChange={(e) => updateField('numeroUtente', e.target.value)} />
+					<input className="form-control" type="text" inputMode="numeric" maxLength={9} value={form.numeroUtente} onChange={(e) => updateField('numeroUtente', sanitizeDigits(e.target.value, { maxDigits: 9 }))} />
 				</div>
 
 				<div className="col-12 col-md-6">
 					<label className="form-label" style={{ fontSize: 13, fontWeight: 800, color: 'rgba(122, 130, 138, 0.95)' }}>
-						NIF
+						NIF *
 					</label>
-					<input className="form-control" type="text" value={form.nif} onChange={(e) => updateField('nif', e.target.value)} />
+					<input className="form-control" type="text" inputMode="numeric" maxLength={9} value={form.nif} onChange={(e) => updateField('nif', sanitizeDigits(e.target.value, { maxDigits: 9 }))} required />
 				</div>
 
 				<div className="col-12">

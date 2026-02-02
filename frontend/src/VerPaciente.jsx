@@ -180,6 +180,9 @@ export default function VerPaciente() {
 													<button className="btn btn-light btn-sm" type="button" onClick={() => navigate(`/pacientes/${d.id}`)}>
 														Abrir
 													</button>
+													<button className="btn btn-light btn-sm ms-2" type="button" onClick={() => navigate(`/pacientes/${d.id}/planos`)}>
+														Planos
+													</button>
 												</td>
 											</tr>
 										))}

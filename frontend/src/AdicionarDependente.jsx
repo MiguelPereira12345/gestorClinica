@@ -12,6 +12,15 @@ import {
 } from './utils/patientStorage'
 
 import { syncPatientsFromApi } from './utils/dataSync'
+import {
+	sanitizeDigits,
+	sanitizeName,
+	sanitizePhone,
+	isValidName,
+	isValidNif,
+	isValidNumeroUtente,
+	isValidPhone,
+} from './utils/validation'
 
 export default function AdicionarDependente() {
 	const navigate = useNavigate()
@@ -29,7 +38,7 @@ export default function AdicionarDependente() {
 		const base = createEmptyPatientForm()
 		base.responsavelId = responsavelId || ''
 		if (!base.contactoTelefone && responsavelTelefone) {
-			base.contactoTelefone = responsavelTelefone
+			base.contactoTelefone = sanitizePhone(responsavelTelefone)
 		}
 		return base
 	})
@@ -37,7 +46,12 @@ export default function AdicionarDependente() {
 	const fileNames = useMemo(() => files.map((f) => f.name), [files])
 
 	function updateField(name, value) {
-		setForm((prev) => ({ ...prev, [name]: value }))
+		let nextValue = value
+		if (name === 'nomeCompleto') nextValue = sanitizeName(value)
+		if (name === 'contactoTelefone') nextValue = sanitizePhone(value)
+		if (name === 'numeroUtente') nextValue = sanitizeDigits(value, { maxDigits: 9 })
+		if (name === 'nif') nextValue = sanitizeDigits(value, { maxDigits: 9 })
+		setForm((prev) => ({ ...prev, [name]: nextValue }))
 	}
 
 	function onPickFiles(event) {
@@ -49,21 +63,39 @@ export default function AdicionarDependente() {
 		e.preventDefault()
 		if (saving) return
 
-		const nome = form.nomeCompleto.trim()
-		if (!nome) {
-			alert('Por favor, preenche o Nome completo do dependente.')
+		const nome = sanitizeName(form.nomeCompleto).trim()
+		const telefone = sanitizePhone(form.contactoTelefone).trim()
+		const numeroUtente = sanitizeDigits(form.numeroUtente, { maxDigits: 9 })
+		const nif = sanitizeDigits(form.nif, { maxDigits: 9 })
+
+		if (!isValidName(nome)) {
+			alert('Nome inválido. Use apenas letras e espaços.')
+			return
+		}
+		if (!isValidPhone(telefone)) {
+			alert('Telefone inválido. Indica um número com 9 a 15 dígitos.')
+			return
+		}
+		if (!isValidNumeroUtente(numeroUtente)) {
+			alert('Nº de utente inválido. Máximo 9 dígitos.')
+			return
+		}
+		if (!isValidNif(nif)) {
+			alert('NIF inválido. Tem de ter exatamente 9 dígitos.')
 			return
 		}
 
-		const telefone = form.contactoTelefone.trim()
-		if (!telefone) {
-			alert('Por favor, preenche o Contacto (telefone).')
-			return
+		const nextForm = {
+			...form,
+			nomeCompleto: nome,
+			contactoTelefone: telefone,
+			numeroUtente,
+			nif,
 		}
 
 		setSaving(true)
 		try {
-			const created = await createDependenteApi({ form, responsavelId })
+			const created = await createDependenteApi({ form: nextForm, responsavelId })
 			const depId = created?.id_dependente
 			if (!depId) throw new Error('Resposta inválida do servidor ao criar dependente')
 			const depIdStr = `D${depId}`
@@ -71,7 +103,7 @@ export default function AdicionarDependente() {
 			const next = buildPatientRecordFromForm({
 				id: depIdStr,
 				form: {
-					...form,
+					...nextForm,
 					responsavelId: responsavelId || '',
 				},
 				anexosClinicos: fileNames,
@@ -175,7 +207,16 @@ export default function AdicionarDependente() {
 								<label className="form-label" style={{ fontSize: 13, fontWeight: 800, color: 'rgba(122, 130, 138, 0.95)' }}>
 									Contacto (telefone) *
 								</label>
-								<input className="form-control" type="tel" value={form.contactoTelefone} onChange={(e) => updateField('contactoTelefone', e.target.value)} placeholder="Ex: 912 345 678" required />
+								<input
+									className="form-control"
+									type="tel"
+									value={form.contactoTelefone}
+									onChange={(e) => updateField('contactoTelefone', e.target.value)}
+									placeholder="Ex: 912345678"
+									inputMode="tel"
+									maxLength={16}
+									required
+								/>
 							</div>
 
 							<div className="col-12 col-md-6">
@@ -189,14 +230,29 @@ export default function AdicionarDependente() {
 								<label className="form-label" style={{ fontSize: 13, fontWeight: 800, color: 'rgba(122, 130, 138, 0.95)' }}>
 									Nº de utente (se aplicável)
 								</label>
-								<input className="form-control" type="text" value={form.numeroUtente} onChange={(e) => updateField('numeroUtente', e.target.value)} />
+								<input
+									className="form-control"
+									type="text"
+									value={form.numeroUtente}
+									onChange={(e) => updateField('numeroUtente', e.target.value)}
+									inputMode="numeric"
+									maxLength={9}
+								/>
 							</div>
 
 							<div className="col-12 col-md-6">
 								<label className="form-label" style={{ fontSize: 13, fontWeight: 800, color: 'rgba(122, 130, 138, 0.95)' }}>
-									NIF
+									NIF *
 								</label>
-								<input className="form-control" type="text" value={form.nif} onChange={(e) => updateField('nif', e.target.value)} />
+								<input
+									className="form-control"
+									type="text"
+									value={form.nif}
+									onChange={(e) => updateField('nif', e.target.value)}
+									inputMode="numeric"
+									maxLength={9}
+									required
+								/>
 							</div>
 
 							<div className="col-12">

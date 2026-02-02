@@ -28,21 +28,37 @@ function normalizePatient(p) {
 	}
 }
 
+function truncateText(value, maxLen) {
+	const s = String(value || '')
+	const clean = s.replace(/\s+/g, ' ').trim()
+	if (!clean) return { short: '', isTruncated: false, full: '' }
+	const max = Number(maxLen) > 0 ? Number(maxLen) : 120
+	if (clean.length <= max) return { short: clean, isTruncated: false, full: clean }
+	return { short: `${clean.slice(0, max)}…`, isTruncated: true, full: clean }
+}
+
 export default function PlanosTratamento() {
 	const navigate = useNavigate()
 	const location = useLocation()
 	const { id: patientIdFromParams } = useParams()
 	const confirm = useConfirm()
+	const rawPatients = useMemo(() => loadPatients(), [])
+	const patientNameById = useMemo(() => {
+		const m = new Map()
+		for (const p of rawPatients) m.set(String(p?.id), p?.nome || p?.data?.nomeCompleto || '')
+		return m
+	}, [rawPatients])
 
 	const patients = useMemo(() => {
-		return loadPatients()
+		return rawPatients
 			.map(normalizePatient)
-			.filter((p) => p?.id && !p?.responsavelId)
+			.filter((p) => p?.id)
 			.sort((a, b) => String(a?.nome || '').localeCompare(String(b?.nome || ''), 'pt-PT'))
-	}, [])
+	}, [rawPatients])
 
 	const preselectedPatientId =
 		String(patientIdFromParams || location.state?.patientId || '').trim() || ''
+	const expandPlanIdFromNav = String(location.state?.expandPlanId || '').trim()
 
 	const [selectedPatientId, setSelectedPatientId] = useState(preselectedPatientId)
 	const selectedPatient = useMemo(
@@ -58,6 +74,7 @@ export default function PlanosTratamento() {
 	const [showForm, setShowForm] = useState(false)
 	const [editingId, setEditingId] = useState('')
 	const [expandedPlanId, setExpandedPlanId] = useState('')
+	const [expandedDescPlanId, setExpandedDescPlanId] = useState('')
 	const [noteText, setNoteText] = useState('')
 	const [form, setForm] = useState({
 		data_inicio: '',
@@ -71,6 +88,15 @@ export default function PlanosTratamento() {
 	useEffect(() => {
 		setSelectedPatientId(preselectedPatientId)
 	}, [preselectedPatientId])
+
+	useEffect(() => {
+		if (!expandPlanIdFromNav) return
+		setExpandedPlanId(expandPlanIdFromNav)
+		setExpandedDescPlanId(expandPlanIdFromNav)
+		setShowForm(false)
+		setEditingId('')
+		setError('')
+	}, [expandPlanIdFromNav])
 
 	useEffect(() => {
 		let mounted = true
@@ -99,6 +125,7 @@ export default function PlanosTratamento() {
 		setEditingId('')
 		setForm({ data_inicio: '', data_fim: '', descricao: '', status: 'ativo' })
 		setError('')
+		setExpandedDescPlanId('')
 		setShowForm(true)
 	}
 
@@ -111,6 +138,7 @@ export default function PlanosTratamento() {
 			status: plan?.status || 'ativo',
 		})
 		setError('')
+		setExpandedDescPlanId(plan?.id || '')
 		setShowForm(true)
 	}
 
@@ -176,7 +204,8 @@ export default function PlanosTratamento() {
 	function markSession(plan) {
 		const patientId = String(selectedPatientId || '').trim()
 		const patientName = selectedPatient?.nome || ''
-		const reason = plan?.descricao ? `Tratamento: ${plan.descricao}` : ''
+		const desc = truncateText(plan?.descricao || '', 240).full
+		const reason = desc ? `Tratamento: ${desc}` : ''
 
 		navigate('/consultas/nova', {
 			state: {
@@ -186,6 +215,10 @@ export default function PlanosTratamento() {
 					firstVisitReason: reason,
 				},
 				fromTreatmentPlanId: plan?.id || null,
+				returnTo: {
+					pathname: `/pacientes/${encodeURIComponent(String(patientId))}/planos`,
+					state: { patientId, expandPlanId: plan?.id || null },
+				},
 			},
 		})
 	}
@@ -256,7 +289,7 @@ export default function PlanosTratamento() {
 								<option value="">Selecione</option>
 								{patients.map((p) => (
 									<option key={p.id} value={p.id}>
-										{p.nome} ({p.id})
+										{p.nome} ({p.id}){p.responsavelId ? ` — Dependente de ${patientNameById.get(String(p.responsavelId)) || p.responsavelId}` : ''}
 									</option>
 								))}
 							</select>
@@ -318,13 +351,14 @@ export default function PlanosTratamento() {
 							</div>
 							<div className="col-12 col-md-8">
 								<label className="form-label">Descrição</label>
-								<input
-									type="text"
+								<textarea
 									className="form-control"
+									rows={2}
 									placeholder="Ex: Ortodontia — alinhadores (12 sessões)"
 									value={form.descricao}
 									onChange={(e) => setForm((p) => ({ ...p, descricao: e.target.value }))}
 								/>
+								<div className="form-text">{String(form.descricao || '').length} caracteres</div>
 							</div>
 						</div>
 
@@ -366,7 +400,38 @@ export default function PlanosTratamento() {
 								{plans.map((p) => (
 									<React.Fragment key={p.id}>
 										<tr>
-											<td style={{ fontWeight: 800 }}>{p.descricao || '—'}</td>
+											<td>
+												<div style={{ fontWeight: 800, minWidth: 0 }}>
+													{(() => {
+														const t = truncateText(p.descricao || '', 90)
+														const expanded = expandedDescPlanId === p.id
+														if (!t.full) return '—'
+														return (
+															<>
+																<span
+																	style={{
+																		whiteSpace: expanded ? 'pre-wrap' : 'normal',
+																		overflowWrap: 'anywhere',
+																		wordBreak: 'break-word',
+																		lineBreak: 'anywhere',
+																	}}
+																>
+																	{expanded ? t.full : t.short}
+																</span>
+																{t.isTruncated ? (
+																	<button
+																		type="button"
+																		className="btn btn-link btn-sm p-0 ms-2"
+																		onClick={() => setExpandedDescPlanId((cur) => (cur === p.id ? '' : p.id))}
+																	>
+																		{expanded ? 'Ver menos' : 'Ver mais'}
+																	</button>
+																) : null}
+															</>
+														)
+													})()}
+												</div>
+											</td>
 											<td>{p.data_inicio || '—'}</td>
 											<td>{p.data_fim || '—'}</td>
 											<td>{planoStatusLabel(p.status)}</td>

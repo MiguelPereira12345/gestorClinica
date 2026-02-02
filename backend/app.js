@@ -42,6 +42,43 @@ const connectDB = async () => {
   try {
     await sequelize.authenticate();
     console.log('Conexão com a base de dados estabelecida com sucesso!');
+
+    // Migrações mínimas e idempotentes para bases antigas.
+    // Evita 500 em /files quando clinical_file não tem as colunas esperadas.
+    // Nota: o script SQL único continua a ser a fonte principal; isto é só um safety-net.
+    try {
+      // Create table if missing (lightweight; matches model expectations)
+      await sequelize.query(`
+        CREATE TABLE IF NOT EXISTS clinical_file (
+          id_file INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+          patient_id INTEGER NULL REFERENCES utilizador(id) ON DELETE CASCADE,
+          consulta_id INTEGER NULL REFERENCES consulta(id_consulta) ON DELETE SET NULL,
+          uploaded_by INTEGER NULL REFERENCES utilizador(id) ON DELETE SET NULL,
+          file_name VARCHAR(255) NOT NULL,
+          mime_type VARCHAR(120) NULL,
+          size_bytes INTEGER NULL,
+          storage_path VARCHAR(500) NOT NULL,
+          kind VARCHAR(80) NULL,
+          created_at TIMESTAMP NOT NULL DEFAULT NOW()
+        );
+      `);
+
+      // Ensure expected columns exist (older DBs could have a partial schema)
+      await sequelize.query(`
+        ALTER TABLE clinical_file
+          ADD COLUMN IF NOT EXISTS consulta_id INTEGER NULL REFERENCES consulta(id_consulta) ON DELETE SET NULL;
+      `);
+
+      await sequelize.query(`
+        CREATE INDEX IF NOT EXISTS idx_clinical_file_patient ON clinical_file(patient_id);
+      `);
+      await sequelize.query(`
+        CREATE INDEX IF NOT EXISTS idx_clinical_file_consulta ON clinical_file(consulta_id);
+      `);
+    } catch (migrationErr) {
+      // Não bloquear o arranque, mas logar para diagnóstico.
+      console.error('Aviso: migração automática (clinical_file) falhou:', migrationErr);
+    }
   } catch (error) {
     console.error(' Erro ao conectar à base de dados:', error);
     process.exit(1);

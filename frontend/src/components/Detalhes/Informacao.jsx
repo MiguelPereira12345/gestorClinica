@@ -1,6 +1,17 @@
 import React from 'react'
+import { sanitizeDigits, sanitizeName, sanitizePhone } from '../../utils/validation'
 
 export default function Informacao({ isEditing, data, onChange }) {
+  const safeBirthDateValue = (() => {
+    const raw = String(data?.dataNascimento || '').trim()
+    // expects dd/mm/yyyy
+    const parts = raw.split('/')
+    if (parts.length !== 3) return ''
+    const [dd, mm, yyyy] = parts
+    if (!dd || !mm || !yyyy) return ''
+    return `${yyyy}-${mm.padStart(2, '0')}-${dd.padStart(2, '0')}`
+  })()
+
   return (
     <section className="ui-card p-3 mb-3" aria-label="Informações Gerais">
       <h2 className="m-0" style={{ fontSize: 16, fontWeight: 600 }}>
@@ -17,7 +28,12 @@ export default function Informacao({ isEditing, data, onChange }) {
           </div>
           <div className="p-3 flex-grow-1" style={{ fontSize: 14 }}>
             {isEditing ? (
-              <input className="form-control" value={data.nomeCompleto} onChange={(e) => onChange('nomeCompleto', e.target.value)} />
+              <input
+                className="form-control"
+                value={data.nomeCompleto}
+                onChange={(e) => onChange('nomeCompleto', sanitizeName(e.target.value))}
+                maxLength={120}
+              />
             ) : (
               data.nomeCompleto
             )}
@@ -33,8 +49,16 @@ export default function Informacao({ isEditing, data, onChange }) {
               <input
                 className="form-control"
                 type="date"
-                value={data.dataNascimento.split('/').reverse().join('-')}
-                onChange={(e) => onChange('dataNascimento', e.target.value.split('-').reverse().join('/'))}
+                value={safeBirthDateValue}
+                onChange={(e) => {
+                  const v = String(e.target.value || '')
+                  if (!v) {
+                    onChange('dataNascimento', '')
+                    return
+                  }
+                  const [yyyy, mm, dd] = v.split('-')
+                  onChange('dataNascimento', `${dd}/${mm}/${yyyy}`)
+                }}
               />
             ) : (
               data.dataNascimento
@@ -54,11 +78,20 @@ export default function Informacao({ isEditing, data, onChange }) {
                     className="form-control"
                     placeholder="Nº Utente"
                     value={data.numeroUtente}
-                    onChange={(e) => onChange('numeroUtente', e.target.value)}
+                    onChange={(e) => onChange('numeroUtente', sanitizeDigits(e.target.value, { maxDigits: 9 }))}
+                    inputMode="numeric"
+                    maxLength={9}
                   />
                 </div>
                 <div className="col-12 col-md-6">
-                  <input className="form-control" placeholder="NIF" value={data.nif} onChange={(e) => onChange('nif', e.target.value)} />
+                  <input
+                    className="form-control"
+                    placeholder="NIF"
+                    value={data.nif}
+                    onChange={(e) => onChange('nif', sanitizeDigits(e.target.value, { maxDigits: 9 }))}
+                    inputMode="numeric"
+                    maxLength={9}
+                  />
                 </div>
               </div>
             ) : (
@@ -75,7 +108,14 @@ export default function Informacao({ isEditing, data, onChange }) {
             {isEditing ? (
               <div className="row g-2">
                 <div className="col-12 col-md-6">
-                  <input className="form-control" placeholder="Telefone" value={data.telefone} onChange={(e) => onChange('telefone', e.target.value)} />
+                  <input
+                    className="form-control"
+                    placeholder="Telefone"
+                    value={data.telefone}
+                    onChange={(e) => onChange('telefone', sanitizePhone(e.target.value))}
+                    inputMode="tel"
+                    maxLength={16}
+                  />
                 </div>
                 <div className="col-12 col-md-6">
                   <input

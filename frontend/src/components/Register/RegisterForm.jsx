@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, Check, Lock, Mail, Phone, User } from 'lucide-react'
+import { isValidName, isValidPhone, sanitizeName, sanitizePhone } from '../../utils/validation'
 
 export default function RegisterForm() {
   const navigate = useNavigate()
@@ -17,6 +18,20 @@ export default function RegisterForm() {
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
+
+  const cleanName = sanitizeName(name)
+  const cleanPhone = sanitizePhone(phone)
+  setName(cleanName)
+  setPhone(cleanPhone)
+
+  if (!isValidName(cleanName)) {
+    setError('O nome não pode conter números e deve estar completo.')
+    return
+  }
+  if (!isValidPhone(cleanPhone)) {
+    setError('Telefone inválido (use apenas dígitos; mínimo 9).')
+    return
+  }
 
     // Validar que os termos foram aceites
     if (!accepted) {
@@ -46,8 +61,8 @@ export default function RegisterForm() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          nome: name,
-          telefone: phone,
+          nome: cleanName,
+          telefone: cleanPhone,
           email: email,
           senha: password,
           tipo: 'user'
@@ -94,7 +109,7 @@ export default function RegisterForm() {
               className="form-control"
               placeholder="O seu nome completo"
               value={name}
-              onChange={(e) => setName(e.target.value)}
+              onChange={(e) => setName(sanitizeName(e.target.value))}
               autoComplete="name"
               required
             />
@@ -115,7 +130,7 @@ export default function RegisterForm() {
               className="form-control"
               placeholder="+351"
               value={phone}
-              onChange={(e) => setPhone(e.target.value)}
+              onChange={(e) => setPhone(sanitizePhone(e.target.value))}
               autoComplete="tel"
               required
             />

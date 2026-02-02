@@ -34,7 +34,8 @@ function normalizeEmail(value) {
 	return String(value || '').trim().toLowerCase()
 }
 
-function buildPacienteApiPayloadFromForm(form) {
+
+function buildPacienteApiPayloadFromForm(form, { requirePassword } = {}) {
 	const nome = String(form?.nomeCompleto || '').trim()
 	const telefone = String(form?.contactoTelefone || '').trim()
 	const email = normalizeEmail(form?.contactoEmail)
@@ -43,19 +44,23 @@ function buildPacienteApiPayloadFromForm(form) {
 	if (!nome) throw new Error('Nome completo em falta')
 	if (!telefone) throw new Error('Telefone em falta')
 	if (!email) throw new Error('Email em falta')
-	if (!senha) throw new Error('Password em falta')
+	if (requirePassword && !senha) throw new Error('Password em falta')
 
-	return {
+	const payload = {
 		nome,
 		email,
 		telefone,
-		senha,
 		sexo: form?.sexo || null,
 		endereco: form?.endereco || null,
 		nif: form?.nif || null,
 		data_nascimento: form?.dataNascimento || null,
 		numero_utente: form?.numeroUtente || null,
 	}
+
+	// Only send senha if provided (avoid forcing password change on edit).
+	if (senha) payload.senha = senha
+
+	return payload
 }
 
 function buildDependenteApiPayloadFromForm(form, responsavelId) {
@@ -77,7 +82,7 @@ function buildDependenteApiPayloadFromForm(form, responsavelId) {
 }
 
 export async function createPacienteApi({ form } = {}) {
-	const payload = buildPacienteApiPayloadFromForm(form)
+	const payload = buildPacienteApiPayloadFromForm(form, { requirePassword: true })
 	const data = await apiFetch('/utilizadores', {
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json' },
@@ -87,7 +92,7 @@ export async function createPacienteApi({ form } = {}) {
 }
 
 export async function updatePacienteApi({ id, form } = {}) {
-	const payload = buildPacienteApiPayloadFromForm(form)
+	const payload = buildPacienteApiPayloadFromForm(form, { requirePassword: false })
 	const data = await apiFetch(`/utilizadores/${encodeURIComponent(String(id))}`, {
 		method: 'PATCH',
 		headers: { 'Content-Type': 'application/json' },

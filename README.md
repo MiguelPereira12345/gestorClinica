@@ -6,7 +6,7 @@
 - Criar uma base de dados (ex: `gestor_clinica`)
 - Abrir o Query Tool e correr o script: [backend/sql/gestorClinica_init.sql](backend/sql/gestorClinica_init.sql)
 
-O script cria as tabelas principais (`utilizador`, `consulta`, `plano_tratamento`, `dependentes`, `historico_medico`, `medico`) e insere um utilizador admin.
+O script único cria as tabelas principais (`utilizador`, `consulta`, `plano_tratamento`, `dependentes`, `historico_medico`, `medico`), as tabelas adicionais (ficheiros, notificações, audit, etc.) e inclui migrações idempotentes para BD já existentes.
 
 Credenciais seed:
 - Email: `admin@clinica.local`

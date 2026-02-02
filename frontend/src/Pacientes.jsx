@@ -186,11 +186,9 @@ export default function Pacientes() {
 													className="btn btn-light btn-sm"
 													onClick={() => {
 														if (!ensurePatientExists(r)) return
-														const baseId = r.responsavelId || r.id
-														navigate(`/pacientes/${baseId}/planos`)
+														navigate(`/pacientes/${r.id}/planos`)
 													}}
-													disabled={!!r.responsavelId}
-													title={r.responsavelId ? 'Planos disponíveis no responsável' : 'Ver planos de tratamento'}
+													title={r.responsavelId ? 'Ver planos do dependente' : 'Ver planos de tratamento'}
 												>
 													<ClipboardList size={14} aria-hidden="true" />
 													Planos
