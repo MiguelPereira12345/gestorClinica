@@ -3,25 +3,10 @@ import './App.css'
 import { useNavigate, useParams } from 'react-router-dom'
 import AppLayout from './components/Layout/AppLayout'
 import PageHeader from './components/UI/PageHeader'
+import InfoField from './components/UI/InfoField'
 import { getDependentsOf, getEffectivePhone, getPatientById, loadPatients } from './utils/patientStorage'
 import { downloadClinicalFile, listClinicalFiles, openClinicalFileInNewTab } from './utils/clinicalFilesApi'
 import { formatDatePT } from './utils/dateTime'
-
-function Field({ label, value }) {
-	return (
-		<div className="col-12 col-lg-6">
-			<div
-				className="border rounded-2 p-3 h-100"
-				style={{ background: 'rgba(255, 255, 255, 0.85)', borderColor: 'rgba(30, 42, 53, 0.08)' }}
-			>
-				<div style={{ fontSize: 12, fontWeight: 900, color: 'rgba(122, 130, 138, 0.95)', marginBottom: 6 }}>{label}</div>
-				<div style={{ fontSize: 13, fontWeight: 700, color: 'rgba(30, 42, 53, 0.92)', whiteSpace: 'pre-wrap' }}>
-					{value || '—'}
-				</div>
-			</div>
-		</div>
-	)
-}
 
 export default function VerPaciente() {
 	const navigate = useNavigate()
@@ -132,20 +117,20 @@ export default function VerPaciente() {
 						Identificação Pessoal
 					</h2>
 					<div className="row g-3">
-						<Field label="Nome completo" value={data.nomeCompleto || patient.nome} />
-						<Field label="Data de nascimento" value={data.dataNascimento} />
-						<Field label="Sexo" value={data.sexo} />
-						<Field label="Endereço" value={data.endereco} />
-						<Field
+						<InfoField label="Nome completo" value={data.nomeCompleto || patient.nome} />
+						<InfoField label="Data de nascimento" value={data.dataNascimento} />
+						<InfoField label="Sexo" value={data.sexo} />
+						<InfoField label="Endereço" value={data.endereco} />
+						<InfoField
 							label={responsavelId ? 'Contacto (telefone) — efetivo' : 'Contacto (telefone)'}
 							value={effectivePhone || data.contactoTelefone}
 						/>
-						<Field label="Contacto (email)" value={data.contactoEmail || patient.email} />
-						<Field label="Nº de utente" value={data.numeroUtente} />
-						<Field label="NIF" value={data.nif} />
-						<Field label="Subsistemas de saúde" value={data.subsistemasSaude} />
-						<Field label="Estado civil" value={data.estadoCivil} />
-						<Field label="Profissão" value={data.profissao} />
+						<InfoField label="Contacto (email)" value={data.contactoEmail || patient.email} />
+						<InfoField label="Nº de utente" value={data.numeroUtente} />
+						<InfoField label="NIF" value={data.nif} />
+						<InfoField label="Subsistemas de saúde" value={data.subsistemasSaude} />
+						<InfoField label="Estado civil" value={data.estadoCivil} />
+						<InfoField label="Profissão" value={data.profissao} />
 					</div>
 				</section>
 
@@ -200,12 +185,12 @@ export default function VerPaciente() {
 						Histórico Médico Geral
 					</h2>
 					<div className="row g-3">
-						<Field label="Condições pré-existentes" value={data.condicoesPreExistentes} />
-						<Field label="Medicamentos em uso" value={data.medicamentosEmUso} />
-						<Field label="Alergias conhecidas" value={data.alergiasConhecidas} />
-						<Field label="Histórico cirúrgico" value={data.historicoCirurgico} />
-						<Field label="Internações/tratamentos" value={data.internacoesTratamentos} />
-						<Field label="Gravidez (se aplicável)" value={data.gravidez} />
+						<InfoField label="Condições pré-existentes" value={data.condicoesPreExistentes} />
+						<InfoField label="Medicamentos em uso" value={data.medicamentosEmUso} />
+						<InfoField label="Alergias conhecidas" value={data.alergiasConhecidas} />
+						<InfoField label="Histórico cirúrgico" value={data.historicoCirurgico} />
+						<InfoField label="Internações/tratamentos" value={data.internacoesTratamentos} />
+						<InfoField label="Gravidez (se aplicável)" value={data.gravidez} />
 					</div>
 				</section>
 
@@ -214,11 +199,11 @@ export default function VerPaciente() {
 						Histórico Dentário
 					</h2>
 					<div className="row g-3">
-						<Field label="Motivo da consulta inicial" value={data.motivoConsultaInicial} />
-						<Field label="Condições dentárias" value={data.condicoesDentarias} />
-						<Field label="Tratamentos dentários passados" value={data.historicoTratamentosDentarios} />
-						<Field label="Experiência com anestesias" value={data.experienciaAnestesias} />
-						<Field label="Dor/desconforto/sensibilidade" value={data.historicoDorSensibilidade} />
+						<InfoField label="Motivo da consulta inicial" value={data.motivoConsultaInicial} />
+						<InfoField label="Condições dentárias" value={data.condicoesDentarias} />
+						<InfoField label="Tratamentos dentários passados" value={data.historicoTratamentosDentarios} />
+						<InfoField label="Experiência com anestesias" value={data.experienciaAnestesias} />
+						<InfoField label="Dor/desconforto/sensibilidade" value={data.historicoDorSensibilidade} />
 					</div>
 				</section>
 
@@ -227,13 +212,13 @@ export default function VerPaciente() {
 						Hábitos e Estilo de Vida
 					</h2>
 					<div className="row g-3">
-						<Field label="Higiene oral" value={data.habitosHigieneOral} />
-						<Field label="Hábitos alimentares" value={data.habitosAlimentares} />
-						<Field label="Tabaco" value={data.consumoTabaco} />
-						<Field label="Álcool" value={data.consumoAlcool} />
-						<Field label="Drogas" value={data.consumoDrogas} />
-						<Field label="Bruxismo" value={data.bruxismo ? 'Sim' : 'Não'} />
-						<Field label="Atividades desportivas" value={data.atividadesDesportivas} />
+						<InfoField label="Higiene oral" value={data.habitosHigieneOral} />
+						<InfoField label="Hábitos alimentares" value={data.habitosAlimentares} />
+						<InfoField label="Tabaco" value={data.consumoTabaco} />
+						<InfoField label="Álcool" value={data.consumoAlcool} />
+						<InfoField label="Drogas" value={data.consumoDrogas} />
+						<InfoField label="Bruxismo" value={data.bruxismo ? 'Sim' : 'Não'} />
+						<InfoField label="Atividades desportivas" value={data.atividadesDesportivas} />
 					</div>
 				</section>
 
@@ -310,9 +295,9 @@ export default function VerPaciente() {
 						Tratamentos anteriores e resultados
 					</h2>
 					<div className="row g-3">
-						<Field label="Histórico de tratamentos" value={data.historicoTratamentos} />
-						<Field label="Resultados" value={data.resultadosTratamentos} />
-						<Field label="Planos de tratamento" value={data.planosTratamento} />
+						<InfoField label="Histórico de tratamentos" value={data.historicoTratamentos} />
+						<InfoField label="Resultados" value={data.resultadosTratamentos} />
+						<InfoField label="Planos de tratamento" value={data.planosTratamento} />
 					</div>
 				</section>
 
@@ -321,7 +306,7 @@ export default function VerPaciente() {
 						Observações adicionais
 					</h2>
 					<div className="row g-3">
-						<Field label="Notas" value={data.observacoesAdicionais} />
+						<InfoField label="Notas" value={data.observacoesAdicionais} />
 					</div>
 				</section>
 			</div>

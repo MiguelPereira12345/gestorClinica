@@ -40,6 +40,24 @@ module.exports = (sequelize, DataTypes) => {
           key: 'id'
         }
       },
+      id_dependente: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        references: {
+          model: 'dependentes',
+          key: 'id_dependente',
+        },
+      },
+      id_tratamento: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        references: {
+          model: 'plano_tratamento',
+          key: 'id_tratamento',
+        },
+        onUpdate: 'CASCADE',
+        onDelete: 'SET NULL',
+      },
       hora: {
         type: DataTypes.TIME,
         allowNull: false,

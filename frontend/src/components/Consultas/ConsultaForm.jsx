@@ -3,9 +3,9 @@ import { CONSULTA_STATUS, DURACOES_MIN, TIPO_MARCACAO } from '../../utils/consul
 import { combineDateAndTimeToISO, toInputDate, toInputTime } from '../../utils/dateTime'
 import { ESPECIALIDADES } from '../../utils/consultasLookups'
 import { listAvailableSlots } from '../../utils/appointmentStorage'
-import { loadPatients } from '../../utils/patientStorage'
+import { dependentNumericId, loadPatients } from '../../utils/patientStorage'
 import { loadMedicosForSelect, refreshMedicosForSelect } from '../../utils/professionalsStorage'
-import { getCurrentUser, isMedicoUser } from '../../utils/apiClient'
+import { apiFetch, getCurrentUser, isMedicoUser } from '../../utils/apiClient'
 
 
 function normalizePatient(p) {
@@ -37,9 +37,16 @@ function parseInputDateToLocalDate(dateStr) {
 
 export default function ConsultaForm({
 	initial,
+	initialTreatmentPlanId = '',
 	submitLabel = 'Guardar',
 	onSubmit,
 	onCancel,
+	lockPatient = false,
+	hidePatient = false,
+	hideDependents = false,
+	minHoursAhead = 0,
+	topContent = null,
+	enableTreatmentSelect = false,
 }) {
 	const currentUser = getCurrentUser()
 	const lockedToCurrentMedico = isMedicoUser() && currentUser?.id
@@ -65,6 +72,9 @@ export default function ConsultaForm({
 		firstVisitReason: initial?.firstVisitReason || '',
 		notes: initial?.notes || '',
 	}))
+	const [treatmentPlanId, setTreatmentPlanId] = useState(() => String(initialTreatmentPlanId || '').trim())
+	const [treatmentPlans, setTreatmentPlans] = useState([])
+	const [treatmentPlansLoading, setTreatmentPlansLoading] = useState(false)
 	const [error, setError] = useState('')
 	const [showPatientResults, setShowPatientResults] = useState(false)
 	const [showTimeResults, setShowTimeResults] = useState(false)
@@ -147,6 +157,49 @@ export default function ConsultaForm({
 		setError('')
 	}
 
+	useEffect(() => {
+		if (!enableTreatmentSelect) return
+		const pid = String(form.patientId || '').trim()
+		if (!pid) {
+			setTreatmentPlans([])
+			setTreatmentPlanId('')
+			return
+		}
+		let mounted = true
+		;(async () => {
+			setTreatmentPlansLoading(true)
+			try {
+				const res = await apiFetch(`/patients/${encodeURIComponent(pid)}/planos`)
+				const rows = Array.isArray(res?.planos) ? res.planos : []
+				if (mounted) setTreatmentPlans(rows)
+			} catch {
+				if (mounted) setTreatmentPlans([])
+			} finally {
+				if (mounted) setTreatmentPlansLoading(false)
+			}
+		})()
+		return () => {
+			mounted = false
+		}
+	}, [enableTreatmentSelect, form.patientId])
+
+	const filteredTreatmentPlans = useMemo(() => {
+		if (!enableTreatmentSelect) return []
+		const depNum = form.forDependent ? dependentNumericId(form.dependentId) : null
+		return (treatmentPlans || []).filter((p) => {
+			const planDep = p?.dependent_id == null ? null : Number(p.dependent_id)
+			if (depNum == null) return planDep == null
+			return planDep === depNum
+		})
+	}, [enableTreatmentSelect, form.dependentId, form.forDependent, treatmentPlans])
+
+	useEffect(() => {
+		if (!enableTreatmentSelect) return
+		if (!treatmentPlanId) return
+		const ok = filteredTreatmentPlans.some((p) => String(p?.id_tratamento) === String(treatmentPlanId))
+		if (!ok) setTreatmentPlanId('')
+	}, [enableTreatmentSelect, filteredTreatmentPlans, treatmentPlanId])
+
 	function pickPatient(p) {
 		update({
 			patientName: p.nome || '',
@@ -218,6 +271,12 @@ export default function ConsultaForm({
 		const consultaDate = new Date(startISO)
 		const now = new Date()
 		if (consultaDate < now) return 'Não é possível criar consultas no passado.'
+
+		const minHours = Number(minHoursAhead || 0)
+		if (minHours > 0) {
+			const diffHoras = (consultaDate.getTime() - now.getTime()) / (1000 * 60 * 60)
+			if (diffHoras < minHours) return `A consulta deve ser marcada com pelo menos ${Math.trunc(minHours)}h de antecedência.`
+		}
 		
 		return ''
 	}
@@ -266,6 +325,7 @@ export default function ConsultaForm({
 			firstVisitReason: String(form.firstVisitReason || '').trim(),
 			notes: String(form.notes || '').trim(),
 			isNoShow: form.bookingStatus === 'falta',
+			treatmentPlanId: enableTreatmentSelect ? (treatmentPlanId ? String(treatmentPlanId) : '') : '',
 		}
 
 		onSubmit(payload)
@@ -279,38 +339,48 @@ export default function ConsultaForm({
 					<div className="text-muted small">Preenche a informação conforme o processo clínico.</div>
 				</div>
 
-			<div className="row g-3">
-				<div className="col-12">
-					<label className="form-label">Paciente</label>
-					<div className="position-relative">
-						<input
-							ref={patientInputRef}
-							className="form-control"
-							placeholder="Pesquisar por nome, telefone ou ID"
-							value={form.patientName}
-							onChange={(e) => {
-								update({ patientName: e.target.value, patientId: '', dependentId: '', dependentName: '' })
-								setShowPatientResults(true)
-							}}
-							onFocus={() => setShowPatientResults(true)}
-							autoComplete="off"
-						/>
-						{showPatientResults && patientResults.length ? (
-							<div ref={patientPopoverRef} className="dropdown-menu show w-100 p-0" role="listbox">
-								{patientResults.map((p) => (
-									<button key={p.id} type="button" className="dropdown-item py-2" onClick={() => pickPatient(p)}>
-										<div className="fw-semibold">{p.nome}</div>
-										<div className="text-muted small">
-											{p.id}
-											{p.telefone ? ` • ${p.telefone}` : ''}
-										</div>
-									</button>
-								))}
-							</div>
-						) : null}
-					</div>
-				</div>
+				{topContent ? <div className="mb-3">{topContent}</div> : null}
 
+			<div className="row g-3">
+				{hidePatient ? null : (
+					<div className="col-12">
+						<label className="form-label">Paciente</label>
+						<div className="position-relative">
+							<input
+								ref={patientInputRef}
+								className="form-control"
+								placeholder="Pesquisar por nome, telefone ou ID"
+								value={form.patientName}
+								onChange={(e) => {
+									if (lockPatient) return
+									update({ patientName: e.target.value, patientId: '', dependentId: '', dependentName: '' })
+									setShowPatientResults(true)
+								}}
+								onFocus={() => {
+									if (lockPatient) return
+									setShowPatientResults(true)
+								}}
+								autoComplete="off"
+								disabled={!!lockPatient}
+							/>
+							{!lockPatient && showPatientResults && patientResults.length ? (
+								<div ref={patientPopoverRef} className="dropdown-menu show w-100 p-0" role="listbox">
+									{patientResults.map((p) => (
+										<button key={p.id} type="button" className="dropdown-item py-2" onClick={() => pickPatient(p)}>
+											<div className="fw-semibold">{p.nome}</div>
+											<div className="text-muted small">
+												{p.id}
+												{p.telefone ? ` • ${p.telefone}` : ''}
+											</div>
+										</button>
+									))}
+								</div>
+							) : null}
+						</div>
+					</div>
+				)}
+
+				{hideDependents ? null : (
 				<div className="col-12">
 					<div className="form-check form-switch">
 						<input
@@ -365,6 +435,7 @@ export default function ConsultaForm({
 						</div>
 					) : null}
 				</div>
+				)}
 
 				<div className="col-md-6">
 					<label className="form-label">Profissional</label>
@@ -400,6 +471,32 @@ export default function ConsultaForm({
 						))}
 					</select>
 				</div>
+
+				{enableTreatmentSelect ? (
+					<div className="col-md-6">
+						<label className="form-label">Tratamentos</label>
+						<select
+							className="form-select"
+							value={treatmentPlanId}
+							onChange={(e) => setTreatmentPlanId(e.target.value)}
+							disabled={!String(form.patientId || '').trim() || treatmentPlansLoading}
+						>
+							<option value="">— Sem tratamento —</option>
+							{filteredTreatmentPlans.map((p) => (
+								<option key={p.id_tratamento} value={String(p.id_tratamento)}>
+									{p.id_tratamento} — {p.descricao ? String(p.descricao).slice(0, 40) : 'Tratamento'}
+								</option>
+							))}
+						</select>
+						{!String(form.patientId || '').trim() ? (
+							<div className="form-text">Seleciona um paciente para listar os tratamentos.</div>
+						) : treatmentPlansLoading ? (
+							<div className="form-text">A carregar tratamentos…</div>
+						) : filteredTreatmentPlans.length === 0 ? (
+							<div className="form-text">Sem tratamentos para esta seleção.</div>
+						) : null}
+					</div>
+				) : null}
 
 				<div className="col-md-6">
 					<label className="form-label">Data</label>

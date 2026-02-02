@@ -3,7 +3,7 @@ const { initModels } = require('../models/init-models');
 const { DataTypes } = require('sequelize');
 
 const models = initModels(sequelize);
-const { Plano } = models;
+const { Plano, Dependente } = models;
 
 const controller = {};
 
@@ -72,14 +72,28 @@ controller.obter_plano = async (req, res) => {
 //PLANO POST
 controller.criar_plano = async (req, res) => {
   try {
-    const { id, data_inicio, data_fim, descricao, status } = req.body;
+    const { id, data_inicio, data_fim, descricao, status, dependent_id } = req.body;
 
     if (!id) {
       return res.status(400).json({ message: 'Campo id (FK para utilizador) em falta' });
     }
 
+    let safeDependentId = null;
+    if (dependent_id != null && String(dependent_id).trim() !== '') {
+      const depIdNum = Number(dependent_id);
+      if (Number.isNaN(depIdNum) || depIdNum <= 0) {
+        return res.status(400).json({ message: 'dependent_id inválido' });
+      }
+      const dep = await Dependente.findOne({ where: { id_dependente: depIdNum, id } });
+      if (!dep) {
+        return res.status(400).json({ message: 'Dependente inválido (ou não pertence ao paciente)' });
+      }
+      safeDependentId = depIdNum;
+    }
+
     const newPlano = await Plano.create({
       id,
+      dependent_id: safeDependentId,
       data_inicio: data_inicio || null,
       data_fim: data_fim || null,
       descricao: descricao || null,
@@ -112,10 +126,26 @@ controller.editar_plano = async (req, res) => {
       return res.status(404).json({ message: 'Plano não encontrado' });
     }
 
-    const { id, data_inicio, data_fim, descricao, status } = req.body;
+    const { id, data_inicio, data_fim, descricao, status, dependent_id } = req.body;
 
     const updatedData = {};
     if (id !== undefined) updatedData.id = id;
+    if (dependent_id !== undefined) {
+      let safeDependentId = null;
+      if (dependent_id != null && String(dependent_id).trim() !== '') {
+        const depIdNum = Number(dependent_id);
+        if (Number.isNaN(depIdNum) || depIdNum <= 0) {
+          return res.status(400).json({ message: 'dependent_id inválido' });
+        }
+        const patientIdForDep = updatedData.id !== undefined ? updatedData.id : plano.id;
+        const dep = await Dependente.findOne({ where: { id_dependente: depIdNum, id: patientIdForDep } });
+        if (!dep) {
+          return res.status(400).json({ message: 'Dependente inválido (ou não pertence ao paciente)' });
+        }
+        safeDependentId = depIdNum;
+      }
+      updatedData.dependent_id = safeDependentId;
+    }
     if (data_inicio !== undefined) updatedData.data_inicio = data_inicio;
     if (data_fim !== undefined) updatedData.data_fim = data_fim;
     if (descricao !== undefined) updatedData.descricao = descricao;

@@ -219,15 +219,23 @@ controller.criar_utilizador = async (req, res) => {
       numero_utente
     } = req.body;
 
+    const emailNorm = String(email || '').trim().toLowerCase();
+    const telefoneNorm = String(telefone || '').trim();
+
     // Validar
-    if (!nome || !email || !telefone || !senha) {
+    if (!nome || !emailNorm || !telefoneNorm || !senha) {
       return res.status(400).json({ 
         message: 'Nome, email, telefone e senha são obrigatórios' 
       });
     }
 
     // Verificar se email já existe 
-    const existingEmail = await User.findOne({ where: { email } });
+    const existingEmail = await User.findOne({
+      where: sequelize.where(
+        sequelize.fn('lower', sequelize.fn('trim', sequelize.col('email'))),
+        emailNorm
+      ),
+    });
     if (existingEmail) {
       return res.status(409).json({ 
         message: `Email já cadastrado como ${existingEmail.tipo === 'admin' ? 'administrador' : 'utilizador'}` 
@@ -235,7 +243,7 @@ controller.criar_utilizador = async (req, res) => {
     }
 
     // Verificar se telefone já existe
-    const existingPhone = await User.findOne({ where: { telefone } });
+    const existingPhone = await User.findOne({ where: { telefone: telefoneNorm } });
     if (existingPhone) {
       return res.status(409).json({ 
         message: `Telefone já cadastrado como ${existingPhone.tipo === 'admin' ? 'administrador' : 'utilizador'}` 
@@ -248,8 +256,8 @@ controller.criar_utilizador = async (req, res) => {
     // Criar o utilizador 
     const novoUtilizador = await User.create({
       nome,
-      email,
-      telefone,
+      email: emailNorm,
+      telefone: telefoneNorm,
       senha: hashedPassword,
       tipo: 'user', // Hardcoded - sempre 'user' para segurança
       ativo: true,

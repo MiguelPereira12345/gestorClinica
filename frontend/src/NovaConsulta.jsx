@@ -77,6 +77,8 @@ export default function NovaConsulta() {
 
 						<ConsultaForm
 							initial={initial}
+							initialTreatmentPlanId={fromTreatmentPlanId ? String(fromTreatmentPlanId) : ''}
+							enableTreatmentSelect
 							submitLabel="Criar consulta"
 							onCancel={() => {
 								if (returnTo?.pathname) {
@@ -90,7 +92,7 @@ export default function NovaConsulta() {
 									if (saving) return
 									setSaving(true)
 									try {
-										const treatmentPlanId = fromTreatmentPlanId ? String(fromTreatmentPlanId) : ''
+										const treatmentPlanId = String(payload?.treatmentPlanId || fromTreatmentPlanId || '').trim()
 										const created = await createConsulta({
 											...payload,
 											treatmentPlanId,

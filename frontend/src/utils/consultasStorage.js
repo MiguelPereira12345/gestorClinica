@@ -200,6 +200,11 @@ export async function createConsulta(payload) {
 		notas_internas: (payload?.notes || '').trim() || null,
 	}
 
+	const planIdNum = parseNumericId(payload?.treatmentPlanId)
+	if (planIdNum) {
+		apiBody.id_tratamento = planIdNum
+	}
+
 	const createdRes = await apiFetch('/consultas', {
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json' },
@@ -285,6 +290,7 @@ export function patchConsulta(id, patch = {}) {
 				status: toApiStatus(next.bookingStatus),
 				data_consulta,
 				id: idNum,
+				id_tratamento: parseNumericId(next.treatmentPlanId) || null,
 				hora,
 				razao_consulta: (next.firstVisitReason || '').trim() || null,
 				notas_internas: (next.notes || '').trim() || null,

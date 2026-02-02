@@ -228,7 +228,7 @@ export async function syncConsultasFromApi() {
 			patientId,
 			patientName,
 			dependentName: '',
-			treatmentPlanId: '',
+			treatmentPlanId: c.id_tratamento != null ? String(c.id_tratamento) : (prev?.treatmentPlanId || ''),
 			notes: (c.notas_internas != null ? String(c.notas_internas) : '') || prev?.notes || '',
 			specialty,
 			medicoId: Number(c.id_medico || 0) || 0,
@@ -280,11 +280,14 @@ export async function syncTreatmentPlansFromApi() {
 		const id = String(p.id_tratamento)
 		const prev = existingById.get(id)
 		const pid = p.id != null ? String(p.id) : ''
+		const depId = p.dependent_id != null ? String(p.dependent_id) : ''
 		return {
 			...(prev || {}),
 			id,
 			patientId: pid,
 			patientName: pMap.get(pid)?.nome || '',
+			dependentId: depId,
+			dependentName: depId ? pMap.get(depId)?.nome || '' : '',
 			data_inicio: p.data_inicio ? String(p.data_inicio).slice(0, 10) : '',
 			data_fim: p.data_fim ? String(p.data_fim).slice(0, 10) : '',
 			descricao: p.descricao || '',

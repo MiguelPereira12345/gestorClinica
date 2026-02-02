@@ -137,9 +137,16 @@ exports.login_admin = async (req, res) => {
       return res.status(400).json({ message: 'Email e senha são obrigatórios' });
     }
 
+    const emailNorm = String(email).trim().toLowerCase();
+
     const user = await User.findOne({
       where: {
-        email: String(email).trim().toLowerCase(),
+        [Op.and]: [
+          sequelize.where(
+            sequelize.fn('lower', sequelize.fn('trim', sequelize.col('email'))),
+            emailNorm
+          ),
+        ],
         tipo: { [Op.in]: ['admin', 'secretaria', 'medico'] },
         ativo: true,
       },
@@ -177,8 +184,19 @@ exports.login_paciente = async (req, res) => {
       return res.status(400).json({ message: 'Email e senha são obrigatórios' });
     }
 
+    const emailNorm = String(email).trim().toLowerCase();
+
     const user = await User.findOne({
-      where: { email: String(email).trim().toLowerCase(), tipo: 'user', ativo: true },
+      where: {
+        [Op.and]: [
+          sequelize.where(
+            sequelize.fn('lower', sequelize.fn('trim', sequelize.col('email'))),
+            emailNorm
+          ),
+        ],
+        tipo: 'user',
+        ativo: true,
+      },
     });
 
     if (!user) {

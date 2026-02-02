@@ -13,6 +13,17 @@ module.exports = (sequelize, DataTypes) => {
       descricao: DataTypes.STRING,
       status: DataTypes.STRING,
 
+      dependent_id: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        references: {
+          model: 'dependentes',
+          key: 'id_dependente',
+        },
+        onUpdate: 'CASCADE',
+        onDelete: 'SET NULL',
+      },
+
       id: {
         type: DataTypes.INTEGER,
         allowNull: false,
@@ -34,6 +45,11 @@ module.exports = (sequelize, DataTypes) => {
     Plano.belongsTo(models.User, {
       foreignKey: 'id',
       as: 'utilizador',
+    });
+
+    Plano.belongsTo(models.Dependente, {
+      foreignKey: 'dependent_id',
+      as: 'dependente',
     });
   };
 

@@ -3,32 +3,67 @@ const { initModels } = require('../models/init-models');
 const { Op } = require('sequelize');
 
 const models = initModels(sequelize);
-const { Consulta, User } = models;
+const { Consulta, User, Plano } = models;
 
 const controller = {};
 
 function isAdmin(req) {
-  return String(req.user?.tipo || '').toLowerCase() === 'admin';
+  const role = String(req.user?.tipo || '')
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/\p{Diacritic}/gu, '');
+  return role === 'admin';
 }
 
 function isMedico(req) {
-  const role = String(req.user?.tipo || '').toLowerCase();
-  return role === 'medico' || role === 'médico';
+  const role = String(req.user?.tipo || '')
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/\p{Diacritic}/gu, '');
+  return role === 'medico';
+}
+
+function isSecretaria(req) {
+  const role = String(req.user?.tipo || '')
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/\p{Diacritic}/gu, '');
+  return role === 'secretaria';
 }
 
 function canViewConsulta(req, consulta) {
   if (isAdmin(req)) return true;
   // Requisito: médico pode ver todas as consultas
   if (isMedico(req)) return true;
+  // Secretaria pode ver consultas
+  if (isSecretaria(req)) return true;
   return false;
 }
 
 function canManageConsulta(req, consulta) {
   if (isAdmin(req)) return true;
+  // Secretaria pode gerir consultas
+  if (isSecretaria(req)) return true;
   // Médico só pode alterar consultas atribuídas a si
   if (isMedico(req)) {
     const uid = req.user?.id;
     return uid != null && consulta?.id_medico != null && String(consulta.id_medico) === String(uid);
+  }
+  return false;
+}
+
+function canApproveRequest(req, consulta) {
+  if (isAdmin(req)) return true;
+  if (isSecretaria(req)) return true;
+  if (isMedico(req)) {
+    const uid = req.user?.id;
+    if (uid == null) return false;
+    // Médico pode aprovar se: consulta não tem médico (assume para si) OU já está atribuída a si
+    if (consulta?.id_medico == null) return true;
+    return String(consulta.id_medico) === String(uid);
   }
   return false;
 }
@@ -197,6 +232,7 @@ controller.criar_consulta = async (req, res) => {
       status,
       data_consulta,
       id,  // ID do paciente (FK para utilizador) - associado por nome e data de nascimento
+      id_tratamento,
       hora,
       razao_consulta,
       notas_internas,
@@ -218,6 +254,20 @@ controller.criar_consulta = async (req, res) => {
       return res.status(400).json({
         message: 'Paciente não encontrado. Verifica o ID do utilizador (utilizador.id).',
       });
+    }
+
+    // Validar plano de tratamento (opcional) - tem de pertencer ao paciente
+    let safePlanoId = null;
+    if (id_tratamento != null && String(id_tratamento).trim() !== '') {
+      const planIdNum = Number(id_tratamento);
+      if (!Number.isFinite(planIdNum) || planIdNum <= 0) {
+        return res.status(400).json({ message: 'id_tratamento inválido' });
+      }
+      const plano = await Plano.findOne({ where: { id_tratamento: planIdNum, id } });
+      if (!plano) {
+        return res.status(400).json({ message: 'Plano de tratamento inválido (ou não pertence ao paciente)' });
+      }
+      safePlanoId = planIdNum;
     }
 
     // Validação - hora entre 09:00 e 19:00 usando função utilitária
@@ -261,6 +311,7 @@ controller.criar_consulta = async (req, res) => {
       status: status || 'Pendente',
       data_consulta,
       id,
+      id_tratamento: safePlanoId,
       hora,
       razao_consulta: razao_consulta != null ? String(razao_consulta) : null,
       notas_internas: notas_internas != null ? String(notas_internas) : null,
@@ -295,6 +346,7 @@ controller.editar_consulta = async (req, res) => {
       status,
       data_consulta,
       id,
+      id_tratamento,
       hora,
       razao_consulta,
       notas_internas,
@@ -361,6 +413,22 @@ controller.editar_consulta = async (req, res) => {
     if (data_consulta !== undefined) updatedData.data_consulta = data_consulta;
     if (id !== undefined) updatedData.id = id;
     if (hora !== undefined) updatedData.hora = hora;
+    if (id_tratamento !== undefined) {
+      let safePlanoId = null;
+      if (id_tratamento != null && String(id_tratamento).trim() !== '') {
+        const planIdNum = Number(id_tratamento);
+        if (!Number.isFinite(planIdNum) || planIdNum <= 0) {
+          return res.status(400).json({ message: 'id_tratamento inválido' });
+        }
+        const patientIdForPlan = id !== undefined ? id : consulta.id;
+        const plano = await Plano.findOne({ where: { id_tratamento: planIdNum, id: patientIdForPlan } });
+        if (!plano) {
+          return res.status(400).json({ message: 'Plano de tratamento inválido (ou não pertence ao paciente)' });
+        }
+        safePlanoId = planIdNum;
+      }
+      updatedData.id_tratamento = safePlanoId;
+    }
     if (razao_consulta !== undefined) updatedData.razao_consulta = razao_consulta != null ? String(razao_consulta) : null;
     if (notas_internas !== undefined) updatedData.notas_internas = notas_internas != null ? String(notas_internas) : null;
 
@@ -413,6 +481,51 @@ controller.cancelar_consulta = async (req, res) => {
   } catch (error) {
     console.error('Erro ao cancelar consulta:', error);
     return res.status(500).json({ message: 'Não foi possível cancelar a consulta' });
+  }
+};
+
+// Aprovar pedido de consulta (pendente) - admin pode aprovar; médico pode aprovar e ficar atribuído.
+controller.aprovar_pedido = async (req, res) => {
+  try {
+    const { id_consulta } = req.params;
+    const consulta = await Consulta.findByPk(id_consulta);
+    if (!consulta) return res.status(404).json({ message: 'Consulta não encontrada' });
+
+    if (!canApproveRequest(req, consulta)) {
+      return res.status(403).json({ message: 'Sem permissão' });
+    }
+
+    // Se médico e consulta não tem médico, atribui ao médico que aprovou.
+    const updates = { status: 'Confirmada' };
+    if (isMedico(req) && (consulta.id_medico == null || consulta.id_medico === '')) {
+      updates.id_medico = req.user?.id;
+    }
+
+    await consulta.update(updates);
+    await consulta.reload();
+    return res.status(200).json({ message: 'Pedido aprovado', consulta });
+  } catch (error) {
+    console.error('Erro ao aprovar pedido:', error);
+    return res.status(500).json({ message: 'Não foi possível aprovar o pedido' });
+  }
+};
+
+controller.rejeitar_pedido = async (req, res) => {
+  try {
+    const { id_consulta } = req.params;
+    const consulta = await Consulta.findByPk(id_consulta);
+    if (!consulta) return res.status(404).json({ message: 'Consulta não encontrada' });
+
+    if (!canApproveRequest(req, consulta)) {
+      return res.status(403).json({ message: 'Sem permissão' });
+    }
+
+    await consulta.update({ status: 'Cancelada' });
+    await consulta.reload();
+    return res.status(200).json({ message: 'Pedido rejeitado', consulta });
+  } catch (error) {
+    console.error('Erro ao rejeitar pedido:', error);
+    return res.status(500).json({ message: 'Não foi possível rejeitar o pedido' });
   }
 };
 

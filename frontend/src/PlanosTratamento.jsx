@@ -1,17 +1,17 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
-import { Plus, CalendarPlus, Pencil, Trash2 } from 'lucide-react'
+import { Plus, BookOpen, Eye, Pencil, Trash2 } from 'lucide-react'
 import AppLayout from './components/Layout/AppLayout'
 import PageHeader from './components/UI/PageHeader'
 import Button from './components/UI/Button'
 import { useConfirm } from './components/UI/ConfirmProvider'
 import { loadPatients } from './utils/patientStorage'
-import { getStoredConsultas, statusLabel } from './utils/consultasStorage'
 import { parseISOToDate } from './utils/dateTime'
 import {
 	PLANO_STATUS,
 	appendTreatmentPlanHistory,
 	listTreatmentPlans,
+	getTreatmentPlanById,
 	planoStatusLabel,
 	createTreatmentPlanApi,
 	updateTreatmentPlanApi,
@@ -28,19 +28,12 @@ function normalizePatient(p) {
 	}
 }
 
-function truncateText(value, maxLen) {
-	const s = String(value || '')
-	const clean = s.replace(/\s+/g, ' ').trim()
-	if (!clean) return { short: '', isTruncated: false, full: '' }
-	const max = Number(maxLen) > 0 ? Number(maxLen) : 120
-	if (clean.length <= max) return { short: clean, isTruncated: false, full: clean }
-	return { short: `${clean.slice(0, max)}…`, isTruncated: true, full: clean }
-}
-
 export default function PlanosTratamento() {
 	const navigate = useNavigate()
 	const location = useLocation()
 	const { id: patientIdFromParams } = useParams()
+	const lockedPatientId = String(patientIdFromParams || '').trim()
+	const isPatientLocked = Boolean(lockedPatientId)
 	const confirm = useConfirm()
 	const rawPatients = useMemo(() => loadPatients(), [])
 	const patientNameById = useMemo(() => {
@@ -59,6 +52,7 @@ export default function PlanosTratamento() {
 	const preselectedPatientId =
 		String(patientIdFromParams || location.state?.patientId || '').trim() || ''
 	const expandPlanIdFromNav = String(location.state?.expandPlanId || '').trim()
+	const editPlanIdFromNav = String(location.state?.editPlanId || '').trim()
 
 	const [selectedPatientId, setSelectedPatientId] = useState(preselectedPatientId)
 	const selectedPatient = useMemo(
@@ -74,7 +68,6 @@ export default function PlanosTratamento() {
 	const [showForm, setShowForm] = useState(false)
 	const [editingId, setEditingId] = useState('')
 	const [expandedPlanId, setExpandedPlanId] = useState('')
-	const [expandedDescPlanId, setExpandedDescPlanId] = useState('')
 	const [noteText, setNoteText] = useState('')
 	const [form, setForm] = useState({
 		data_inicio: '',
@@ -92,11 +85,18 @@ export default function PlanosTratamento() {
 	useEffect(() => {
 		if (!expandPlanIdFromNav) return
 		setExpandedPlanId(expandPlanIdFromNav)
-		setExpandedDescPlanId(expandPlanIdFromNav)
 		setShowForm(false)
 		setEditingId('')
 		setError('')
 	}, [expandPlanIdFromNav])
+
+	useEffect(() => {
+		if (!editPlanIdFromNav) return
+		const plan = getTreatmentPlanById(editPlanIdFromNav)
+		if (!plan) return
+		setExpandedPlanId(editPlanIdFromNav)
+		openEdit(plan)
+	}, [editPlanIdFromNav, itemsVersion])
 
 	useEffect(() => {
 		let mounted = true
@@ -125,7 +125,6 @@ export default function PlanosTratamento() {
 		setEditingId('')
 		setForm({ data_inicio: '', data_fim: '', descricao: '', status: 'ativo' })
 		setError('')
-		setExpandedDescPlanId('')
 		setShowForm(true)
 	}
 
@@ -138,7 +137,6 @@ export default function PlanosTratamento() {
 			status: plan?.status || 'ativo',
 		})
 		setError('')
-		setExpandedDescPlanId(plan?.id || '')
 		setShowForm(true)
 	}
 
@@ -201,35 +199,6 @@ export default function PlanosTratamento() {
 		})()
 	}
 
-	function markSession(plan) {
-		const patientId = String(selectedPatientId || '').trim()
-		const patientName = selectedPatient?.nome || ''
-		const desc = truncateText(plan?.descricao || '', 240).full
-		const reason = desc ? `Tratamento: ${desc}` : ''
-
-		navigate('/consultas/nova', {
-			state: {
-				prefill: {
-					patientId,
-					patientName,
-					firstVisitReason: reason,
-				},
-				fromTreatmentPlanId: plan?.id || null,
-				returnTo: {
-					pathname: `/pacientes/${encodeURIComponent(String(patientId))}/planos`,
-					state: { patientId, expandPlanId: plan?.id || null },
-				},
-			},
-		})
-	}
-
-	function sessionsForPlan(planId) {
-		const all = getStoredConsultas()
-		return all
-			.filter((c) => String(c?.treatmentPlanId || '') === String(planId))
-			.slice()
-			.sort((a, b) => String(b?.startISO || '').localeCompare(String(a?.startISO || '')))
-	}
 
 	function formatStart(iso) {
 		const d = parseISOToDate(iso)
@@ -256,7 +225,7 @@ export default function PlanosTratamento() {
 		<AppLayout breadcrumb="Planos de Tratamento" userName="Dra. Sofia Lima">
 			<div className="ui-page">
 				<PageHeader
-					title="Planos de Tratamento"
+					title="Tratamentos"
 					subtitle={selectedPatient ? `${selectedPatient.nome} • ${selectedPatient.id}` : 'Selecione um paciente para ver/criar planos'}
 					actions={
 						<>
@@ -276,29 +245,44 @@ export default function PlanosTratamento() {
 					<div className="row g-3 align-items-end">
 						<div className="col-12 col-md-8">
 							<label className="form-label">Paciente</label>
-							<select
-								className="form-select"
-								value={selectedPatientId}
-								onChange={(e) => {
-									setSelectedPatientId(e.target.value)
-									setShowForm(false)
-									setEditingId('')
-									setError('')
-								}}
-							>
-								<option value="">Selecione</option>
-								{patients.map((p) => (
-									<option key={p.id} value={p.id}>
-										{p.nome} ({p.id}){p.responsavelId ? ` — Dependente de ${patientNameById.get(String(p.responsavelId)) || p.responsavelId}` : ''}
-									</option>
-								))}
-							</select>
+							{isPatientLocked ? (
+								<input
+									type="text"
+									className="form-control"
+									readOnly
+									value={selectedPatient ? `${selectedPatient.nome} (${selectedPatient.id})` : lockedPatientId}
+								/>
+							) : (
+								<select
+									className="form-select"
+									value={selectedPatientId}
+									onChange={(e) => {
+										setSelectedPatientId(e.target.value)
+										setShowForm(false)
+										setEditingId('')
+										setError('')
+									}}
+								>
+									<option value="">Selecione</option>
+									{patients.map((p) => (
+										<option key={p.id} value={p.id}>
+											{p.nome} ({p.id}){p.responsavelId ? ` — Dependente de ${patientNameById.get(String(p.responsavelId)) || p.responsavelId}` : ''}
+										</option>
+									))}
+								</select>
+							)}
 						</div>
 
 						<div className="col-12 col-md-4 d-flex justify-content-md-end gap-2">
-							<Button variant="light" onClick={() => navigate('/pacientes')}>
-								Ver pacientes
-							</Button>
+							{isPatientLocked ? (
+								<Button variant="light" onClick={() => navigate(`/pacientes/${encodeURIComponent(String(lockedPatientId))}`)}>
+									Voltar ao paciente
+								</Button>
+							) : (
+								<Button variant="light" onClick={() => navigate('/pacientes')}>
+									Ver pacientes
+								</Button>
+							)}
 						</div>
 					</div>
 				</section>
@@ -379,19 +363,22 @@ export default function PlanosTratamento() {
 					</section>
 				) : null}
 
-				<section className="ui-card" aria-label="Lista de planos">
-					<div className="p-3 border-bottom" style={{ borderColor: 'rgba(30, 42, 53, 0.10)' }}>
-						<div className="fw-bold">Planos</div>
-						<div className="text-muted small">{plans.length} plano(s)</div>
+				<section className="ui-card p-3" aria-label="Tratamentos">
+					<div className="d-flex align-items-center justify-content-between gap-2 flex-wrap">
+						<div className="d-flex gap-2 flex-wrap">
+							<div className="fw-bold">Tratamentos</div>
+							<div className="text-muted small" style={{ marginTop: 2 }}>{plans.length} plano(s)</div>
+						</div>
 					</div>
 
 					<div className="ui-table-wrap">
 						<table className="table ui-table" style={{ minWidth: 720 }}>
 							<thead>
 								<tr>
-									<th>Descrição</th>
+									<th>ID</th>
 									<th>Início</th>
 									<th>Fim</th>
+									<th>Descrição</th>
 									<th>Estado</th>
 									<th className="ui-actions-col">Ações</th>
 								</tr>
@@ -400,52 +387,38 @@ export default function PlanosTratamento() {
 								{plans.map((p) => (
 									<React.Fragment key={p.id}>
 										<tr>
-											<td>
-												<div style={{ fontWeight: 800, minWidth: 0 }}>
-													{(() => {
-														const t = truncateText(p.descricao || '', 90)
-														const expanded = expandedDescPlanId === p.id
-														if (!t.full) return '—'
-														return (
-															<>
-																<span
-																	style={{
-																		whiteSpace: expanded ? 'pre-wrap' : 'normal',
-																		overflowWrap: 'anywhere',
-																		wordBreak: 'break-word',
-																		lineBreak: 'anywhere',
-																	}}
-																>
-																	{expanded ? t.full : t.short}
-																</span>
-																{t.isTruncated ? (
-																	<button
-																		type="button"
-																		className="btn btn-link btn-sm p-0 ms-2"
-																		onClick={() => setExpandedDescPlanId((cur) => (cur === p.id ? '' : p.id))}
-																	>
-																		{expanded ? 'Ver menos' : 'Ver mais'}
-																	</button>
-																) : null}
-															</>
-														)
-													})()}
-												</div>
-											</td>
+											<td style={{ fontWeight: 700 }}>{p.id || '—'}</td>
 											<td>{p.data_inicio || '—'}</td>
 											<td>{p.data_fim || '—'}</td>
-											<td>{planoStatusLabel(p.status)}</td>
+											<td style={{ maxWidth: 520, whiteSpace: 'pre-wrap', overflowWrap: 'anywhere', wordBreak: 'break-word' }}>
+												{p.descricao || '—'}
+											</td>
+											<td>{planoStatusLabel(p.status) || '—'}</td>
 											<td className="ui-actions-col">
 												<div className="d-flex gap-2 justify-content-end flex-wrap">
-												<button
-													type="button"
-													className="btn btn-light btn-sm"
-													onClick={() => markSession(p)}
-													title="Marcar sessão"
-												>
-													<CalendarPlus size={16} aria-hidden="true" className="me-1" />
-													Marcar sessão
-												</button>
+													<button
+														type="button"
+														className="btn btn-light btn-sm"
+														onClick={() =>
+															navigate(
+																`/pacientes/${encodeURIComponent(String(selectedPatientId))}/planos/${encodeURIComponent(String(p.id))}`,
+																{ state: { patientId: selectedPatientId, planId: p.id } }
+															)
+													}
+														title="Ver"
+													>
+														<Eye size={16} aria-hidden="true" />
+														Ver
+													</button>
+													<button
+														type="button"
+														className="btn btn-light btn-sm"
+														onClick={() => openEdit(p)}
+														title="Editar"
+													>
+														<Pencil size={16} aria-hidden="true" className="me-1" />
+														Editar
+													</button>
 													<button
 														type="button"
 														className="btn btn-light btn-sm"
@@ -453,65 +426,34 @@ export default function PlanosTratamento() {
 															setExpandedPlanId((cur) => (cur === p.id ? '' : p.id))
 															setNoteText('')
 														}}
-														title="Histórico"
+														title="Notas"
 													>
-														Histórico
+														<BookOpen size={16} aria-hidden="true" className="me-1" />
+														Notas
 													</button>
-												<button
-													type="button"
-													className="btn btn-light btn-sm"
-													onClick={() => openEdit(p)}
-													title="Editar"
-												>
-													<Pencil size={16} aria-hidden="true" />
-												</button>
 												<button
 													type="button"
 													className="btn btn-light btn-sm"
 													onClick={() => onDelete(p)}
 													title="Apagar"
 												>
-													<Trash2 size={16} aria-hidden="true" />
+													<Trash2 size={16} aria-hidden="true" className="me-1" />
+													Eliminar
 												</button>
 											</div>
 											</td>
 										</tr>
 										{expandedPlanId === p.id ? (
 											<tr>
-												<td colSpan={5} style={{ padding: 0 }}>
+												<td colSpan={6} style={{ padding: 0 }}>
 													<div className="p-3" style={{ background: 'rgba(30, 42, 53, 0.03)' }}>
-														<div className="row g-3">
-															<div className="col-12 col-lg-6">
-																<div className="ui-card p-3" style={{ background: 'rgba(255,255,255,0.9)' }}>
-																	<div className="fw-bold mb-2">Sessões</div>
-																	{sessionsForPlan(p.id).length ? (
-																		<div className="d-flex flex-column gap-2">
-																			{sessionsForPlan(p.id).slice(0, 12).map((s) => (
-																				<div key={s.id} className="d-flex justify-content-between gap-2 border rounded-2 p-2" style={{ borderColor: 'rgba(30, 42, 53, 0.10)' }}>
-																					<div className="min-w-0">
-																						<div className="fw-semibold" style={{ fontSize: 13 }}>
-																							{formatStart(s.startISO)}
-																						</div>
-																						<div className="text-muted small">
-																							{s.medicoName || '—'} • {statusLabel(s.bookingStatus)}
-																						</div>
-																					</div>
-																					<div className="flex-shrink-0">
-																						<button type="button" className="btn btn-light btn-sm" onClick={() => navigate(`/consultas/${s.id}`)}>
-																							Abrir
-																						</button>
-																					</div>
-																				</div>
-																			))}
+																<div className="row g-3">
+																	<div className="col-12">
+																		<div className="ui-card p-3" style={{ background: 'rgba(255,255,255,0.9)' }}>
+																		<div className="fw-bold mb-2">
+																			<BookOpen size={16} aria-hidden="true" className="me-1" />
+																			Notas
 																		</div>
-																	) : (
-																		<div className="text-muted small">Ainda sem sessões marcadas.</div>
-																	)}
-																</div>
-															</div>
-															<div className="col-12 col-lg-6">
-																<div className="ui-card p-3" style={{ background: 'rgba(255,255,255,0.9)' }}>
-																	<div className="fw-bold mb-2">Histórico</div>
 																	<div className="d-flex gap-2 mb-2">
 																		<input
 																			type="text"
@@ -538,7 +480,7 @@ export default function PlanosTratamento() {
 																			))}
 																		</ul>
 																	) : (
-																		<div className="text-muted small">Sem entradas de histórico.</div>
+																			<div className="text-muted small">Sem notas.</div>
 																	)}
 																</div>
 															</div>
@@ -551,7 +493,7 @@ export default function PlanosTratamento() {
 								))}
 								{!plans.length ? (
 									<tr>
-										<td colSpan={5} className="text-muted" style={{ padding: 16 }}>
+										<td colSpan={6} className="text-muted" style={{ padding: 16 }}>
 											{selectedPatientId ? 'Sem planos registados.' : 'Seleciona um paciente para ver os planos.'}
 										</td>
 									</tr>

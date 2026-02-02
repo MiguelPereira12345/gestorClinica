@@ -24,6 +24,14 @@ module.exports = (sequelize, DataTypes) => {
           key: 'id_consulta',
         },
       },
+      dependent_id: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        references: {
+          model: 'dependentes',
+          key: 'id_dependente',
+        },
+      },
       uploaded_by: {
         type: DataTypes.INTEGER,
         allowNull: true,

@@ -33,35 +33,7 @@ CREATE TABLE IF NOT EXISTS medico (
   especialidade VARCHAR(255)
 );
 
-CREATE TABLE IF NOT EXISTS consulta (
-  id_consulta      INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-  -- Nota: id_medico refere-se ao utilizador (tipo='medico'), não à tabela medico.
-  id_medico        INTEGER NULL REFERENCES utilizador(id) ON UPDATE CASCADE ON DELETE SET NULL,
-  duracao          INTEGER,
-  tipo_de_marcacao VARCHAR(50),
-  status           VARCHAR(50),
-  data_consulta    DATE NOT NULL,
-  id               INTEGER NULL REFERENCES utilizador(id) ON UPDATE CASCADE ON DELETE SET NULL,
-  hora             TIME NOT NULL,
-  razao_consulta   TEXT,
-  notas_internas   TEXT
-);
-
-CREATE INDEX IF NOT EXISTS idx_consulta_data ON consulta (data_consulta);
-CREATE INDEX IF NOT EXISTS idx_consulta_paciente ON consulta (id);
-CREATE INDEX IF NOT EXISTS idx_consulta_medico ON consulta (id_medico);
-
-CREATE TABLE IF NOT EXISTS plano_tratamento (
-  id_tratamento INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-  data_inicio   DATE,
-  data_fim      DATE,
-  descricao     TEXT,
-  status        VARCHAR(50),
-  id            INTEGER NOT NULL REFERENCES utilizador(id) ON UPDATE CASCADE ON DELETE CASCADE
-);
-
-CREATE INDEX IF NOT EXISTS idx_plano_paciente ON plano_tratamento (id);
-
+-- Nota: `dependentes` tem de existir antes de `consulta` (FK id_dependente)
 CREATE TABLE IF NOT EXISTS dependentes (
   id_dependente  INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   nome           VARCHAR(255) NOT NULL,
@@ -74,6 +46,45 @@ CREATE TABLE IF NOT EXISTS dependentes (
 );
 
 CREATE INDEX IF NOT EXISTS idx_dependentes_paciente ON dependentes (id);
+
+CREATE TABLE IF NOT EXISTS plano_tratamento (
+  id_tratamento INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  data_inicio   DATE,
+  data_fim      DATE,
+  descricao     TEXT,
+  status        VARCHAR(50),
+  -- responsável (paciente) em utilizador.id
+  id            INTEGER NOT NULL REFERENCES utilizador(id) ON UPDATE CASCADE ON DELETE CASCADE,
+  -- opcional: plano para um dependente (responsável em `id`)
+  dependent_id  INTEGER NULL REFERENCES dependentes(id_dependente) ON UPDATE CASCADE ON DELETE SET NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_plano_paciente ON plano_tratamento (id);
+CREATE INDEX IF NOT EXISTS idx_plano_dependente ON plano_tratamento (dependent_id);
+
+CREATE TABLE IF NOT EXISTS consulta (
+  id_consulta      INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  -- Nota: id_medico refere-se ao utilizador (tipo='medico'), não à tabela medico.
+  id_medico        INTEGER NULL REFERENCES utilizador(id) ON UPDATE CASCADE ON DELETE SET NULL,
+  duracao          INTEGER,
+  tipo_de_marcacao VARCHAR(50),
+  status           VARCHAR(50),
+  data_consulta    DATE NOT NULL,
+  id               INTEGER NULL REFERENCES utilizador(id) ON UPDATE CASCADE ON DELETE SET NULL,
+  -- Quando a consulta é para um dependente (responsável em `id`)
+  id_dependente     INTEGER NULL REFERENCES dependentes(id_dependente) ON UPDATE CASCADE ON DELETE SET NULL,
+  -- Consulta associada a um plano de tratamento (opcional)
+  id_tratamento     INTEGER NULL REFERENCES plano_tratamento(id_tratamento) ON UPDATE CASCADE ON DELETE SET NULL,
+  hora             TIME NOT NULL,
+  razao_consulta   TEXT,
+  notas_internas   TEXT
+);
+
+CREATE INDEX IF NOT EXISTS idx_consulta_data ON consulta (data_consulta);
+CREATE INDEX IF NOT EXISTS idx_consulta_paciente ON consulta (id);
+CREATE INDEX IF NOT EXISTS idx_consulta_medico ON consulta (id_medico);
+CREATE INDEX IF NOT EXISTS idx_consulta_dependente ON consulta (id_dependente);
+CREATE INDEX IF NOT EXISTS idx_consulta_tratamento ON consulta (id_tratamento);
 
 CREATE TABLE IF NOT EXISTS historico_medico (
   id_historico INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
@@ -122,6 +133,8 @@ BEGIN
   IF to_regclass('public.consulta') IS NOT NULL THEN
     ALTER TABLE consulta ADD COLUMN IF NOT EXISTS razao_consulta TEXT;
     ALTER TABLE consulta ADD COLUMN IF NOT EXISTS notas_internas TEXT;
+    ALTER TABLE consulta ADD COLUMN IF NOT EXISTS id_dependente INTEGER;
+    ALTER TABLE consulta ADD COLUMN IF NOT EXISTS id_tratamento INTEGER;
 
     -- Drop existing FK constraints that mention id_medico (name can vary)
     FOR c IN (
@@ -147,6 +160,70 @@ BEGIN
       REFERENCES utilizador(id)
       ON UPDATE CASCADE
       ON DELETE SET NULL;
+
+    -- FK opcional para dependentes
+    IF to_regclass('public.dependentes') IS NOT NULL THEN
+      BEGIN
+        ALTER TABLE consulta
+          ADD CONSTRAINT consulta_id_dependente_fkey
+          FOREIGN KEY (id_dependente)
+          REFERENCES dependentes(id_dependente)
+          ON UPDATE CASCADE
+          ON DELETE SET NULL;
+      EXCEPTION
+        WHEN duplicate_object THEN
+          NULL;
+      END;
+    END IF;
+
+    -- FK opcional para plano de tratamento
+    IF to_regclass('public.plano_tratamento') IS NOT NULL THEN
+      -- Limpar ids inválidos antes de criar a constraint
+      UPDATE consulta c
+      SET id_tratamento = NULL
+      WHERE c.id_tratamento IS NOT NULL
+        AND NOT EXISTS (SELECT 1 FROM plano_tratamento p WHERE p.id_tratamento = c.id_tratamento);
+
+      BEGIN
+        ALTER TABLE consulta
+          ADD CONSTRAINT consulta_id_tratamento_fkey
+          FOREIGN KEY (id_tratamento)
+          REFERENCES plano_tratamento(id_tratamento)
+          ON UPDATE CASCADE
+          ON DELETE SET NULL;
+      EXCEPTION
+        WHEN duplicate_object THEN
+          NULL;
+      END;
+
+      CREATE INDEX IF NOT EXISTS idx_consulta_tratamento ON consulta (id_tratamento);
+    END IF;
+
+    CREATE INDEX IF NOT EXISTS idx_consulta_dependente ON consulta (id_dependente);
+  END IF;
+END $$;
+
+-- Garantir coluna e FK do plano para dependentes (para BD existentes)
+DO $$
+BEGIN
+  IF to_regclass('public.plano_tratamento') IS NOT NULL THEN
+    ALTER TABLE plano_tratamento ADD COLUMN IF NOT EXISTS dependent_id INTEGER;
+
+    IF to_regclass('public.dependentes') IS NOT NULL THEN
+      BEGIN
+        ALTER TABLE plano_tratamento
+          ADD CONSTRAINT plano_tratamento_dependent_id_fkey
+          FOREIGN KEY (dependent_id)
+          REFERENCES dependentes(id_dependente)
+          ON UPDATE CASCADE
+          ON DELETE SET NULL;
+      EXCEPTION
+        WHEN duplicate_object THEN
+          NULL;
+      END;
+    END IF;
+
+    CREATE INDEX IF NOT EXISTS idx_plano_dependente ON plano_tratamento (dependent_id);
   END IF;
 END $$;
 
@@ -214,6 +291,7 @@ CREATE TABLE IF NOT EXISTS clinical_file (
   id_file INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   patient_id INTEGER NULL REFERENCES utilizador(id) ON DELETE SET NULL,
   consulta_id INTEGER NULL REFERENCES consulta(id_consulta) ON DELETE SET NULL,
+  dependent_id INTEGER NULL REFERENCES dependentes(id_dependente) ON DELETE SET NULL,
   uploaded_by INTEGER NULL REFERENCES utilizador(id) ON DELETE SET NULL,
   file_name VARCHAR(255) NOT NULL,
   mime_type VARCHAR(120) NULL,
@@ -234,6 +312,7 @@ END $$;
 
 CREATE INDEX IF NOT EXISTS idx_clinical_file_patient ON clinical_file(patient_id);
 CREATE INDEX IF NOT EXISTS idx_clinical_file_consulta ON clinical_file(consulta_id);
+CREATE INDEX IF NOT EXISTS idx_clinical_file_dependent ON clinical_file(dependent_id);
 
 CREATE TABLE IF NOT EXISTS notification (
   id_notification INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,

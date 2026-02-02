@@ -6,7 +6,7 @@ const { initModels } = require('../models/init-models');
 const audit = require('./controller.audit');
 
 const models = initModels(sequelize);
-const { ClinicalFile, Consulta } = models;
+const { ClinicalFile, Consulta, Dependente } = models;
 
 const UPLOADS_DIR = path.join(__dirname, '..', '..', 'uploads');
 
@@ -60,6 +60,7 @@ exports.upload = async (req, res) => {
 
     const consultaId = req.body?.consulta_id != null ? parseId(req.body.consulta_id) : null;
     let patientId = req.body?.patient_id != null ? parseId(req.body.patient_id) : null;
+    const dependentId = req.body?.dependent_id != null ? parseId(req.body.dependent_id) : null;
     const kind = req.body?.kind != null ? String(req.body.kind) : null;
 
     // Se vier consulta_id, inferir patient_id a partir da consulta
@@ -74,6 +75,20 @@ exports.upload = async (req, res) => {
       }
     }
 
+    // Se vier dependent_id, validar e inferir patient_id (responsável)
+    if (dependentId) {
+      const dep = await Dependente.findByPk(dependentId);
+      if (!dep) {
+        return res.status(400).json({ message: 'dependent_id inválido' });
+      }
+      const ownerId = parseId(dep.id);
+      if (patientId == null) {
+        patientId = ownerId;
+      } else if (ownerId && String(patientId) !== String(ownerId)) {
+        return res.status(400).json({ message: 'dependent_id não pertence ao patient_id indicado' });
+      }
+    }
+
     const storedName = `${Date.now()}-${Math.random().toString(16).slice(2)}-${req.file.originalname}`;
     const finalPath = path.join(UPLOADS_DIR, storedName);
 
@@ -82,6 +97,7 @@ exports.upload = async (req, res) => {
     const created = await ClinicalFile.create({
       patient_id: patientId,
       consulta_id: consultaId,
+      dependent_id: dependentId,
       uploaded_by: req.user?.id || null,
       file_name: req.file.originalname,
       mime_type: req.file.mimetype,
@@ -96,7 +112,7 @@ exports.upload = async (req, res) => {
       action: 'file.upload',
       entityType: 'clinical_file',
       entityId: created.id_file,
-      metadata: { patient_id: patientId, consulta_id: consultaId, kind, file_name: req.file.originalname },
+      metadata: { patient_id: patientId, consulta_id: consultaId, dependent_id: dependentId, kind, file_name: req.file.originalname },
     }).catch(() => {});
 
     return res.status(201).json({ message: 'Upload efetuado', file: created });
@@ -108,7 +124,7 @@ exports.upload = async (req, res) => {
 
 exports.list = async (req, res) => {
   try {
-    const { patientId, consultaId } = req.query || {};
+    const { patientId, consultaId, dependentId } = req.query || {};
     const where = {};
 
     const role = normalizeRole(req.user?.tipo);
@@ -133,6 +149,24 @@ exports.list = async (req, res) => {
       // ajuda a manter consistência (opcional): também filtra pelo patient_id da consulta
       if (consulta?.id != null) {
         where.patient_id = parseId(consulta.id);
+      }
+
+    } else if (dependentId != null && String(dependentId).trim() !== '') {
+      const dIdNum = parseId(dependentId);
+      if (!dIdNum) return res.status(400).json({ message: 'dependentId inválido' });
+
+      const dep = await Dependente.findByPk(dIdNum);
+      if (!dep) return res.status(404).json({ message: 'Dependente não encontrado' });
+
+      where.dependent_id = dIdNum;
+
+      // Paciente só pode ver anexos dos seus dependentes
+      if (role !== 'admin' && role !== 'medico') {
+        if (String(req.user?.id) !== String(dep?.id)) {
+          return res.status(403).json({ message: 'Sem permissão' });
+        }
+        // manter consistência
+        where.patient_id = parseId(dep.id);
       }
 
     } else if (patientId != null && String(patientId).trim() !== '') {
@@ -211,7 +245,7 @@ exports.remove = async (req, res) => {
       action: 'file.delete',
       entityType: 'clinical_file',
       entityId: idFile,
-      metadata: { storage_path: row.storage_path, file_name: row.file_name },
+      metadata: { storage_path: row.storage_path, file_name: row.file_name, patient_id: row.patient_id, consulta_id: row.consulta_id, dependent_id: row.dependent_id },
     }).catch(() => {});
 
     return res.status(200).json({ message: 'Ficheiro eliminado' });

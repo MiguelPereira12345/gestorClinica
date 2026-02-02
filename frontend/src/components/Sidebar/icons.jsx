@@ -39,6 +39,16 @@ export const menuItems = [
       <svg className="sidebar-icon" width="20" height="20" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="3" y="7" width="18" height="13" rx="1" stroke="currentColor" strokeWidth="1.2" fill="none"/><path d="M7 7V5h2v2" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/><path d="M17 7V5h2v2" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/><rect x="6" y="11" width="4" height="4" fill="currentColor"/></svg>
     )
   },
+  {
+    label: 'Notificações',
+    path: '/notificacoes',
+    icon: (
+      <svg className="sidebar-icon" width="20" height="20" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <path d="M12 22a2.2 2.2 0 0 0 2-2h-4a2.2 2.2 0 0 0 2 2z" fill="currentColor" />
+        <path d="M18 16V11a6 6 0 1 0-12 0v5l-2 2h16l-2-2z" stroke="currentColor" strokeWidth="1.2" fill="none" />
+      </svg>
+    )
+  },
   
 ]
 

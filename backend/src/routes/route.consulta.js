@@ -19,6 +19,10 @@ router.patch('/:id_consulta', consultaController.editar_consulta);
 // PATCH cancelamento até 48h antes
 router.patch('/:id_consulta/cancelar', consultaController.cancelar_consulta);
 
+// PATCH aprovar/rejeitar pedido (solicitações de paciente)
+router.patch('/:id_consulta/aprovar', consultaController.aprovar_pedido);
+router.patch('/:id_consulta/rejeitar', consultaController.rejeitar_pedido);
+
 // PATCH remarcar 
 router.patch('/:id_consulta/remarcar', consultaController.remarcar_consulta);
 

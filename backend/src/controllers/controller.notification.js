@@ -50,10 +50,16 @@ exports.list = async (req, res) => {
     const where = {};
 
     if (req.user?.tipo === 'admin') {
+      // Por defeito, admin vê apenas as suas próprias notificações.
+      // Para ver todas: ?all=true, ou filtrar por userId.
+      const all = String(req.query?.all || '').toLowerCase() === 'true';
+
       if (userId != null && String(userId).trim() !== '') {
         const idNum = parseId(userId);
         if (!idNum) return res.status(400).json({ message: 'userId inválido' });
         where.user_id = idNum;
+      } else if (!all) {
+        where.user_id = req.user?.id;
       }
     } else {
       where.user_id = req.user?.id;

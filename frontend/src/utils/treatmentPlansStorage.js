@@ -157,6 +157,7 @@ function normalizeApiStatus(value) {
 
 export async function createTreatmentPlanApi({
 	patientId,
+	dependentId = '',
 	data_inicio = '',
 	data_fim = '',
 	descricao = '',
@@ -165,12 +166,15 @@ export async function createTreatmentPlanApi({
 	const pid = Number(String(patientId || '').trim())
 	if (!Number.isFinite(pid) || !pid) throw new Error('patientId inválido')
 	if (!String(descricao || '').trim()) throw new Error('Descrição em falta')
+	const depIdNum = dependentId != null && String(dependentId).trim() !== '' ? Number(String(dependentId).trim()) : null
+	if (depIdNum != null && (!Number.isFinite(depIdNum) || depIdNum <= 0)) throw new Error('dependentId inválido')
 
 	const res = await apiFetch('/plano/plano', {
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json' },
 		body: JSON.stringify({
 			id: pid,
+			dependent_id: depIdNum,
 			data_inicio: data_inicio || null,
 			data_fim: data_fim || null,
 			descricao: String(descricao || '').trim(),
@@ -189,8 +193,11 @@ export async function createTreatmentPlanApi({
 
 export async function updateTreatmentPlanApi(id, patch = {}) {
 	if (!id) throw new Error('id em falta')
+	const depIdNum = patch.dependentId != null && String(patch.dependentId).trim() !== '' ? Number(String(patch.dependentId).trim()) : (patch.dependentId === '' ? null : undefined)
+	if (depIdNum != null && depIdNum !== undefined && (!Number.isFinite(depIdNum) || depIdNum <= 0)) throw new Error('dependentId inválido')
 	const body = {
 		id: patch.patientId ? Number(String(patch.patientId).trim()) : undefined,
+		dependent_id: depIdNum,
 		data_inicio: patch.data_inicio !== undefined ? patch.data_inicio : undefined,
 		data_fim: patch.data_fim !== undefined ? patch.data_fim : undefined,
 		descricao: patch.descricao !== undefined ? String(patch.descricao || '').trim() : undefined,

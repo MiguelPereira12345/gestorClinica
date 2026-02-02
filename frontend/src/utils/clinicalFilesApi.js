@@ -7,6 +7,13 @@ export async function listClinicalFiles(patientId) {
 	return Array.isArray(data?.files) ? data.files : []
 }
 
+export async function listDependentFiles(dependentId) {
+	const did = Number(String(dependentId || '').trim())
+	if (!Number.isFinite(did) || !did) throw new Error('dependentId inválido')
+	const data = await apiFetch(`/files?dependentId=${encodeURIComponent(String(did))}`)
+	return Array.isArray(data?.files) ? data.files : []
+}
+
 export async function uploadClinicalFile({ patientId, file, kind = 'anexo_clinico' }) {
 	const pid = Number(String(patientId || '').trim())
 	if (!Number.isFinite(pid) || !pid) throw new Error('patientId inválido')

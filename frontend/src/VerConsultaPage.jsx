@@ -7,6 +7,7 @@ import StatusBadge from './components/Consultas/StatusBadge'
 
 import { ensureConsultaStored, getConsultaById, patchConsulta } from './utils/consultasStorage'
 import { formatDatePT, formatTimePT, parseISOToDate } from './utils/dateTime'
+import { syncConsultasFromApi } from './utils/dataSync'
 import { getPatientById } from './utils/patientStorage'
 import { downloadClinicalFile, listConsultaFiles, openClinicalFileInNewTab, uploadConsultaFile } from './utils/clinicalFilesApi'
 
@@ -77,6 +78,24 @@ export default function VerConsultaPage() {
 	const consulta = useMemo(() => getConsultaById(id), [id, rev])
 	const patient = useMemo(() => (consulta?.patientId ? getPatientById(consulta.patientId) : null), [consulta?.patientId])
 	const patientData = patient?.data || {}
+
+	useEffect(() => {
+		let mounted = true
+		if (!id) return
+		if (consulta) return
+		void (async () => {
+			try {
+				await syncConsultasFromApi()
+			} catch {
+				// ignore
+			} finally {
+				if (mounted) setRev((v) => v + 1)
+			}
+		})()
+		return () => {
+			mounted = false
+		}
+	}, [consulta, id])
 
 	const [consultaFiles, setConsultaFiles] = useState([])
 	const [filesLoading, setFilesLoading] = useState(false)

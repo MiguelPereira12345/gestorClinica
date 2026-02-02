@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import './App.css'
 import { useNavigate } from 'react-router-dom'
-import { Info, LogIn, Lock, Mail, RefreshCcw, UserPlus } from 'lucide-react'
+import { Info, LogIn, Lock, Mail, RefreshCcw } from 'lucide-react'
 
 import logoClinimolelos from './assets/Logo-CliniMolelos.png'
 import { syncAllFromApi } from './utils/dataSync'
@@ -21,29 +21,39 @@ export default function Login() {
 
 		try {
 			const apiBase = getApiBaseUrl()
-			const response = await fetch(`${apiBase}/auth/admin/login`, {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json',
-				},
-				body: JSON.stringify({ email, senha: password }),
-			})
 
-			const data = await response.json().catch(() => null)
-			if (!response.ok) {
-				setError(data?.message || 'Não foi possível iniciar sessão.')
+			async function tryLogin(path) {
+				const response = await fetch(`${apiBase}${path}`, {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({ email, senha: password }),
+				})
+				const data = await response.json().catch(() => null)
+				return { response, data }
+			}
+
+			// 1) Tenta como colaborador (admin/secretaria/médico)
+			let out = await tryLogin('/auth/admin/login')
+			if (out.response.ok) {
+				localStorage.setItem('auth_user', JSON.stringify(out.data))
+				try {
+					await syncAllFromApi()
+				} catch {
+					// ignore
+				}
+				navigate('/pagina-inicial', { replace: true })
 				return
 			}
 
-			// Guarda sessão em localStorage (token + refreshToken)
-			localStorage.setItem('auth_user', JSON.stringify(data))
-			// Preenche caches locais com dados reais da API
-			try {
-				await syncAllFromApi()
-			} catch {
-				// ignore
+			// 2) Se falhou, tenta como paciente
+			out = await tryLogin('/auth/paciente/login')
+			if (out.response.ok) {
+				localStorage.setItem('auth_user', JSON.stringify(out.data))
+				navigate('/portal', { replace: true })
+				return
 			}
-			navigate('/pagina-inicial', { replace: true })
+
+			setError(out.data?.message || 'Credenciais inválidas')
 		} catch (err) {
 			console.error('Erro no login:', err)
 			setError('Erro de conexão. Verifique se o servidor está ativo.')
@@ -95,7 +105,7 @@ export default function Login() {
 							<div className="d-flex align-items-center gap-2 border-bottom px-3 px-lg-4 py-3">
 								<LogIn style={{ width: 18, height: 18 }} aria-hidden="true" />
 								<h2 className="m-0 fw-bold" style={{ fontSize: 16 }}>
-									Entrar na Conta
+									Entrar
 								</h2>
 							</div>
 
@@ -165,17 +175,6 @@ export default function Login() {
 									</button>
 								</div>
 
-								<hr className="my-3" />
-
-								<div className="d-flex align-items-center justify-content-between gap-3 flex-wrap">
-									<div className="text-muted fw-semibold" style={{ fontSize: 13 }}>
-										Ainda não tens conta?
-									</div>
-									<button className="btn btn-secondary" type="button" onClick={() => navigate('/registar')}>
-										<UserPlus style={{ width: 16, height: 16 }} aria-hidden="true" />
-										Criar Conta
-									</button>
-								</div>
 							</form>
 						</div>
 					</section>
