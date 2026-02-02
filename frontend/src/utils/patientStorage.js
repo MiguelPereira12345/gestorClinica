@@ -1,3 +1,5 @@
+import { apiFetch } from './apiClient'
+
 const STORAGE_KEY = 'gestorClinica.pacientes'
 
 function normalizePhone(value) {
@@ -17,6 +19,127 @@ function safeParse(json) {
 	} catch {
 		return null
 	}
+}
+
+export function isDependentPatientId(id) {
+	return typeof id === 'string' && /^D\d+$/.test(id)
+}
+
+export function dependentNumericId(id) {
+	if (!isDependentPatientId(id)) return null
+	return Number(String(id).slice(1))
+}
+
+function normalizeEmail(value) {
+	return String(value || '').trim().toLowerCase()
+}
+
+function buildPacienteApiPayloadFromForm(form) {
+	const nome = String(form?.nomeCompleto || '').trim()
+	const telefone = String(form?.contactoTelefone || '').trim()
+	const email = normalizeEmail(form?.contactoEmail)
+	const senha = String(form?.password || '').trim()
+
+	if (!nome) throw new Error('Nome completo em falta')
+	if (!telefone) throw new Error('Telefone em falta')
+	if (!email) throw new Error('Email em falta')
+	if (!senha) throw new Error('Password em falta')
+
+	return {
+		nome,
+		email,
+		telefone,
+		senha,
+		sexo: form?.sexo || null,
+		endereco: form?.endereco || null,
+		nif: form?.nif || null,
+		data_nascimento: form?.dataNascimento || null,
+		numero_utente: form?.numeroUtente || null,
+	}
+}
+
+function buildDependenteApiPayloadFromForm(form, responsavelId) {
+	const nome = String(form?.nomeCompleto || '').trim()
+	const data_nascimento = String(form?.dataNascimento || '').trim()
+	const id = Number(responsavelId)
+	if (!nome) throw new Error('Nome completo do dependente em falta')
+	if (!data_nascimento) throw new Error('Data de nascimento do dependente em falta')
+	if (!Number.isFinite(id) || !id) throw new Error('Responsável inválido')
+	return {
+		nome,
+		data_nascimento,
+		sexo: form?.sexo || null,
+		nif: form?.nif || null,
+		numero_utente: form?.numeroUtente || null,
+		ativo: true,
+		id,
+	}
+}
+
+export async function createPacienteApi({ form } = {}) {
+	const payload = buildPacienteApiPayloadFromForm(form)
+	const data = await apiFetch('/utilizadores', {
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json' },
+		body: JSON.stringify(payload),
+	})
+	return data?.utilizador || null
+}
+
+export async function updatePacienteApi({ id, form } = {}) {
+	const payload = buildPacienteApiPayloadFromForm(form)
+	const data = await apiFetch(`/utilizadores/${encodeURIComponent(String(id))}`, {
+		method: 'PATCH',
+		headers: { 'Content-Type': 'application/json' },
+		body: JSON.stringify(payload),
+	})
+	return data?.utilizador || data?.user || data?.data || null
+}
+
+export async function deletePacienteApi(id) {
+	await apiFetch(`/utilizadores/${encodeURIComponent(String(id))}`, { method: 'DELETE' })
+	return true
+}
+
+export async function createDependenteApi({ form, responsavelId } = {}) {
+	const payload = buildDependenteApiPayloadFromForm(form, responsavelId)
+	const data = await apiFetch('/dependentes', {
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json' },
+		body: JSON.stringify(payload),
+	})
+	return data?.dependente || null
+}
+
+export async function updateDependenteApi({ dependentId, form } = {}) {
+	const depIdNum = dependentNumericId(String(dependentId))
+	if (!depIdNum) throw new Error('Dependente inválido')
+
+	const payload = {
+		nome: String(form?.nomeCompleto || '').trim(),
+		data_nascimento: String(form?.dataNascimento || '').trim(),
+		sexo: form?.sexo || null,
+		nif: form?.nif || null,
+		numero_utente: form?.numeroUtente || null,
+		ativo: true,
+	}
+
+	if (!payload.nome) throw new Error('Nome completo do dependente em falta')
+	if (!payload.data_nascimento) throw new Error('Data de nascimento do dependente em falta')
+
+	const data = await apiFetch(`/dependentes/${depIdNum}`, {
+		method: 'PATCH',
+		headers: { 'Content-Type': 'application/json' },
+		body: JSON.stringify(payload),
+	})
+	return data?.dependente || null
+}
+
+export async function deleteDependenteApi(dependentId) {
+	const depIdNum = dependentNumericId(String(dependentId))
+	if (!depIdNum) throw new Error('Dependente inválido')
+	await apiFetch(`/dependentes/${depIdNum}`, { method: 'DELETE' })
+	return true
 }
 
 export function loadPatients() {
@@ -104,6 +227,8 @@ export function createEmptyPatientForm() {
 		endereco: '',
 		contactoTelefone: '',
 		contactoEmail: '',
+		password: '',
+		confirmPassword: '',
 		responsavelId: '',
 		numeroUtente: '',
 		nif: '',

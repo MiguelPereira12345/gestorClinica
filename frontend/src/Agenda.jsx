@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import AppLayout from './components/Layout/AppLayout'
 import ResourceDayCalendar from './components/Agenda/ResourceDayCalendar'
 import MiniCalendar from './components/Agenda/MiniCalendar'
@@ -8,6 +8,9 @@ import './components/Agenda/Agenda.css'
 import './App.css'
 import { useNavigate } from 'react-router-dom'
 import { computeOccupancyForDay, dateToISO, loadAppointments } from './utils/appointmentStorage'
+import { syncConsultasFromApi, syncPatientsFromApi } from './utils/dataSync'
+import { loadMedicosForSelect, refreshMedicosForSelect } from './utils/professionalsStorage'
+import { getCurrentUser, isMedicoUser } from './utils/apiClient'
 
 import Button from './components/UI/Button'
 import PageHeader from './components/UI/PageHeader'
@@ -33,6 +36,21 @@ export default function Agenda() {
   const [viewMode, setViewMode] = useState('day') // day | week | month
   const [cursorDate, setCursorDate] = useState(new Date())
   const [selectedDayIndex, setSelectedDayIndex] = useState(0)
+  const [rev, setRev] = useState(0)
+
+  const currentUser = getCurrentUser()
+  const isMedico = isMedicoUser()
+  const currentUserId = Number(currentUser?.id || 0) || 0
+  const AGENDA_ONLY_MINE_KEY = 'gestorClinica.agenda.onlyMine'
+  const [onlyMine, setOnlyMine] = useState(() => {
+    const raw = localStorage.getItem(AGENDA_ONLY_MINE_KEY)
+    if (raw != null) return raw === '1' || raw === 'true'
+    return false
+  })
+
+  useEffect(() => {
+    localStorage.setItem(AGENDA_ONLY_MINE_KEY, onlyMine ? '1' : '0')
+  }, [onlyMine])
 
   const weekStart = useMemo(() => startOfWeek(cursorDate), [cursorDate])
 
@@ -43,21 +61,56 @@ export default function Agenda() {
   }, [selectedDayIndex, weekStart])
 
   // constants must match WeeklyCalendar settings
-  const HOUR_START = 8
+  const HOUR_START = 9
   const HOUR_END = 19
   const HOUR_HEIGHT = 40
   const totalHours = HOUR_END - HOUR_START + 1
   // header for wc (day labels) approx 40px + section paddings (12*2)
   const panelHeight = totalHours * HOUR_HEIGHT + 40 + 24
 
-  const resources = useMemo(
-    () => [
-      { id: 1, name: 'Dra. Sofia Lima', color: '#C6E9FF' },
-      { id: 2, name: 'Dr. Marco Sousa', color: '#7EE7A7' },
-      { id: 3, name: 'Dr. Alex Morgan', color: '#89CFFF' },
-    ],
-    [],
-  )
+  const [resources, setResources] = useState(() => {
+    const medicos = loadMedicosForSelect()
+    const base = medicos.map((p, idx) => ({
+      id: Number(p.id),
+      name: p.name,
+      color: idx % 2 === 0 ? '#C6E9FF' : '#7EE7A7',
+    }))
+
+    // lane para consultas sem médico atribuído (id_medico NULL -> 0)
+    return [
+      ...base,
+      { id: 0, name: 'Sem médico', color: '#E9E9E9' },
+    ]
+  })
+
+  useEffect(() => {
+    let mounted = true
+    ;(async () => {
+      try {
+        const medicos = await refreshMedicosForSelect()
+        const nextResources = medicos
+          .map((p, idx) => ({
+            id: Number(p.id),
+            name: p.name,
+            color: idx % 2 === 0 ? '#C6E9FF' : '#7EE7A7',
+          }))
+          .filter((r) => Number.isFinite(r.id) && r.id)
+
+        nextResources.push({ id: 0, name: 'Sem médico', color: '#E9E9E9' })
+        if (mounted) setResources(nextResources)
+
+        await syncPatientsFromApi()
+        await syncConsultasFromApi()
+      } catch {
+        // ignore
+      } finally {
+        if (mounted) setRev((x) => x + 1)
+      }
+    })()
+    return () => {
+      mounted = false
+    }
+  }, [])
 
   const resourceColorById = useMemo(() => {
     const map = new Map()
@@ -86,38 +139,17 @@ export default function Agenda() {
     const storedForWeek = stored
       .filter((a) => a?.startISO && a?.endISO)
       .filter((a) => {
+        if (!isMedico || !onlyMine || !currentUserId) return true
+        return Number(a.medicoId || 0) === currentUserId
+      })
+      .filter((a) => {
         const s = new Date(a.startISO)
         return s >= rangeStart && s <= rangeEnd
       })
       .map(toCalendar)
 
-    if (storedForWeek.length > 0) return storedForWeek
-
-    // fallback demo
-    const mapToWeek = (idx, hourStart, durationMin, medicoId, name) => {
-      const day = new Date(weekStart)
-      day.setDate(day.getDate() + idx)
-      const start = new Date(day)
-      start.setHours(hourStart, 0, 0, 0)
-      const end = new Date(start.getTime() + durationMin * 60000)
-      return {
-        id: `demo-${idx}-${hourStart}-${medicoId}`,
-        paciente_nome: name,
-        medico_id: medicoId,
-        data_inicio: start.toISOString(),
-        data_fim: end.toISOString(),
-        tipo_consulta: 'Consulta',
-      }
-    }
-
-    return [
-      mapToWeek(0, 11, 60, 3, 'Paciente'),
-      mapToWeek(0, 11, 45, 1, 'Maria Ferreira'),
-      mapToWeek(0, 14, 60, 2, 'Joana Oliveira'),
-      mapToWeek(2, 10, 30, 1, 'Paciente X'),
-      mapToWeek(4, 15, 45, 2, 'Paciente Y'),
-    ]
-  }, [weekStart])
+    return storedForWeek
+  }, [currentUserId, isMedico, onlyMine, weekStart, rev])
 
   const appointmentsWithColor = useMemo(() => {
     return (appointments || []).map((a) => ({
@@ -138,13 +170,14 @@ export default function Agenda() {
     const map = new Map()
     for (const a of stored) {
       if (!a?.startISO) continue
+      if (isMedico && onlyMine && currentUserId && Number(a.medicoId || 0) !== currentUserId) continue
       const s = new Date(a.startISO)
       if (s < monthStart || s > monthEnd) continue
       const iso = String(a.startISO).slice(0, 10)
       map.set(iso, (map.get(iso) || 0) + 1)
     }
     return map
-  }, [cursorDate])
+  }, [cursorDate, currentUserId, isMedico, onlyMine])
 
   function goPrevWeek() {
     const d = new Date(weekStart)
@@ -179,7 +212,8 @@ export default function Agenda() {
   }
 
   function getDayMeta(date) {
-    return computeOccupancyForDay({ date, medicoId: null })
+    const medicoId = isMedico && onlyMine && currentUserId ? currentUserId : null
+    return computeOccupancyForDay({ date, medicoId })
   }
 
   function openAppointment(appt) {
@@ -252,6 +286,23 @@ export default function Agenda() {
                 </div>
 
                 <div className="d-flex flex-wrap gap-2">
+                  {isMedico ? (
+                    <div className="d-flex align-items-center gap-2 me-2">
+                      <div className="form-check form-switch m-0">
+                        <input
+                          className="form-check-input"
+                          type="checkbox"
+                          role="switch"
+                          id="agenda-only-mine"
+                          checked={onlyMine}
+                          onChange={(e) => setOnlyMine(e.target.checked)}
+                        />
+                        <label className="form-check-label ui-meta" htmlFor="agenda-only-mine">
+                          Só as minhas
+                        </label>
+                      </div>
+                    </div>
+                  ) : null}
                   {viewMode === 'month' ? (
                     <>
                       <button

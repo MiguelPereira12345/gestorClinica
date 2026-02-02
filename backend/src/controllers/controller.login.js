@@ -1,10 +1,18 @@
+const jwt = require('jsonwebtoken');
+const bcrypt = require('bcryptjs');
 const sequelize = require('../models/database');
 const { initModels } = require('../models/init-models');
-const { User } = initModels(sequelize);
+
+const models = initModels(sequelize);
+const { User } = models;
 
 exports.login = async (req, res) => {
   try {
     const { email, senha } = req.body;
+
+    if (!email || !senha) {
+      return res.status(400).json({ message: 'Email e senha são obrigatórios' });
+    }
 
     // procura user admin e ativo
     const user = await User.findOne({
@@ -24,20 +32,8 @@ exports.login = async (req, res) => {
     // suporte para senhas guardadas em texto simples (varchar) ou hash bcrypt
     let ok = false;
     if (user.senha && /^\$2[aby]\$/.test(user.senha)) {
-
-
-      // senha parece ser um hash bcrypt -> precisa de bcryptjs
-      let bcrypt;
-      try {
-        bcrypt = require('bcryptjs');
-      } catch (e) {
-        console.error('bcryptjs not installed', e);
-        return res.status(500).json({ message: 'Server configuration error: bcrypt missing' });
-      }
       ok = await bcrypt.compare(senha, user.senha);
     } else {
-
-      // compara texto simples 
       ok = user.senha === senha;
     }
 
@@ -45,12 +41,30 @@ exports.login = async (req, res) => {
       return res.status(401).json({ message: "Credenciais inválidas" });
     }
 
-    // gerar um JWT; por enquanto só devolve dados básicos
+    const secret = process.env.JWT_SECRET;
+    if (!secret) {
+      return res.status(500).json({ message: 'Configuração em falta: JWT_SECRET' });
+    }
+
+    const token = jwt.sign(
+      {
+        id: user.id,
+        email: user.email,
+        nome: user.nome,
+        tipo: user.tipo,
+      },
+      secret,
+      { expiresIn: process.env.JWT_EXPIRES_IN || '8h' }
+    );
+
     return res.json({
-      id: user.id,
-      nome: user.nome,
-      email: user.email,
-      tipo: user.tipo,
+      token,
+      user: {
+        id: user.id,
+        nome: user.nome,
+        email: user.email,
+        tipo: user.tipo,
+      },
     });
   } catch (err) {
     console.error(err);

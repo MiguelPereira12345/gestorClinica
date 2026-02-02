@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, Paperclip, Upload } from 'lucide-react'
 import AppLayout from './components/Layout/AppLayout'
@@ -8,6 +8,7 @@ import StatusBadge from './components/Consultas/StatusBadge'
 import { ensureConsultaStored, getConsultaById, patchConsulta } from './utils/consultasStorage'
 import { formatDatePT, formatTimePT, parseISOToDate } from './utils/dateTime'
 import { getPatientById } from './utils/patientStorage'
+import { downloadClinicalFile, listConsultaFiles, openClinicalFileInNewTab, uploadConsultaFile } from './utils/clinicalFilesApi'
 
 function tipoLabelFromMime(mime) {
 	if (!mime) return 'Ficheiro'
@@ -77,6 +78,10 @@ export default function VerConsultaPage() {
 	const patient = useMemo(() => (consulta?.patientId ? getPatientById(consulta.patientId) : null), [consulta?.patientId])
 	const patientData = patient?.data || {}
 
+	const [consultaFiles, setConsultaFiles] = useState([])
+	const [filesLoading, setFilesLoading] = useState(false)
+	const [filesError, setFilesError] = useState('')
+
 	const [presenceEntryTime, setPresenceEntryTime] = useState(() => {
 		const d = parseISOToDate(consulta?.startISO)
 		if (!d) return ''
@@ -107,31 +112,53 @@ export default function VerConsultaPage() {
 	const billing = consulta.billing || null
 	const attachments = Array.isArray(consulta.attachments) ? consulta.attachments : []
 
+	useEffect(() => {
+		let mounted = true
+		if (!consulta?.id) return
+
+		setFilesError('')
+		setFilesLoading(true)
+		;(async () => {
+			try {
+				const rows = await listConsultaFiles(consulta.id)
+				if (mounted) setConsultaFiles(rows)
+			} catch (e) {
+				if (mounted) {
+					setConsultaFiles([])
+					setFilesError(e?.message || 'Erro ao carregar anexos')
+				}
+			} finally {
+				if (mounted) setFilesLoading(false)
+			}
+		})()
+
+		return () => {
+			mounted = false
+		}
+	}, [consulta?.id])
+
 	async function onUploadFiles(files) {
 		if (!files?.length) return
-		const next = []
-		for (const f of files) {
-			if (f.size > 8 * 1024 * 1024) {
-				window.alert(`O ficheiro “${f.name}” é demasiado grande (máx 8MB).`)
-				continue
+		if (!consulta?.id) return
+
+		setFilesError('')
+		setFilesLoading(true)
+		try {
+			for (const f of files) {
+				if (f.size > 8 * 1024 * 1024) {
+					window.alert(`O ficheiro “${f.name}” é demasiado grande (máx 8MB).`)
+					continue
+				}
+				await uploadConsultaFile({ consultaId: consulta.id, patientId: consulta.patientId || null, file: f })
 			}
-			const dataUrl = await new Promise((resolve) => {
-				const reader = new FileReader()
-				reader.onload = () => resolve(String(reader.result || ''))
-				reader.onerror = () => resolve('')
-				reader.readAsDataURL(f)
-			})
-			next.push({
-				id: `A${Date.now()}_${Math.random().toString(16).slice(2)}`,
-				filename: f.name,
-				mimeType: f.type || 'application/octet-stream',
-				addedAtISO: new Date().toISOString(),
-				dataUrl,
-			})
+			const rows = await listConsultaFiles(consulta.id)
+			setConsultaFiles(rows)
+		} catch (e) {
+			setFilesError(e?.message || 'Sem permissão')
+		} finally {
+			setFilesLoading(false)
+			if (fileInputRef.current) fileInputRef.current.value = ''
 		}
-		if (next.length === 0) return
-		patchConsulta(consulta.id, { attachments: [...next, ...attachments] })
-		setRev((x) => x + 1)
 	}
 
 	return (
@@ -246,6 +273,12 @@ export default function VerConsultaPage() {
 									<div className="fw-bold">Anexos</div>
 								</div>
 
+								{filesError ? (
+									<div className="alert alert-warning py-2" role="alert">
+										{filesError}
+									</div>
+								) : null}
+
 								<div className="table-responsive">
 									<table className="table table-sm align-middle mb-0" aria-label="Anexos">
 										<thead>
@@ -253,12 +286,40 @@ export default function VerConsultaPage() {
 												<th>Ficheiro</th>
 												<th>Tipo</th>
 												<th>Adicionado</th>
+												<th className="text-end">Ações</th>
 											</tr>
 										</thead>
 										<tbody>
-											{attachments.length === 0 ? (
+											{filesLoading ? (
 												<tr>
-													<td colSpan={3} className="ui-meta">
+													<td colSpan={4} className="ui-meta">
+														A carregar…
+													</td>
+												</tr>
+											) : consultaFiles.length > 0 ? (
+												consultaFiles.map((f) => (
+													<tr key={f.id_file}>
+														<td className="fw-bold">
+															<Paperclip size={14} className="me-2" aria-hidden="true" />
+															{f.file_name || `Anexo ${f.id_file}`}
+														</td>
+														<td>{tipoLabelFromMime(f.mime_type)}</td>
+														<td>{formatDatePT(f.created_at) || '—'}</td>
+														<td className="text-end">
+															<div className="btn-group" role="group" aria-label="Ações do anexo">
+																<button type="button" className="btn btn-light btn-sm" onClick={() => openClinicalFileInNewTab(f.id_file)}>
+																	Ver
+																</button>
+																<button type="button" className="btn btn-light btn-sm" onClick={() => downloadClinicalFile(f.id_file)}>
+																	Baixar
+																</button>
+															</div>
+														</td>
+													</tr>
+												))
+											) : attachments.length === 0 ? (
+												<tr>
+													<td colSpan={4} className="ui-meta">
 														Sem anexos.
 													</td>
 												</tr>
@@ -272,13 +333,12 @@ export default function VerConsultaPage() {
 																	{a.filename}
 																</a>
 															) : (
-																<button type="button" className="btn btn-link p-0 link-dark fw-bold" onClick={() => window.alert('Anexo de exemplo (sem ficheiro).')}>
-																	{a.filename}
-																</button>
+																	<span className="fw-bold">{a.filename}</span>
 															)}
 														</td>
 														<td>{tipoLabelFromMime(a.mimeType)}</td>
 														<td>{formatDatePT(a.addedAtISO) || '—'}</td>
+														<td className="text-end"><span className="ui-meta">Local</span></td>
 													</tr>
 												))
 											)}
@@ -295,7 +355,7 @@ export default function VerConsultaPage() {
 										className="d-none"
 										onChange={(e) => onUploadFiles(Array.from(e.target.files || []))}
 									/>
-									<button type="button" className="btn btn-light btn-sm" onClick={() => fileInputRef.current?.click()}>
+									<button type="button" className="btn btn-light btn-sm" onClick={() => fileInputRef.current?.click()} disabled={filesLoading}>
 										<Upload size={16} aria-hidden="true" />
 										Carregar ficheiro
 									</button>

@@ -130,4 +130,31 @@ controller.editar_plano = async (req, res) => {
   }
 };
 
+// DELETE plano
+controller.apagar_plano = async (req, res) => {
+  try {
+    const { id_tratamento } = req.params;
+
+    if (!id_tratamento) {
+      return res.status(400).json({ message: 'ID do plano em falta' });
+    }
+
+    const planoId = Number(id_tratamento);
+    if (Number.isNaN(planoId)) {
+      return res.status(400).json({ message: 'ID inválido' });
+    }
+
+    const plano = await Plano.findByPk(planoId);
+    if (!plano) {
+      return res.status(404).json({ message: 'Plano não encontrado' });
+    }
+
+    await plano.destroy();
+    return res.status(200).json({ message: 'Plano eliminado com sucesso' });
+  } catch (error) {
+    console.error('Erro ao eliminar plano:', error);
+    return res.status(500).json({ message: 'Erro do servidor', error: error.message });
+  }
+};
+
 module.exports = controller;

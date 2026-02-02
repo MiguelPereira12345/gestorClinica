@@ -1,39 +1,15 @@
+import { apiFetch } from './apiClient'
+import { syncColaboradoresFromApi } from './dataSync'
+
 const STORAGE_KEY = 'gestorClinica.colaboradores'
 
-const MOCK_COLABORADORES = [
-	{
-		id: 'COL001',
-		name: 'Dr. João Silva',
-		email: 'joao.silva@clinica.com',
-		phone: '(11) 99999-0001',
-		cargo: 'Médico',
-		status: 'ativo',
-	},
-	{
-		id: 'COL002',
-		name: 'Dra. Maria Santos',
-		email: 'maria.santos@clinica.com',
-		phone: '(11) 99999-0002',
-		cargo: 'Admin',
-		status: 'ativo',
-	},
-	{
-		id: 'COL003',
-		name: 'Enf. Pedro Costa',
-		email: 'pedro.costa@clinica.com',
-		phone: '(11) 99999-0003',
-		cargo: 'Recepcionista',
-		status: 'ativo',
-	},
-	{
-		id: 'COL004',
-		name: 'Dr. Carlos Mendes',
-		email: 'carlos.mendes@clinica.com',
-		phone: '(11) 99999-0004',
-		cargo: 'Médico',
-		status: 'inativo',
-	},
-]
+function cargoLabelFromKey(key) {
+	const v = String(key || '').trim().toLowerCase()
+	if (v === 'admin') return 'Admin'
+	if (v === 'medico' || v === 'médico') return 'Médico'
+	if (v === 'secretaria' || v === 'recepcionista') return 'Secretaria'
+	return ''
+}
 
 function getStoredColaboradores() {
 	const raw = localStorage.getItem(STORAGE_KEY)
@@ -41,10 +17,10 @@ function getStoredColaboradores() {
 		try {
 			return JSON.parse(raw)
 		} catch {
-			return MOCK_COLABORADORES
+			return []
 		}
 	}
-	return MOCK_COLABORADORES
+	return []
 }
 
 function saveColaboradores(list) {
@@ -91,7 +67,12 @@ export function patchColaborador(id, data) {
 	const all = getStoredColaboradores()
 	const idx = all.findIndex(c => c.id === id)
 	if (idx !== -1) {
-		all[idx] = { ...all[idx], ...data }
+		const next = { ...all[idx], ...data }
+		if (data?.cargo) {
+			const label = cargoLabelFromKey(data.cargo)
+			if (label) next.cargo = label
+		}
+		all[idx] = next
 		saveColaboradores(all)
 	}
 	return all[idx]
@@ -120,4 +101,69 @@ export function exportColaboradoresToCSV(items) {
 	].join('\n')
 
 	return csv
+}
+
+export async function createColaboradorApi(payload = {}) {
+	const nome = String(payload?.name || '').trim()
+	const email = String(payload?.email || '').trim().toLowerCase()
+	const telefone = String(payload?.phone || '').trim()
+	const cargo = String(payload?.cargo || '').trim().toLowerCase()
+	const senha = String(payload?.password || '').trim()
+	if (!nome) throw new Error('Nome em falta')
+	if (!email) throw new Error('Email em falta')
+	if (!telefone) throw new Error('Telefone em falta')
+	if (!cargo) throw new Error('Cargo em falta')
+	if (!senha) throw new Error('Password em falta')
+	if (senha.length < 6) throw new Error('A password deve ter pelo menos 6 caracteres')
+
+	const ativo = String(payload?.status || '').toLowerCase() !== 'inativo'
+
+	const res = await apiFetch('/gestores', {
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json' },
+		body: JSON.stringify({ nome, email, telefone, senha, tipo: cargo, ativo }),
+	})
+
+	try {
+		await syncColaboradoresFromApi()
+	} catch {
+		// ignore
+	}
+
+	return res?.gestor || null
+}
+
+export async function updateColaboradorApi(id, payload = {}) {
+	if (!id) throw new Error('id em falta')
+	const nome = payload?.name !== undefined ? String(payload?.name || '').trim() : undefined
+	const email = payload?.email !== undefined ? String(payload?.email || '').trim().toLowerCase() : undefined
+	const telefone = payload?.phone !== undefined ? String(payload?.phone || '').trim() : undefined
+	const ativo = payload?.status !== undefined ? String(payload?.status || '').toLowerCase() !== 'inativo' : undefined
+	const tipo = payload?.cargo !== undefined ? String(payload?.cargo || '').trim().toLowerCase() : undefined
+	const senha = payload?.password ? String(payload.password).trim() : undefined
+
+	const res = await apiFetch(`/gestores/${encodeURIComponent(String(id))}`, {
+		method: 'PATCH',
+		headers: { 'Content-Type': 'application/json' },
+		body: JSON.stringify({ nome, email, telefone, ativo, tipo, senha }),
+	})
+
+	try {
+		await syncColaboradoresFromApi()
+	} catch {
+		// ignore
+	}
+
+	return res?.gestor || null
+}
+
+export async function deleteColaboradorApi(id) {
+	if (!id) throw new Error('id em falta')
+	await apiFetch(`/gestores/${encodeURIComponent(String(id))}`, { method: 'DELETE' })
+	try {
+		await syncColaboradoresFromApi()
+	} catch {
+		// ignore
+	}
+	return true
 }

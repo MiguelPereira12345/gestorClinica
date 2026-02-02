@@ -3,7 +3,9 @@ import './App.css'
 import { useNavigate } from 'react-router-dom'
 import AppLayout from './components/Layout/AppLayout'
 import PageHeader from './components/UI/PageHeader'
-import { buildPatientRecordFromForm, createEmptyPatientForm, upsertPatient } from './utils/patientStorage'
+import { buildPatientRecordFromForm, createEmptyPatientForm, upsertPatient, createPacienteApi } from './utils/patientStorage'
+import { syncPatientsFromApi } from './utils/dataSync'
+import { uploadClinicalFile } from './utils/clinicalFilesApi'
 
 export default function AdicionarPaciente() {
 	const navigate = useNavigate()
@@ -23,7 +25,7 @@ export default function AdicionarPaciente() {
 		setFiles(list)
 	}
 
-	function onSubmit(e) {
+	async function onSubmit(e) {
 		e.preventDefault()
 		if (saving) return
 
@@ -39,14 +41,58 @@ export default function AdicionarPaciente() {
 			return
 		}
 
+		const email = String(form.contactoEmail || '').trim()
+		if (!email) {
+			alert('Por favor, preenche o Contacto (email).')
+			return
+		}
+
+		const password = String(form.password || '').trim()
+		if (!password) {
+			alert('Por favor, preenche a Password.')
+			return
+		}
+		if (password.length < 6) {
+			alert('A password deve ter pelo menos 6 caracteres.')
+			return
+		}
+		if (String(form.confirmPassword || '') !== password) {
+			alert('As passwords não coincidem.')
+			return
+		}
+
 		setSaving(true)
 		try {
+			const created = await createPacienteApi({ form })
+			const createdId = created?.id != null ? String(created.id) : ''
+			if (!createdId) throw new Error('Resposta inválida do servidor ao criar paciente')
+
+			// Upload de anexos clínicos (se existirem). Nota: requer permissões no backend.
+			if (files.length) {
+				await Promise.allSettled(
+					files.map((file) => uploadClinicalFile({ patientId: createdId, file, kind: 'anexo_clinico' }))
+				)
+			}
+
 			const patient = buildPatientRecordFromForm({
+				id: createdId,
+				createdAt: created?.data_inscricao || undefined,
+				estado: created?.ativo === false ? 'Inativo' : 'Ativo',
 				form,
 				anexosClinicos: fileNames,
 			})
 			upsertPatient(patient)
-			navigate(`/pacientes/${patient.id}`)
+
+			try {
+				await syncPatientsFromApi()
+			} catch {
+				// ignore
+			}
+
+			navigate(`/pacientes/${createdId}`)
+		} catch (e) {
+			console.error(e)
+			alert(e?.message || 'Erro ao criar paciente')
 		} finally {
 			setSaving(false)
 		}
@@ -124,6 +170,20 @@ export default function AdicionarPaciente() {
 									Contacto (email)
 								</label>
 								<input className="form-control" type="email" value={form.contactoEmail} onChange={(e) => updateField('contactoEmail', e.target.value)} placeholder="nome@exemplo.com" />
+							</div>
+
+							<div className="col-12 col-md-6">
+								<label className="form-label" style={{ fontSize: 13, fontWeight: 800, color: 'rgba(122, 130, 138, 0.95)' }}>
+									Password *
+								</label>
+								<input className="form-control" type="password" value={form.password} onChange={(e) => updateField('password', e.target.value)} autoComplete="new-password" required />
+							</div>
+
+							<div className="col-12 col-md-6">
+								<label className="form-label" style={{ fontSize: 13, fontWeight: 800, color: 'rgba(122, 130, 138, 0.95)' }}>
+									Confirmar password *
+								</label>
+								<input className="form-control" type="password" value={form.confirmPassword} onChange={(e) => updateField('confirmPassword', e.target.value)} autoComplete="new-password" required />
 							</div>
 
 							<div className="col-12 col-md-6">

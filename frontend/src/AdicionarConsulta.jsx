@@ -5,22 +5,18 @@ import MiniCalendar from './components/Agenda/MiniCalendar'
 import './AdicionarConsulta.css'
 
 import {
-	buildAppointmentRecord,
 	dateToISO,
 	getClinicIntervalsForDate,
 	isSlotFree,
 	listAvailableSlots,
-	upsertAppointment,
 } from './utils/appointmentStorage'
 
 import { loadPatients } from './utils/patientStorage'
+import { loadMedicosForSelect, refreshMedicosForSelect } from './utils/professionalsStorage'
+import { createConsulta } from './utils/consultasStorage'
 
-const SAMPLE_PATIENTS = [
-	{ id: 'P001', nome: 'Maria Gonzalez', telefone: '912 345 678' },
-	{ id: 'P002', nome: 'Liam Chen', telefone: '913 222 111' },
-	{ id: 'P003', nome: 'Sofia Martins', telefone: '914 000 999' },
-	{ id: 'P004', nome: 'Noah Patel', telefone: '915 123 456' },
-]
+import { useConfirm } from './components/UI/ConfirmProvider'
+
 
 const APPOINTMENT_TYPES = [
 	{ id: 'avaliacao', label: 'Consulta de avaliação', durationMin: 30 },
@@ -52,17 +48,22 @@ function formatSlotLabel(date, hhmm) {
 
 export default function AdicionarConsulta() {
 	const navigate = useNavigate()
+	const confirm = useConfirm()
 	const patientInputRef = useRef(null)
 	const patientPopoverRef = useRef(null)
+	const [resources, setResources] = useState(() => loadMedicosForSelect().map((m) => ({ id: Number(m.id), name: m.name })))
 
-	const resources = useMemo(
-		() => [
-			{ id: 1, name: 'Dra. Sofia Lima' },
-			{ id: 2, name: 'Dr. Marco Sousa' },
-			{ id: 3, name: 'Dr. Alex Morgan' },
-		],
-		[],
-	)
+	useEffect(() => {
+		let mounted = true
+		;(async () => {
+			const list = await refreshMedicosForSelect()
+			const next = list.map((m) => ({ id: Number(m.id), name: m.name })).filter((m) => Number.isFinite(m.id) && m.id)
+			if (mounted) setResources(next)
+		})()
+		return () => {
+			mounted = false
+		}
+	}, [])
 
 	const [calendarMonth, setCalendarMonth] = useState(new Date())
 	const [selectedDate, setSelectedDate] = useState(startOfDay(new Date()))
@@ -89,7 +90,7 @@ export default function AdicionarConsulta() {
 			telefone: p.telefone || p?.data?.contactoTelefone || '',
 		}))
 		const map = new Map()
-		for (const p of [...stored, ...SAMPLE_PATIENTS]) map.set(p.id, p)
+		for (const p of stored) map.set(p.id, p)
 		return Array.from(map.values())
 	}, [])
 
@@ -147,7 +148,10 @@ export default function AdicionarConsulta() {
 		return unique
 	}
 
-	const nextSlots = useMemo(() => computeNextSlots({ fromDate: startOfDay(new Date()), days: 14, limit: 24 }), [durationMin, professionalId])
+	const nextSlots = useMemo(
+		() => computeNextSlots({ fromDate: startOfDay(new Date()), days: 14, limit: 24 }),
+		[durationMin, professionalId, resources],
+	)
 
 	const monthMeta = useMemo(() => {
 		const year = calendarMonth.getFullYear()
@@ -176,7 +180,7 @@ export default function AdicionarConsulta() {
 		}
 
 		return map
-	}, [calendarMonth, durationMin, professionalId])
+	}, [calendarMonth, durationMin, professionalId, resources])
 
 	function getDayMeta(date) {
 		return monthMeta.get(dateToISO(date)) || { status: 'open', occupancy: 0 }
@@ -233,33 +237,50 @@ export default function AdicionarConsulta() {
 			`Estado: ${bookingStatus === 'confirmada' ? 'Confirmada' : 'A confirmar'}`,
 		].filter(Boolean).join('\n')
 
-		if (!window.confirm(confirmText)) return
+		void (async () => {
+			const ok = await confirm({
+				title: 'Confirmar marcação',
+				message: confirmText,
+				confirmText: 'Confirmar',
+				confirmVariant: 'primary',
+			})
+			if (!ok) return
 
-		const record = buildAppointmentRecord({
-			patientId: selectedPatient.id,
-			patientName: selectedPatient.nome,
-			dependentName: '',
-			notes: (notes || '').trim(),
-			specialty: selectedType.label,
-			medicoId,
-			medicoName,
-			bookingType: 'vaga',
-			bookingStatus,
-			firstVisitReason: (firstVisitReason || '').trim(),
-			isReschedule: false,
-			isNoShow: false,
-			durationMin,
-			date: selectedSlot.date,
-			startHHMM: selectedSlot.hhmm,
-		})
+			try {
+				const day = new Date(selectedSlot.date)
+				const [h, m] = String(selectedSlot.hhmm).split(':').map(Number)
+				day.setHours(h || 0, m || 0, 0, 0)
+				const startISO = day.toISOString()
 
-		upsertAppointment(record)
-		navigate('/agenda', { replace: true })
+				await createConsulta({
+					patientId: selectedPatient.id,
+					patientName: selectedPatient.nome,
+					dependentName: '',
+					notes: (notes || '').trim(),
+					specialty: selectedType.label,
+					medicoId,
+					medicoName,
+					bookingType: 'vaga',
+					bookingStatus,
+					firstVisitReason: (firstVisitReason || '').trim(),
+					isReschedule: false,
+					isNoShow: false,
+					durationMin,
+					startISO,
+				})
+
+				navigate('/agenda', { replace: true })
+			} catch (e) {
+				console.error(e)
+				setError(e?.message || 'Erro ao criar consulta')
+			}
+		})()
 	}, [
 		bookingStatus,
 		durationMin,
 		navigate,
 		notes,
+		firstVisitReason,
 		resources,
 		selectedPatient,
 		selectedSlot,

@@ -8,7 +8,10 @@ import {
 	createEmptyPatientForm,
 	getPatientById,
 	upsertPatient,
+	createDependenteApi,
 } from './utils/patientStorage'
+
+import { syncPatientsFromApi } from './utils/dataSync'
 
 export default function AdicionarDependente() {
 	const navigate = useNavigate()
@@ -42,7 +45,7 @@ export default function AdicionarDependente() {
 		setFiles(list)
 	}
 
-	function onSubmit(e) {
+	async function onSubmit(e) {
 		e.preventDefault()
 		if (saving) return
 
@@ -60,7 +63,13 @@ export default function AdicionarDependente() {
 
 		setSaving(true)
 		try {
+			const created = await createDependenteApi({ form, responsavelId })
+			const depId = created?.id_dependente
+			if (!depId) throw new Error('Resposta inválida do servidor ao criar dependente')
+			const depIdStr = `D${depId}`
+
 			const next = buildPatientRecordFromForm({
+				id: depIdStr,
 				form: {
 					...form,
 					responsavelId: responsavelId || '',
@@ -68,7 +77,17 @@ export default function AdicionarDependente() {
 				anexosClinicos: fileNames,
 			})
 			upsertPatient(next)
-			navigate(`/pacientes/${next.id}`)
+
+			try {
+				await syncPatientsFromApi()
+			} catch {
+				// ignore
+			}
+
+			navigate(`/pacientes/${depIdStr}`)
+		} catch (e) {
+			console.error(e)
+			alert(e?.message || 'Erro ao criar dependente')
 		} finally {
 			setSaving(false)
 		}

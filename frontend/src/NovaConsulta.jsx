@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react'
+import React, { useMemo, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
 import AppLayout from './components/Layout/AppLayout'
@@ -31,6 +31,7 @@ function defaultInitial() {
 export default function NovaConsulta() {
 	const navigate = useNavigate()
 	const location = useLocation()
+	const [saving, setSaving] = useState(false)
 	const prefill = location.state?.prefill || null
 	const fromTreatmentPlanId = location.state?.fromTreatmentPlanId || null
 	const initial = useMemo(() => {
@@ -68,20 +69,31 @@ export default function NovaConsulta() {
 							submitLabel="Criar consulta"
 							onCancel={() => navigate('/consultas')}
 							onSubmit={(payload) => {
-									const treatmentPlanId = fromTreatmentPlanId ? String(fromTreatmentPlanId) : ''
-									const created = createConsulta({
-										...payload,
-										treatmentPlanId,
-									})
-									if (treatmentPlanId) {
-										appendTreatmentPlanHistory(treatmentPlanId, {
-											type: 'session',
-											title: 'Sessão marcada',
-											note: `${created.startISO?.slice(0, 16) || ''} • ${created.medicoName || ''}`.trim(),
-											meta: { consultaId: created.id, startISO: created.startISO },
+								void (async () => {
+									if (saving) return
+									setSaving(true)
+									try {
+										const treatmentPlanId = fromTreatmentPlanId ? String(fromTreatmentPlanId) : ''
+										const created = await createConsulta({
+											...payload,
+											treatmentPlanId,
 										})
+										if (treatmentPlanId) {
+											appendTreatmentPlanHistory(treatmentPlanId, {
+												type: 'session',
+												title: 'Sessão marcada',
+												note: `${created.startISO?.slice(0, 16) || ''} • ${created.medicoName || ''}`.trim(),
+												meta: { consultaId: created.id, startISO: created.startISO },
+											})
+										}
+										navigate(`/consultas/${created.id}`)
+									} catch (e) {
+										console.error(e)
+										window.alert(e?.message || 'Erro ao criar consulta')
+									} finally {
+										setSaving(false)
 									}
-								navigate(`/consultas/${created.id}`)
+								})()
 							}}
 						/>
 					</div>

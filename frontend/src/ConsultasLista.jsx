@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Plus } from 'lucide-react'
 import AppLayout from './components/Layout/AppLayout'
@@ -6,15 +6,23 @@ import AppLayout from './components/Layout/AppLayout'
 import ConsultasFilters from './components/Consultas/ConsultasFilters'
 import ConsultasTable from './components/Consultas/ConsultasTable'
 import Pagination from './components/Consultas/Pagination'
+import { useConfirm } from './components/UI/ConfirmProvider'
 
-import { listConsultas } from './utils/consultasStorage'
-import { PROFESSIONALS } from './utils/consultasLookups'
+import { deleteConsultaApi, listConsultas, patchConsulta } from './utils/consultasStorage'
+import { syncColaboradoresFromApi, syncConsultasFromApi } from './utils/dataSync'
+import { loadMedicosForSelect, refreshMedicosForSelect } from './utils/professionalsStorage'
+import { getCurrentUser, isMedicoUser } from './utils/apiClient'
 
 const DEFAULT_PAGE_SIZE = 5
 const VIEWS_KEY = 'gestorClinica.consultas.vistas'
 
 export default function ConsultasLista() {
 	const navigate = useNavigate()
+	const confirm = useConfirm()
+	const currentUser = getCurrentUser()
+	const isMedico = isMedicoUser()
+	const currentUserId = Number(currentUser?.id || 0) || 0
+	const [professionals, setProfessionals] = useState(() => loadMedicosForSelect())
 	const [filters, setFilters] = useState({
 		patient: '',
 		professional: '',
@@ -23,10 +31,31 @@ export default function ConsultasLista() {
 		bookingType: '',
 	})
 	const [page, setPage] = useState(1)
+	const [rev, setRev] = useState(0)
+
+	useEffect(() => {
+		let mounted = true
+		;(async () => {
+			try {
+				await syncColaboradoresFromApi().catch(() => null)
+				const list = await refreshMedicosForSelect()
+				if (mounted) setProfessionals(list)
+
+				await syncConsultasFromApi()
+			} catch {
+				// ignore
+			} finally {
+				if (mounted) setRev((x) => x + 1)
+			}
+		})()
+		return () => {
+			mounted = false
+		}
+	}, [])
 
 	const result = useMemo(
 		() => listConsultas({ filters, page, pageSize: DEFAULT_PAGE_SIZE }),
-		[filters, page],
+		[filters, page, rev],
 	)
 
 	const startIdx = result.total === 0 ? 0 : (result.page - 1) * result.pageSize + 1
@@ -46,6 +75,24 @@ export default function ConsultasLista() {
 	function onClear() {
 		setFilters({ patient: '', professional: '', date: '', status: '', bookingType: '' })
 		setPage(1)
+	}
+
+	async function handleDelete(consulta) {
+		const id = consulta?.id
+		if (!id) return
+		const ok = await confirm({
+			title: 'Eliminar consulta',
+			message: 'Tem a certeza que deseja eliminar esta consulta?\n\nEsta ação não pode ser desfeita.',
+			confirmText: 'Eliminar',
+			confirmVariant: 'danger',
+		})
+		if (!ok) return
+		try {
+			await deleteConsultaApi(id)
+			setRev((x) => x + 1)
+		} catch (e) {
+			window.alert(e?.message ?? 'Erro ao eliminar consulta')
+		}
 	}
 
 	return (
@@ -71,7 +118,7 @@ export default function ConsultasLista() {
 						setFilters(next)
 						setPage(1)
 					}}
-					professionals={PROFESSIONALS}
+					professionals={professionals}
 					onClear={onClear}
 					onSaveView={onSaveView}
 				/>
@@ -88,8 +135,18 @@ export default function ConsultasLista() {
 
 				<ConsultasTable
 					rows={result.items}
+					canManage={(c) => {
+						if (!isMedico) return true
+						if (!currentUserId) return false
+						return Number(c?.medicoId || 0) === currentUserId
+					}}
 					onView={(c) => navigate(`/consultas/${c.id}`)}
 					onEdit={(c) => navigate(`/consultas/${c.id}/editar`)}
+					onSetStatus={(c, status) => {
+						patchConsulta(c.id, { bookingStatus: status })
+						setRev((x) => x + 1)
+					}}
+					onDelete={handleDelete}
 				/>
 			</div>
 		</AppLayout>

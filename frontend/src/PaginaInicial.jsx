@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Plus, RefreshCw } from 'lucide-react'
 import AppLayout from './components/Layout/AppLayout'
@@ -9,57 +9,79 @@ import ProximasConsultas from './components/PaginaInicial/ProximasConsultas'
 import Atalhos from './components/PaginaInicial/Atalhos'
 import './App.css'
 
+import { getStoredConsultas, isConsultaConfirmada, statusLabel } from './utils/consultasStorage'
+import { parseISOToDate } from './utils/dateTime'
+import { syncConsultasFromApi, syncPatientsFromApi } from './utils/dataSync'
+
 export default function PaginaInicial() {
 	const navigate = useNavigate()
-	const [appointments, setAppointments] = useState(() => [
-		{
-			id: 'a1',
-			paciente: 'Paciente',
-			medico: 'Dra. Sofia Lima',
-			tipo: 'Check-up',
-			inicio: '09:30',
-			fim: '10:00',
-			estado: 'Por confirmar',
-		},
-		{
-			id: 'a2',
-			paciente: 'Maria Ferreira',
-			medico: 'Dr. Bruno Costa',
-			tipo: 'Limpeza',
-			inicio: '10:15',
-			fim: '10:45',
-			estado: 'Confirmada',
-		},
-		{
-			id: 'a3',
-			paciente: 'Carlos Nunes',
-			medico: 'Dra. Inês Rocha',
-			tipo: 'Tratamento',
-			inicio: '11:00',
-			fim: '11:45',
-			estado: 'Em atraso',
-		},
-		{
-			id: 'a4',
-			paciente: 'Ana Martins',
-			medico: 'Dra. Sofia Lima',
-			tipo: 'Primeira consulta',
-			inicio: '12:00',
-			fim: '13:00',
-			estado: 'Por confirmar',
-		},
-	])
+	const [rev, setRev] = useState(0)
+
+	useEffect(() => {
+		let mounted = true
+		;(async () => {
+			try {
+				await syncPatientsFromApi()
+				await syncConsultasFromApi()
+			} catch {
+				// ignore
+			} finally {
+				if (mounted) setRev((x) => x + 1)
+			}
+		})()
+		return () => {
+			mounted = false
+		}
+	}, [])
+
+	const appointments = useMemo(() => {
+		const all = getStoredConsultas()
+		const now = Date.now()
+		return all
+			.filter((c) => c?.startISO)
+			.map((c) => {
+				const dStart = parseISOToDate(c.startISO)
+				const dEnd = parseISOToDate(c.endISO)
+				const inicio = dStart
+					? `${String(dStart.getHours()).padStart(2, '0')}:${String(dStart.getMinutes()).padStart(2, '0')}`
+					: ''
+				const fim = dEnd
+					? `${String(dEnd.getHours()).padStart(2, '0')}:${String(dEnd.getMinutes()).padStart(2, '0')}`
+					: ''
+
+				return {
+					id: c.id,
+					paciente: c.dependentName || c.patientName || c.patientId || 'Paciente',
+					medico: c.medicoName || 'Profissional',
+					tipo: c.specialty || 'Consulta',
+					inicio,
+					fim,
+					estado: statusLabel(c.bookingStatus),
+					_startMs: dStart ? dStart.getTime() : 0,
+					_isPast: dStart ? dStart.getTime() < now : false,
+				}
+			})
+			.filter((a) => !a._isPast)
+			.sort((a, b) => a._startMs - b._startMs)
+	}, [rev])
 
 	const summary = useMemo(() => {
 		const total = appointments.length
-		const confirmed = appointments.filter((a) => a.estado === 'Confirmada').length
-		const inProgress = appointments.filter((a) => a.estado === 'Em atraso').length
-		const done = appointments.filter((a) => a.estado === 'Concluída').length
+		const confirmed = getStoredConsultas().filter((c) => isConsultaConfirmada(c.bookingStatus)).length
+		const inProgress = 0
+		const done = 0
 		return { total, confirmed, inProgress, done }
 	}, [appointments])
 
-	function setStatus(id, estado) {
-		setAppointments((prev) => prev.map((a) => (a.id === id ? { ...a, estado } : a)))
+	async function refresh() {
+		try {
+			await syncPatientsFromApi()
+			await syncConsultasFromApi()
+		} catch {
+			// ignore
+		} finally {
+			setRev((x) => x + 1)
+		}
 	}
 	return (
 		<AppLayout breadcrumb="Painel" userName="Dra. Sofia Lima">
@@ -69,7 +91,7 @@ export default function PaginaInicial() {
 					subtitle={null}
 					actions={
 						<>
-							<Button variant="light" leftIcon={<RefreshCw size={16} aria-hidden="true" />}>
+							<Button variant="light" leftIcon={<RefreshCw size={16} aria-hidden="true" />} onClick={refresh}>
 								Atualizar
 							</Button>
 							<Button

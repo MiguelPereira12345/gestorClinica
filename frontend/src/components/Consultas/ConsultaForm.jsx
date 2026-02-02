@@ -1,16 +1,12 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { CONSULTA_STATUS, DURACOES_MIN, TIPO_MARCACAO } from '../../utils/consultasStorage'
 import { combineDateAndTimeToISO, toInputDate, toInputTime } from '../../utils/dateTime'
-import { ESPECIALIDADES, PROFESSIONALS } from '../../utils/consultasLookups'
+import { ESPECIALIDADES } from '../../utils/consultasLookups'
 import { listAvailableSlots } from '../../utils/appointmentStorage'
 import { loadPatients } from '../../utils/patientStorage'
+import { loadMedicosForSelect, refreshMedicosForSelect } from '../../utils/professionalsStorage'
+import { getCurrentUser, isMedicoUser } from '../../utils/apiClient'
 
-const SAMPLE_PATIENTS = [
-	{ id: 'P001', nome: 'Maria Gonzalez', telefone: '912 345 678' },
-	{ id: 'P002', nome: 'Liam Chen', telefone: '913 222 111' },
-	{ id: 'P003', nome: 'Sofia Martins', telefone: '914 000 999' },
-	{ id: 'P004', nome: 'Noah Patel', telefone: '915 123 456' },
-]
 
 function normalizePatient(p) {
 	return {
@@ -39,16 +35,14 @@ function parseInputDateToLocalDate(dateStr) {
 	return new Date(y, m - 1, d)
 }
 
-function getProfessionalById(id) {
-	return PROFESSIONALS.find((p) => String(p.id) === String(id)) || null
-}
-
 export default function ConsultaForm({
 	initial,
 	submitLabel = 'Guardar',
 	onSubmit,
 	onCancel,
 }) {
+	const currentUser = getCurrentUser()
+	const lockedToCurrentMedico = isMedicoUser() && currentUser?.id
 	const patientInputRef = useRef(null)
 	const patientPopoverRef = useRef(null)
 	const timeButtonRef = useRef(null)
@@ -60,8 +54,8 @@ export default function ConsultaForm({
 		forDependent: Boolean(initial?.dependentName),
 		dependentId: '',
 		dependentName: initial?.dependentName || '',
-		medicoId: String(initial?.medicoId || ''),
-		medicoName: initial?.medicoName || '',
+		medicoId: String(initial?.medicoId || (lockedToCurrentMedico ? currentUser.id : '') || ''),
+		medicoName: initial?.medicoName || (lockedToCurrentMedico ? currentUser.nome : '') || '',
 		specialty: initial?.specialty || 'Clínica Geral',
 		date: toInputDate(initial?.startISO) || '',
 		time: toInputTime(initial?.startISO) || '',
@@ -74,13 +68,46 @@ export default function ConsultaForm({
 	const [error, setError] = useState('')
 	const [showPatientResults, setShowPatientResults] = useState(false)
 	const [showTimeResults, setShowTimeResults] = useState(false)
+	const [professionalOptions, setProfessionalOptions] = useState(() => loadMedicosForSelect())
 
-	const professionalOptions = useMemo(() => PROFESSIONALS, [])
+	useEffect(() => {
+		let mounted = true
+		;(async () => {
+			const list = await refreshMedicosForSelect()
+			if (mounted) setProfessionalOptions(list)
+		})()
+		return () => {
+			mounted = false
+		}
+	}, [])
+
+	useEffect(() => {
+		if (!lockedToCurrentMedico) return
+		const myId = String(currentUser?.id || '').trim()
+		if (!myId) return
+		setForm((prev) => {
+			if (String(prev.medicoId || '').trim() === myId) return prev
+			return { ...prev, medicoId: myId, medicoName: currentUser?.nome || prev.medicoName }
+		})
+	}, [lockedToCurrentMedico, currentUser?.id, currentUser?.nome])
+
+	function getProfessionalById(id) {
+		return professionalOptions.find((p) => String(p.id) === String(id)) || null
+	}
+
+	const professionalOptionsWithFallback = useMemo(() => {
+		const base = Array.isArray(professionalOptions) ? professionalOptions : []
+		const selectedId = String(form.medicoId || '').trim()
+		if (!selectedId) return base
+		if (base.some((p) => String(p.id) === selectedId)) return base
+		const fallbackName = String(form.medicoName || '').trim() || 'Profissional'
+		return [{ id: selectedId, name: fallbackName }, ...base]
+	}, [form.medicoId, form.medicoName, professionalOptions])
 
 	const patients = useMemo(() => {
 		const stored = loadPatients().map(normalizePatient)
 		const map = new Map()
-		for (const p of [...stored, ...SAMPLE_PATIENTS]) {
+		for (const p of stored) {
 			if (!p?.id) continue
 			map.set(p.id, p)
 		}
@@ -345,14 +372,18 @@ export default function ConsultaForm({
 						className="form-select"
 						value={form.medicoId}
 						onChange={(e) => update({ medicoId: e.target.value })}
+						disabled={!!lockedToCurrentMedico}
 					>
 						<option value="">Selecione</option>
-						{professionalOptions.map((p) => (
+						{professionalOptionsWithFallback.map((p) => (
 							<option key={p.id} value={p.id}>
 								{p.name}
 							</option>
 						))}
 					</select>
+					{lockedToCurrentMedico ? (
+						<div className="form-text">Como médico, o profissional fica automaticamente definido para si.</div>
+					) : null}
 				</div>
 
 				<div className="col-md-6">

@@ -22,39 +22,42 @@ import DetalhesColaborador from './DetalhesColaborador'
 import EditarColaborador from './EditarColaborador'
 import NovoColaborador from './NovoColaborador'
 import PlanosTratamento from './PlanosTratamento'
+import { ConfirmProvider } from './components/UI/ConfirmProvider'
 
 function App() {
   return (
-    <div className="app">
-      <Routes>
-        {/* proteger rotas para nao ser acessivel pela barra de pesquisa */}
+		<ConfirmProvider>
+			<div className="app">
+				<Routes>
+					{/* proteger rotas para nao ser acessivel pela barra de pesquisa */}
 
-        <Route path="/login" element={<Login />} />
-        <Route path="/registar" element={<Register />} />
-        <Route path="/recuperar-palavra-passe" element={<Recuperarpass />} />
-        <Route path="/pacientes" element={<Pacientes />} />
-        <Route path="/pacientes/novo" element={<AdicionarPaciente />} />
-        <Route path="/pacientes/:id/dependente/novo" element={<AdicionarDependente />} />
-        <Route path="/pacientes/:id" element={<VerPaciente />} />
-        <Route path="/pacientes/:id/editar" element={<EditarPaciente />} />
-        <Route path="/pacientes/:id/planos" element={<PlanosTratamento />} />
-        <Route path="/pagina-inicial" element={<PaginaInicial />} />
-        <Route path="/agenda" element={<Agenda />} />
-        <Route path="/agenda/consultas/novo" element={<Navigate to="/consultas/nova" replace />} />
-        <Route path="/consultas" element={<ConsultasLista />} />
-        <Route path="/consultas/nova" element={<NovaConsulta />} />
-        <Route path="/planos" element={<PlanosTratamento />} />
-        <Route path="/consultas/:id" element={<VerConsulta />} />
-        <Route path="/consultas/:id/editar" element={<EditarConsulta />} />
-        <Route path="/ver-exames" element={<VerExames />} />
-        <Route path="/editar-detalhes" element={<EditarDetalhes />} />
-        <Route path="/colaboradores" element={<ColaboradoresLista />} />
-        <Route path="/colaboradores/novo" element={<NovoColaborador />} />
-        <Route path="/colaboradores/:id" element={<DetalhesColaborador />} />
-        <Route path="/colaboradores/:id/editar" element={<EditarColaborador />} />
-        <Route path="/" element={<Navigate to="/login" replace />} />
-      </Routes>
-    </div>
+					<Route path="/login" element={<Login />} />
+					<Route path="/registar" element={<Register />} />
+					<Route path="/recuperar-palavra-passe" element={<Recuperarpass />} />
+					<Route path="/pacientes" element={<Pacientes />} />
+					<Route path="/pacientes/novo" element={<AdicionarPaciente />} />
+					<Route path="/pacientes/:id/dependente/novo" element={<AdicionarDependente />} />
+					<Route path="/pacientes/:id" element={<VerPaciente />} />
+					<Route path="/pacientes/:id/editar" element={<EditarPaciente />} />
+					<Route path="/pacientes/:id/planos" element={<PlanosTratamento />} />
+					<Route path="/pagina-inicial" element={<PaginaInicial />} />
+					<Route path="/agenda" element={<Agenda />} />
+					<Route path="/agenda/consultas/novo" element={<Navigate to="/consultas/nova" replace />} />
+					<Route path="/consultas" element={<ConsultasLista />} />
+					<Route path="/consultas/nova" element={<NovaConsulta />} />
+					<Route path="/planos" element={<PlanosTratamento />} />
+					<Route path="/consultas/:id" element={<VerConsulta />} />
+					<Route path="/consultas/:id/editar" element={<EditarConsulta />} />
+					<Route path="/ver-exames" element={<VerExames />} />
+					<Route path="/editar-detalhes" element={<EditarDetalhes />} />
+					<Route path="/colaboradores" element={<ColaboradoresLista />} />
+					<Route path="/colaboradores/novo" element={<NovoColaborador />} />
+					<Route path="/colaboradores/:id" element={<DetalhesColaborador />} />
+					<Route path="/colaboradores/:id/editar" element={<EditarColaborador />} />
+					<Route path="/" element={<Navigate to="/login" replace />} />
+				</Routes>
+			</div>
+		</ConfirmProvider>
   )
 }
 

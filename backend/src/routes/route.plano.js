@@ -17,5 +17,8 @@ router.post('/plano', planoController.criar_plano);
 router.patch('/:id_tratamento', planoController.editar_plano);
 router.put('/:id_tratamento', planoController.editar_plano);
 
+// Eliminar plano
+router.delete('/:id_tratamento', planoController.apagar_plano);
+
 module.exports = router;
 

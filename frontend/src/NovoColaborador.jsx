@@ -5,7 +5,7 @@ import AppLayout from './components/Layout/AppLayout'
 import PageHeader from './components/UI/PageHeader'
 
 import ColaboradorForm from './components/Colaboradores/ColaboradorForm'
-import { addColaborador } from './utils/colaboradoresStorage'
+import { createColaboradorApi } from './utils/colaboradoresStorage'
 
 export default function NovoColaborador() {
 	const navigate = useNavigate()
@@ -28,8 +28,16 @@ export default function NovoColaborador() {
 					submitLabel="Criar Colaborador"
 					onCancel={() => navigate('/colaboradores')}
 					onSubmit={(payload) => {
-						const newColaborador = addColaborador(payload)
-						navigate(`/colaboradores/${newColaborador.id}`)
+						void (async () => {
+							try {
+								const created = await createColaboradorApi(payload)
+								if (!created?.id) throw new Error('Resposta inválida ao criar colaborador')
+								navigate(`/colaboradores/${created.id}`)
+							} catch (e) {
+								console.error(e)
+								window.alert(e?.message || 'Erro ao criar colaborador')
+							}
+						})()
 					}}
 				/>
 			</div>

@@ -1,11 +1,21 @@
 const sequelize = require('../models/database');
 const { initModels } = require('../models/init-models');
 const { DataTypes } = require('sequelize');
+const bcrypt = require('bcryptjs');
 
 const models = initModels(sequelize);
 const { User } = models;
 
 const controller = {};
+
+function normalizeStaffRole(input) {
+  const v = String(input || '').trim().toLowerCase();
+  if (!v) return null;
+  if (v === 'admin') return 'admin';
+  if (v === 'medico' || v === 'médico') return 'medico';
+  if (v === 'secretaria' || v === 'recepcionista' || v === 'recepcionista(a)' || v === 'receção' || v === 'rececao') return 'secretaria';
+  return null;
+}
 
 controller.criar_gestor = async (req, res) => {
   try {
@@ -14,6 +24,9 @@ controller.criar_gestor = async (req, res) => {
       email,
       telefone,
       senha,
+      tipo,
+      cargo,
+      ativo,
       sexo,
       endereco,
       nif,
@@ -27,6 +40,16 @@ controller.criar_gestor = async (req, res) => {
         message: 'Nome, email, telefone e senha são obrigatórios' 
       });
     }
+
+    const wantedRole = normalizeStaffRole(tipo || cargo);
+    if (!wantedRole) {
+      return res.status(400).json({
+        message: 'Cargo/tipo inválido. Use: admin, secretaria ou medico',
+        received: { tipo, cargo },
+      });
+    }
+
+    console.log('[gestores] criar_gestor role:', { tipo, cargo, wantedRole });
 
     // Verificar se o email já existe
     const existingUser = await User.findOne({ where: { email } });
@@ -44,14 +67,17 @@ controller.criar_gestor = async (req, res) => {
       });
     }
 
+    const rawPassword = String(senha);
+    const hashedPassword = await bcrypt.hash(rawPassword, 10);
+
     // Criar o gestor
     const novoGestor = await User.create({
       nome,
       email,
       telefone,
-      senha,
-      tipo: 'admin',
-      ativo: true,
+      senha: hashedPassword,
+      tipo: wantedRole,
+      ativo: typeof ativo === 'boolean' ? ativo : true,
       sexo,
       endereco,
       nif,
@@ -83,7 +109,7 @@ controller.get_gestores = async (req, res) => {
   try {
     const gestores = await User.findAll({
       where: { 
-        tipo: 'admin',
+        tipo: ['admin', 'secretaria', 'medico'],
         ativo: true
       },
       attributes: ['id', 'nome', 'email', 'telefone', 'tipo', 'ativo', 'data_inscricao'],
@@ -111,7 +137,7 @@ controller.get_gestor = async (req, res) => {
     const gestor = await User.findOne({
       where: { 
         id,
-        tipo: 'admin',
+        tipo: ['admin', 'secretaria', 'medico'],
         ativo: true
       },
       attributes: ['id', 'nome', 'email', 'telefone', 'tipo', 'ativo', 'sexo', 'endereco', 'nif', 'data_nascimento', 'numero_utente', 'data_inscricao']
@@ -139,12 +165,12 @@ controller.get_gestor = async (req, res) => {
 controller.editar_gestor = async (req, res) => {
   try {
     const { id } = req.params;
-    const { nome, email, telefone, senha, sexo, endereco, nif, data_nascimento, numero_utente } = req.body;
+    const { nome, email, telefone, senha, sexo, endereco, nif, data_nascimento, numero_utente, tipo, cargo } = req.body;
 
     const gestor = await User.findOne({
       where: { 
         id,
-        tipo: 'admin',
+        tipo: ['admin', 'secretaria', 'medico'],
         ativo: true
       }
     });
@@ -179,7 +205,11 @@ controller.editar_gestor = async (req, res) => {
     if (nome) gestor.nome = nome;
     if (email) gestor.email = email;
     if (telefone) gestor.telefone = telefone;
-    if (senha) gestor.senha = senha;
+    if (senha) gestor.senha = await bcrypt.hash(senha, 10);
+    if (tipo || cargo) {
+      const wantedRole = normalizeStaffRole(tipo || cargo);
+      if (wantedRole) gestor.tipo = wantedRole;
+    }
     if (sexo) gestor.sexo = sexo;
     if (endereco) gestor.endereco = endereco;
     if (nif) gestor.nif = nif;
@@ -215,7 +245,7 @@ controller.deletar_gestor = async (req, res) => {
     const gestor = await User.findOne({
       where: { 
         id,
-        tipo: 'admin',
+        tipo: ['admin', 'secretaria', 'medico'],
         ativo: true
       }
     });

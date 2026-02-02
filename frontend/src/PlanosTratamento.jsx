@@ -4,23 +4,27 @@ import { Plus, CalendarPlus, Pencil, Trash2 } from 'lucide-react'
 import AppLayout from './components/Layout/AppLayout'
 import PageHeader from './components/UI/PageHeader'
 import Button from './components/UI/Button'
+import { useConfirm } from './components/UI/ConfirmProvider'
 import { loadPatients } from './utils/patientStorage'
 import { getStoredConsultas, statusLabel } from './utils/consultasStorage'
 import { parseISOToDate } from './utils/dateTime'
 import {
 	PLANO_STATUS,
 	appendTreatmentPlanHistory,
-	createTreatmentPlan,
 	listTreatmentPlans,
 	planoStatusLabel,
-	removeTreatmentPlan,
-	updateTreatmentPlan,
+	createTreatmentPlanApi,
+	updateTreatmentPlanApi,
+	deleteTreatmentPlanApi,
 } from './utils/treatmentPlansStorage'
+
+import { syncTreatmentPlansFromApi } from './utils/dataSync'
 
 function normalizePatient(p) {
 	return {
 		id: p?.id,
 		nome: p?.nome || p?.data?.nomeCompleto || '',
+		responsavelId: p?.responsavelId || p?.data?.responsavelId || null,
 	}
 }
 
@@ -28,11 +32,12 @@ export default function PlanosTratamento() {
 	const navigate = useNavigate()
 	const location = useLocation()
 	const { id: patientIdFromParams } = useParams()
+	const confirm = useConfirm()
 
 	const patients = useMemo(() => {
 		return loadPatients()
 			.map(normalizePatient)
-			.filter((p) => p?.id)
+			.filter((p) => p?.id && !p?.responsavelId)
 			.sort((a, b) => String(a?.nome || '').localeCompare(String(b?.nome || ''), 'pt-PT'))
 	}, [])
 
@@ -61,10 +66,27 @@ export default function PlanosTratamento() {
 		status: 'ativo',
 	})
 	const [error, setError] = useState('')
+	const [saving, setSaving] = useState(false)
 
 	useEffect(() => {
 		setSelectedPatientId(preselectedPatientId)
 	}, [preselectedPatientId])
+
+	useEffect(() => {
+		let mounted = true
+		;(async () => {
+			try {
+				await syncTreatmentPlansFromApi()
+			} catch {
+				// ignore
+			} finally {
+				if (mounted) setItemsVersion((v) => v + 1)
+			}
+		})()
+		return () => {
+			mounted = false
+		}
+	}, [])
 
 	function resetForm() {
 		setEditingId('')
@@ -103,34 +125,52 @@ export default function PlanosTratamento() {
 			return
 		}
 
-		try {
-			if (editingId) {
-				updateTreatmentPlan(editingId, {
-					...form,
-					patientId: selectedPatientId,
-					patientName: selectedPatient?.nome || '',
-				})
-			} else {
-				createTreatmentPlan({
-					patientId: selectedPatientId,
-					patientName: selectedPatient?.nome || '',
-					...form,
-				})
+		void (async () => {
+			if (saving) return
+			setSaving(true)
+			try {
+				if (editingId) {
+					await updateTreatmentPlanApi(editingId, {
+						patientId: selectedPatientId,
+						...form,
+					})
+				} else {
+					await createTreatmentPlanApi({
+						patientId: selectedPatientId,
+						...form,
+					})
+				}
+				await syncTreatmentPlansFromApi().catch(() => {})
+				setItemsVersion((v) => v + 1)
+				resetForm()
+			} catch (e) {
+				setError(e?.message || 'Erro ao guardar o plano')
+			} finally {
+				setSaving(false)
 			}
-			setItemsVersion((v) => v + 1)
-			resetForm()
-		} catch (e) {
-			setError(e?.message || 'Erro ao guardar o plano')
-		}
+		})()
 	}
 
 	function onDelete(plan) {
 		if (!plan?.id) return
-		const ok = window.confirm('Remover este plano de tratamento?')
-		if (!ok) return
-		removeTreatmentPlan(plan.id)
-		if (expandedPlanId === plan.id) setExpandedPlanId('')
-		setItemsVersion((v) => v + 1)
+		void (async () => {
+			const ok = await confirm({
+				title: 'Remover plano de tratamento',
+				message: 'Deseja realmente remover este plano de tratamento?\n\nEsta ação não pode ser desfeita.',
+				confirmText: 'Remover',
+				confirmVariant: 'danger',
+			})
+			if (!ok) return
+			try {
+				await deleteTreatmentPlanApi(plan.id)
+				if (expandedPlanId === plan.id) setExpandedPlanId('')
+				await syncTreatmentPlansFromApi().catch(() => {})
+				setItemsVersion((v) => v + 1)
+			} catch (e) {
+				console.error(e)
+				window.alert(e?.message || 'Erro ao apagar o plano')
+			}
+		})()
 	}
 
 	function markSession(plan) {

@@ -2,10 +2,45 @@ import {
 	buildAppointmentRecord,
 	loadAppointments,
 	saveAppointments,
+	removeAppointment,
 	upsertAppointment,
 } from './appointmentStorage'
 
 import { addMinutesISO, parseISOToDate } from './dateTime'
+import { apiFetch } from './apiClient'
+import { syncConsultasFromApi, syncPatientsFromApi } from './dataSync'
+
+function pad2(value) {
+	return String(value).padStart(2, '0')
+}
+
+function toApiStatus(bookingStatus) {
+	const s = String(bookingStatus || '').trim().toLowerCase()
+	if (s === 'confirmada') return 'Confirmada'
+	if (s === 'cancelada') return 'Cancelada'
+	if (s === 'remarcada') return 'Remarcada'
+	if (s === 'falta') return 'Falta'
+	return 'Pendente'
+}
+
+function toApiTipoMarcacao(bookingType) {
+	const t = String(bookingType || '').trim().toLowerCase()
+	if (t === 'rotina' || t === 'urgente' || t === 'vaga') return t
+	return 'vaga'
+}
+
+function dateAndTimeFromISO(iso) {
+	const d = parseISOToDate(iso)
+	if (!d) return { data_consulta: null, hora: null }
+	const data_consulta = `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`
+	const hora = `${pad2(d.getHours())}:${pad2(d.getMinutes())}`
+	return { data_consulta, hora }
+}
+
+function parseNumericId(value) {
+	const n = Number(String(value || '').trim())
+	return Number.isFinite(n) && n > 0 ? n : null
+}
 
 export const CONSULTA_STATUS = [
 	{ id: 'confirmada', label: 'Confirmada' },
@@ -22,94 +57,6 @@ export const TIPO_MARCACAO = [
 ]
 
 export const DURACOES_MIN = [30, 45, 60]
-
-const DEMO_CONSULTAS = [
-	{
-		id: 'C-DEMO-001',
-		patientId: 'P001',
-		patientName: 'Maria Gonzalez',
-		medicoId: 3,
-		medicoName: 'Dr. Alex Morgan',
-		specialty: 'Clínica Geral',
-		bookingType: 'rotina',
-		bookingStatus: 'confirmada',
-		durationMin: 30,
-		startISO: new Date('2025-11-12T10:30:00').toISOString(),
-		endISO: new Date('2025-11-12T11:00:00').toISOString(),
-		firstVisitReason: 'Consulta de rotina anual',
-		notes: 'Trazer resultados de análises anteriores.',
-		attachments: [
-			{ id: 'A1', filename: 'Pedido_Analises.pdf', mimeType: 'application/pdf', addedAtISO: '2025-11-05T10:00:00.000Z' },
-			{ id: 'A2', filename: 'Exame.png', mimeType: 'image/png', addedAtISO: '2025-11-01T09:00:00.000Z' },
-		],
-		billing: {
-			service: 'Consulta Clínica Geral',
-			amount: 45,
-			payer: 'Particular',
-			state: 'Pendente',
-		},
-	},
-	{
-		id: 'C-DEMO-002',
-		patientId: 'P010',
-		patientName: 'João Pereira',
-		medicoId: 1,
-		medicoName: 'Dra. Sofia Lima',
-		specialty: 'Dermatologia',
-		bookingType: 'vaga',
-		bookingStatus: 'a_confirmar',
-		durationMin: 30,
-		startISO: new Date('2025-11-12T14:00:00').toISOString(),
-		endISO: new Date('2025-11-12T14:30:00').toISOString(),
-		firstVisitReason: '',
-		notes: '',
-	},
-	{
-		id: 'C-DEMO-003',
-		patientId: 'P011',
-		patientName: 'Ana Sousa',
-		medicoId: 2,
-		medicoName: 'Dr. Miguel Rocha',
-		specialty: 'Ortopedia',
-		bookingType: 'rotina',
-		bookingStatus: 'confirmada',
-		durationMin: 45,
-		startISO: new Date('2025-11-13T09:15:00').toISOString(),
-		endISO: new Date('2025-11-13T10:00:00').toISOString(),
-		firstVisitReason: '',
-		notes: '',
-	},
-	{
-		id: 'C-DEMO-004',
-		patientId: 'P012',
-		patientName: 'Rui Carvalho',
-		medicoId: 2,
-		medicoName: 'Dra. Beatriz Nunes',
-		specialty: 'Cardiologia',
-		bookingType: 'urgente',
-		bookingStatus: 'cancelada',
-		durationMin: 30,
-		startISO: new Date('2025-11-13T11:00:00').toISOString(),
-		endISO: new Date('2025-11-13T11:30:00').toISOString(),
-		firstVisitReason: '',
-		notes: '',
-	},
-	{
-		id: 'C-DEMO-005',
-		patientId: 'P013',
-		patientName: 'Carla Mendes',
-		medicoId: 3,
-		medicoName: 'Dr. Alex Morgan',
-		specialty: 'Clínica Geral',
-		bookingType: 'vaga',
-		bookingStatus: 'remarcada',
-		durationMin: 60,
-		startISO: new Date('2025-11-14T16:45:00').toISOString(),
-		endISO: new Date('2025-11-14T17:45:00').toISOString(),
-		firstVisitReason: '',
-		notes: '',
-	},
-]
 
 function normalizeStatus(status) {
 	const s = String(status || '').trim().toLowerCase()
@@ -158,9 +105,7 @@ export function listConsultas({
 	page = 1,
 	pageSize = 10,
 } = {}) {
-	const stored = getStoredConsultas()
-	const demo = DEMO_CONSULTAS.filter((d) => !stored.some((s) => s?.id === d.id))
-	const all = [...stored, ...demo]
+	const all = getStoredConsultas()
 
 	const qPatient = String(filters.patient || '').trim().toLowerCase()
 	const qProfessional = String(filters.professional || '').trim().toLowerCase()
@@ -219,24 +164,62 @@ export function listConsultas({
 
 export function getConsultaById(id) {
 	if (!id) return null
-	const stored = getStoredConsultas().find((c) => c?.id === id)
-	if (stored) return stored
-	return DEMO_CONSULTAS.find((d) => d.id === id) || null
-}
-
-export function ensureConsultaStored(id) {
-	const existing = getStoredConsultas().find((c) => c?.id === id)
-	if (existing) return existing
-	const demo = DEMO_CONSULTAS.find((d) => d.id === id)
-	if (!demo) return null
-	upsertAppointment({ ...demo, createdAt: new Date().toISOString() })
 	return getStoredConsultas().find((c) => c?.id === id) || null
 }
 
-export function createConsulta(payload) {
+export function ensureConsultaStored(id) {
+	return getStoredConsultas().find((c) => c?.id === id) || null
+}
+
+export async function createConsulta(payload) {
 	const durationMin = Number(payload?.durationMin || 30)
 	const startISO = payload?.startISO
 	const endISO = payload?.endISO || addMinutesISO(startISO, durationMin)
+
+	const pacienteIdNum = parseNumericId(payload?.patientId)
+	if (!pacienteIdNum) {
+		throw new Error('Seleciona um paciente (responsável) existente na base de dados.')
+	}
+
+	const { data_consulta, hora } = dateAndTimeFromISO(startISO)
+	if (!data_consulta || !hora) {
+		throw new Error('Data/hora inválida.')
+	}
+
+	const id_medico = parseNumericId(payload?.medicoId)
+
+	const apiBody = {
+		id_medico,
+		duracao: durationMin,
+		tipo_de_marcacao: toApiTipoMarcacao(payload?.bookingType),
+		status: toApiStatus(payload?.bookingStatus),
+		data_consulta,
+		id: pacienteIdNum,
+		hora,
+		razao_consulta: (payload?.firstVisitReason || '').trim() || null,
+		notas_internas: (payload?.notes || '').trim() || null,
+	}
+
+	const createdRes = await apiFetch('/consultas', {
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json' },
+		body: JSON.stringify(apiBody),
+	})
+
+	const createdId = createdRes?.consulta?.id_consulta
+	const createdIdStr = createdId != null ? String(createdId) : ''
+	// Atualiza caches locais com dados reais
+	try {
+		await syncPatientsFromApi()
+		await syncConsultasFromApi()
+	} catch {
+		// ignore
+	}
+
+	if (createdId != null) {
+		const stored = getStoredConsultas().find((c) => String(c?.id) === String(createdId))
+		if (stored) return stored
+	}
 
 	const record = buildAppointmentRecord({
 		patientId: payload?.patientId || '',
@@ -260,6 +243,7 @@ export function createConsulta(payload) {
 	// sobrescrever start/end para evitar dependência do HH:MM dummy
 	const finalRecord = {
 		...record,
+		id: createdIdStr || record.id,
 		startISO,
 		endISO,
 		attachments: payload?.attachments || [],
@@ -286,6 +270,35 @@ export function patchConsulta(id, patch = {}) {
 	}
 
 	upsertAppointment(next)
+
+	// Propagar para API apenas os campos suportados pelo backend (sem anexos/billing/history).
+	void (async () => {
+		try {
+			const startISO = patch.startISO || next.startISO
+			const { data_consulta, hora } = dateAndTimeFromISO(startISO)
+			const idNum = parseNumericId(next.patientId)
+			if (!data_consulta || !hora || !idNum) return
+			const body = {
+				id_medico: parseNumericId(next.medicoId),
+				duracao: Number(next.durationMin || 30),
+				tipo_de_marcacao: toApiTipoMarcacao(next.bookingType),
+				status: toApiStatus(next.bookingStatus),
+				data_consulta,
+				id: idNum,
+				hora,
+				razao_consulta: (next.firstVisitReason || '').trim() || null,
+				notas_internas: (next.notes || '').trim() || null,
+			}
+			await apiFetch(`/consultas/${encodeURIComponent(String(id))}`, {
+				method: 'PATCH',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify(body),
+			})
+		} catch (e) {
+			console.error('Falha ao sincronizar consulta com API:', e)
+		}
+	})()
+
 	return next
 }
 
@@ -329,4 +342,21 @@ export function exportConsultasToCSV(items) {
 
 export function clearAllStoredConsultas() {
 	saveAppointments([])
+}
+
+export async function deleteConsultaApi(id) {
+	if (!id) throw new Error('id em falta')
+	await apiFetch(`/consultas/${encodeURIComponent(String(id))}`, { method: 'DELETE' })
+	// Atualiza cache local imediatamente e depois sincroniza
+	try {
+		removeAppointment(String(id))
+	} catch {
+		// ignore
+	}
+	try {
+		await syncConsultasFromApi()
+	} catch {
+		// ignore
+	}
+	return true
 }

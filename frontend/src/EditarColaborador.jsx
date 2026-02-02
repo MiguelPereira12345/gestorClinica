@@ -5,7 +5,7 @@ import AppLayout from './components/Layout/AppLayout'
 import PageHeader from './components/UI/PageHeader'
 
 import ColaboradorForm from './components/Colaboradores/ColaboradorForm'
-import { getColaboradorById, patchColaborador } from './utils/colaboradoresStorage'
+import { getColaboradorById, patchColaborador, updateColaboradorApi } from './utils/colaboradoresStorage'
 
 export default function EditarColaborador() {
 	const navigate = useNavigate()
@@ -50,8 +50,16 @@ export default function EditarColaborador() {
 					submitLabel="Guardar alterações"
 					onCancel={() => navigate(`/colaboradores/${colaborador.id}`)}
 					onSubmit={(payload) => {
-						patchColaborador(colaborador.id, payload)
-						navigate(`/colaboradores/${colaborador.id}`)
+						void (async () => {
+							try {
+								patchColaborador(colaborador.id, payload)
+								await updateColaboradorApi(colaborador.id, payload)
+								navigate(`/colaboradores/${colaborador.id}`)
+							} catch (e) {
+								console.error(e)
+								window.alert(e?.message || 'Erro ao atualizar colaborador')
+							}
+						})()
 					}}
 				/>
 			</div>

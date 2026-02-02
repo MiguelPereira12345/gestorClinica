@@ -1,9 +1,11 @@
-import React, { useMemo } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import './App.css'
 import { useNavigate, useParams } from 'react-router-dom'
 import AppLayout from './components/Layout/AppLayout'
 import PageHeader from './components/UI/PageHeader'
 import { getDependentsOf, getEffectivePhone, getPatientById, loadPatients } from './utils/patientStorage'
+import { downloadClinicalFile, listClinicalFiles, openClinicalFileInNewTab } from './utils/clinicalFilesApi'
+import { formatDatePT } from './utils/dateTime'
 
 function Field({ label, value }) {
 	return (
@@ -32,6 +34,33 @@ export default function VerPaciente() {
 	const responsavel = useMemo(() => (responsavelId ? allPatients.find((p) => p?.id === responsavelId) : null), [responsavelId, allPatients])
 	const dependentes = useMemo(() => (patient ? getDependentsOf(patient.id, allPatients) : []), [patient, allPatients])
 	const effectivePhone = useMemo(() => (patient ? getEffectivePhone(patient, allPatients) : ''), [patient, allPatients])
+
+	const [clinicalFiles, setClinicalFiles] = useState([])
+	const [filesLoading, setFilesLoading] = useState(false)
+	const [filesError, setFilesError] = useState('')
+
+	useEffect(() => {
+		let mounted = true
+		if (!patient?.id) return
+		setFilesError('')
+		setFilesLoading(true)
+		;(async () => {
+			try {
+				const rows = await listClinicalFiles(patient.id)
+				if (mounted) setClinicalFiles(rows)
+			} catch (e) {
+				if (mounted) {
+					setClinicalFiles([])
+					setFilesError(e?.message || 'Erro ao carregar anexos')
+				}
+			} finally {
+				if (mounted) setFilesLoading(false)
+			}
+		})()
+		return () => {
+			mounted = false
+		}
+	}, [patient?.id])
 
 	if (!patient) {
 		return (
@@ -209,14 +238,65 @@ export default function VerPaciente() {
 					<h2 className="m-0 mb-3" style={{ fontSize: 16, fontWeight: 900, color: 'rgba(30, 42, 53, 0.92)' }}>
 						Anexos clínicos
 					</h2>
-					{Array.isArray(data.anexosClinicos) && data.anexosClinicos.length ? (
-						<ul className="list-group" aria-label="Anexos">
-							{data.anexosClinicos.map((name) => (
-								<li className="list-group-item py-2" key={name}>
-									{name}
-								</li>
-							))}
-						</ul>
+					{filesLoading ? (
+						<div className="form-text">A carregar anexos…</div>
+					) : filesError ? (
+						<div className="alert alert-warning mb-0" role="alert">
+							{filesError}
+						</div>
+					) : clinicalFiles.length ? (
+						<div className="ui-table-wrap">
+							<table className="table ui-table" aria-label="Anexos">
+								<thead>
+									<tr>
+										<th>Ficheiro</th>
+										<th>Tipo</th>
+										<th>Tamanho</th>
+										<th>Data</th>
+										<th className="ui-actions-col">Ações</th>
+									</tr>
+								</thead>
+								<tbody>
+									{clinicalFiles.map((f) => (
+										<tr key={f.id_file}>
+											<td style={{ fontWeight: 700 }}>{f.file_name || `Anexo ${f.id_file}`}</td>
+											<td>{f.mime_type || '—'}</td>
+											<td>{typeof f.size_bytes === 'number' ? `${Math.round(f.size_bytes / 1024)} KB` : '—'}</td>
+											<td>{formatDatePT(f.created_at) || '—'}</td>
+											<td className="ui-actions-col">
+												<div className="ui-actions">
+													<button
+														type="button"
+														className="btn btn-light btn-sm"
+														onClick={() => openClinicalFileInNewTab(f.id_file)}
+													>
+														Ver
+													</button>
+													<button
+														type="button"
+														className="btn btn-light btn-sm"
+														onClick={() => downloadClinicalFile(f.id_file)}
+													>
+														Baixar
+													</button>
+												</div>
+											</td>
+										</tr>
+									))}
+								</tbody>
+							</table>
+						</div>
+					) : Array.isArray(data.anexosClinicos) && data.anexosClinicos.length ? (
+						<div>
+							<div className="form-text mb-2">Anexos antigos (apenas nomes; sem ficheiro associado no servidor).</div>
+							<ul className="list-group" aria-label="Anexos (legacy)">
+								{data.anexosClinicos.map((name) => (
+									<li className="list-group-item py-2" key={name}>
+										{name}
+									</li>
+								))}
+							</ul>
+						</div>
 					) : (
 						<div className="form-text">Sem anexos.</div>
 					)}

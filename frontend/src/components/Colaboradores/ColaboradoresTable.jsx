@@ -1,8 +1,8 @@
 import React from 'react'
-import { Eye, Edit } from 'lucide-react'
+import { Eye, Edit, Trash2 } from 'lucide-react'
 import StatusBadge from '../UI/StatusBadge'
 
-export default function ColaboradoresTable({ rows, onView, onEdit }) {
+export default function ColaboradoresTable({ rows, onView, onEdit, onDelete }) {
 	return (
 		<div className="ui-card p-3">
 			<div className="fw-bold">Lista de colaboradores</div>
@@ -48,15 +48,28 @@ export default function ColaboradoresTable({ rows, onView, onEdit }) {
 												<Eye size={14} aria-hidden="true" />
 												Ver
 											</button>
-											<button
-												type="button"
-												className="btn btn-light btn-sm"
-												onClick={() => onEdit(colaborador)}
-												title="Editar"
-											>
-												<Edit size={14} aria-hidden="true" />
-												Editar
-											</button>
+											{onEdit ? (
+												<button
+													type="button"
+													className="btn btn-light btn-sm"
+													onClick={() => onEdit(colaborador)}
+													title="Editar"
+												>
+													<Edit size={14} aria-hidden="true" />
+													Editar
+												</button>
+											) : null}
+											{onDelete ? (
+												<button
+													type="button"
+													className="btn btn-light btn-sm"
+													onClick={() => onDelete?.(colaborador)}
+													title="Eliminar"
+												>
+													<Trash2 size={14} aria-hidden="true" />
+													Eliminar
+												</button>
+											) : null}
 										</div>
 									</td>
 								</tr>

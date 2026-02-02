@@ -22,4 +22,7 @@ router.patch('/:id_consulta/cancelar', consultaController.cancelar_consulta);
 // PATCH remarcar 
 router.patch('/:id_consulta/remarcar', consultaController.remarcar_consulta);
 
+// DELETE remove uma consulta
+router.delete('/:id_consulta', consultaController.deletar_consulta);
+
 module.exports = router;

@@ -1,10 +1,37 @@
 const sequelize = require('../models/database');
 const { initModels } = require('../models/init-models');
+const { Op } = require('sequelize');
 
 const models = initModels(sequelize);
-const { Consulta } = models;
+const { Consulta, User } = models;
 
 const controller = {};
+
+function isAdmin(req) {
+  return String(req.user?.tipo || '').toLowerCase() === 'admin';
+}
+
+function isMedico(req) {
+  const role = String(req.user?.tipo || '').toLowerCase();
+  return role === 'medico' || role === 'médico';
+}
+
+function canViewConsulta(req, consulta) {
+  if (isAdmin(req)) return true;
+  // Requisito: médico pode ver todas as consultas
+  if (isMedico(req)) return true;
+  return false;
+}
+
+function canManageConsulta(req, consulta) {
+  if (isAdmin(req)) return true;
+  // Médico só pode alterar consultas atribuídas a si
+  if (isMedico(req)) {
+    const uid = req.user?.id;
+    return uid != null && consulta?.id_medico != null && String(consulta.id_medico) === String(uid);
+  }
+  return false;
+}
 
 // Validar hora no formato HH:MM entre 09:00 e 19:00
 const validarHora = (hora) => {
@@ -40,19 +67,54 @@ controller.listar_consultas = async (req, res) => {
     const dataLimite = new Date();
     dataLimite.setMonth(dataLimite.getMonth() - 2);
 
+    // incluir também consultas futuras (janela limitada para não sobrecarregar)
+    const dataFuturaLimite = new Date();
+    dataFuturaLimite.setMonth(dataFuturaLimite.getMonth() + 6);
+
+    const where = {
+      data_consulta: {
+        [Op.gte]: dataLimite.toISOString().split('T')[0],
+        [Op.lte]: dataFuturaLimite.toISOString().split('T')[0]
+      }
+    };
+
     const consultas = await Consulta.findAll({
-      where: {
-        data_consulta: {
-          [sequelize.Op.gte]: dataLimite.toISOString().split('T')[0],
-          [sequelize.Op.lte]: dataAtual.toISOString().split('T')[0]
-        }
-      },
+      where,
       order: [['data_consulta', 'DESC'], ['hora', 'DESC']]
+    });
+
+    // Mapear nome do médico (utilizador.tipo='medico') para o frontend
+    const medicoIds = Array.from(
+      new Set(
+        (consultas || [])
+          .map((c) => c?.id_medico)
+          .filter((id) => id != null)
+          .map((id) => Number(id))
+          .filter((id) => Number.isFinite(id) && id > 0)
+      )
+    );
+
+    let medicoNameById = new Map();
+    if (medicoIds.length > 0) {
+      const medicos = await User.findAll({
+        where: { id: medicoIds, tipo: 'medico', ativo: true },
+        attributes: ['id', 'nome'],
+      });
+      medicoNameById = new Map((medicos || []).map((m) => [String(m.id), m.nome]));
+    }
+
+    const consultasOut = (consultas || []).map((c) => {
+      const plain = typeof c?.toJSON === 'function' ? c.toJSON() : c;
+      const mid = plain?.id_medico != null ? String(plain.id_medico) : '';
+      return {
+        ...plain,
+        medico_nome: mid ? medicoNameById.get(mid) || null : null,
+      };
     });
 
     return res.status(200).json({ 
       message: 'Consultas listadas com sucesso', 
-      consultas 
+      consultas: consultasOut 
     });
   } catch (error) {
     console.error('Erro ao listar consultas:', error);
@@ -75,15 +137,54 @@ controller.obter_consulta = async (req, res) => {
       });
     }
 
+    if (!canViewConsulta(req, consulta)) {
+      return res.status(403).json({ message: 'Sem permissão' });
+    }
+
+    let medico_nome = null;
+    if (consulta?.id_medico) {
+      const medicoUser = await User.findOne({
+        where: { id: consulta.id_medico, tipo: 'medico', ativo: true },
+        attributes: ['nome'],
+      });
+      medico_nome = medicoUser ? medicoUser.nome : null;
+    }
+
+    const plain = typeof consulta?.toJSON === 'function' ? consulta.toJSON() : consulta;
     return res.status(200).json({ 
       message: 'Consulta encontrada', 
-      consulta 
+      consulta: {
+        ...plain,
+        medico_nome,
+      }
     });
   } catch (error) {
     console.error('Erro ao obter consulta:', error);
     return res.status(500).json({ 
       message: 'Não foi possível obter a consulta'
     });
+  }
+};
+
+//DELETE CONSULTA
+controller.deletar_consulta = async (req, res) => {
+  try {
+    const { id_consulta } = req.params;
+    const consulta = await Consulta.findByPk(id_consulta);
+
+    if (!consulta) {
+      return res.status(404).json({ message: 'Consulta não encontrada' });
+    }
+
+    if (!canManageConsulta(req, consulta)) {
+      return res.status(403).json({ message: 'Sem permissão' });
+    }
+
+    await consulta.destroy();
+    return res.status(200).json({ message: 'Consulta eliminada com sucesso' });
+  } catch (error) {
+    console.error('Erro ao eliminar consulta:', error);
+    return res.status(500).json({ message: 'Não foi possível eliminar a consulta' });
   }
 };
 
@@ -97,12 +198,25 @@ controller.criar_consulta = async (req, res) => {
       data_consulta,
       id,  // ID do paciente (FK para utilizador) - associado por nome e data de nascimento
       hora,
+      razao_consulta,
+      notas_internas,
     } = req.body;
+
+    // Médico só pode marcar consultas para si próprio.
+    const requestedMedicoId = isMedico(req) ? req.user?.id : id_medico;
 
     // Validação dos campos obrigatórios
     if (!data_consulta || !hora || !id) {
       return res.status(400).json({ 
         message: 'Campos obrigatórios: data_consulta, hora, id (paciente)' 
+      });
+    }
+
+    // Valida se o paciente existe para evitar erro FK (500)
+    const paciente = await User.findByPk(id);
+    if (!paciente) {
+      return res.status(400).json({
+        message: 'Paciente não encontrado. Verifica o ID do utilizador (utilizador.id).',
       });
     }
 
@@ -128,14 +242,28 @@ controller.criar_consulta = async (req, res) => {
       });
     }
 
+    // Valida médico como utilizador (tipo='medico'). Se não existir, guarda NULL para não rebentar FK.
+    let safeMedicoId = requestedMedicoId ?? null;
+    if (safeMedicoId != null && safeMedicoId !== '') {
+      const medicoUser = await User.findOne({
+        where: { id: safeMedicoId, tipo: 'medico', ativo: true },
+        attributes: ['id'],
+      });
+      if (!medicoUser) safeMedicoId = null;
+    } else {
+      safeMedicoId = null;
+    }
+
     const newConsulta = await Consulta.create({
-      id_medico: id_medico || null,
+      id_medico: safeMedicoId,
       duracao: duracao || null,
       tipo_de_marcacao: tipo_de_marcacao || null,
       status: status || 'Pendente',
       data_consulta,
       id,
       hora,
+      razao_consulta: razao_consulta != null ? String(razao_consulta) : null,
+      notas_internas: notas_internas != null ? String(notas_internas) : null,
     });
 
     return res.status(201).json({ 
@@ -144,6 +272,12 @@ controller.criar_consulta = async (req, res) => {
     });
   } catch (error) {
     console.error('Erro ao criar consulta:', error);
+
+    if (error?.name === 'SequelizeForeignKeyConstraintError') {
+      return res.status(400).json({
+        message: 'Referência inválida (paciente ou médico). Confirma IDs existentes na base de dados.',
+      });
+    }
     return res.status(500).json({ 
       message: 'Não foi possível criar a consulta'
     });
@@ -162,6 +296,8 @@ controller.editar_consulta = async (req, res) => {
       data_consulta,
       id,
       hora,
+      razao_consulta,
+      notas_internas,
     } = req.body;
 
     // Verifica se a consulta existe
@@ -170,6 +306,10 @@ controller.editar_consulta = async (req, res) => {
       return res.status(404).json({ 
         message: 'Consulta não encontrada' 
       });
+    }
+
+    if (!canManageConsulta(req, consulta)) {
+      return res.status(403).json({ message: 'Sem permissão' });
     }
 
     // não permitir editar consultas no passado
@@ -202,13 +342,27 @@ controller.editar_consulta = async (req, res) => {
 
     // Atualiza os campos fornecidos
     const updatedData = {};
-    if (id_medico !== undefined) updatedData.id_medico = id_medico;
+    if (id_medico !== undefined && !isMedico(req)) {
+      let safeMedicoId = id_medico;
+      if (safeMedicoId != null && safeMedicoId !== '') {
+        const medicoUser = await User.findOne({
+          where: { id: safeMedicoId, tipo: 'medico', ativo: true },
+          attributes: ['id'],
+        });
+        if (!medicoUser) safeMedicoId = null;
+      } else {
+        safeMedicoId = null;
+      }
+      updatedData.id_medico = safeMedicoId;
+    }
     if (duracao !== undefined) updatedData.duracao = duracao;
     if (tipo_de_marcacao !== undefined) updatedData.tipo_de_marcacao = tipo_de_marcacao;
     if (status !== undefined) updatedData.status = status;
     if (data_consulta !== undefined) updatedData.data_consulta = data_consulta;
     if (id !== undefined) updatedData.id = id;
     if (hora !== undefined) updatedData.hora = hora;
+    if (razao_consulta !== undefined) updatedData.razao_consulta = razao_consulta != null ? String(razao_consulta) : null;
+    if (notas_internas !== undefined) updatedData.notas_internas = notas_internas != null ? String(notas_internas) : null;
 
     await consulta.update(updatedData);
 
@@ -232,6 +386,10 @@ controller.cancelar_consulta = async (req, res) => {
     const consulta = await Consulta.findByPk(id_consulta);
     if (!consulta) {
       return res.status(404).json({ message: 'Consulta não encontrada' });
+    }
+
+    if (!canManageConsulta(req, consulta)) {
+      return res.status(403).json({ message: 'Sem permissão' });
     }
 
     if (!consulta.data_consulta || !consulta.hora) {
@@ -274,6 +432,10 @@ controller.remarcar_consulta = async (req, res) => {
     const consulta = await Consulta.findByPk(id_consulta);
     if (!consulta) {
       return res.status(404).json({ message: 'Consulta não encontrada' });
+    }
+
+    if (!canManageConsulta(req, consulta)) {
+      return res.status(403).json({ message: 'Sem permissão' });
     }
 
     // Validar que a consulta não está cancelada

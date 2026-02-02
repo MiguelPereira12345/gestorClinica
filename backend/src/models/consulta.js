@@ -12,8 +12,8 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.INTEGER,
         allowNull: true,
         references: {
-          model: 'medico',
-          key: 'id_medico'
+          model: 'utilizador',
+          key: 'id'
         }
       },
       duracao: {
@@ -43,6 +43,14 @@ module.exports = (sequelize, DataTypes) => {
       hora: {
         type: DataTypes.TIME,
         allowNull: false,
+      },
+      razao_consulta: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+      },
+      notas_internas: {
+        type: DataTypes.TEXT,
+        allowNull: true,
       }
     },
     {

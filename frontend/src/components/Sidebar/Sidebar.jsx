@@ -2,6 +2,7 @@ import React from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import '../../App.css'
 import menuItems from './icons'
+import { apiFetch, getAuthSession } from '../../utils/apiClient'
 
 export default function Sidebar() {
   const navigate = useNavigate()
@@ -15,13 +16,24 @@ export default function Sidebar() {
   }
 
   const handleLogout = () => {
-    // Limpar dados da sessão
-    localStorage.removeItem('user')
-    localStorage.removeItem('token')
-    sessionStorage.clear()
-    
-    // Redirecionar para login
-    navigate('/login')
+    void (async () => {
+      try {
+        const session = getAuthSession()
+        if (session?.refreshToken) {
+          await apiFetch('/auth/logout', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ refreshToken: session.refreshToken }),
+          })
+        }
+      } catch {
+        // ignore
+      } finally {
+        localStorage.removeItem('auth_user')
+        sessionStorage.clear()
+        navigate('/login')
+      }
+    })()
   }
 
   return (

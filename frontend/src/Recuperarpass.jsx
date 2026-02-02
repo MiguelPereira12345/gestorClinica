@@ -1,6 +1,6 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import './App.css'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import {
 	ArrowLeft,
 	Info,
@@ -15,18 +15,37 @@ import logoClinimolelos from './assets/Logo-CliniMolelos.png'
 
 export default function Recuperarpass() {
 	const navigate = useNavigate()
+	const [searchParams] = useSearchParams()
 	const [email, setEmail] = useState('')
+	const [step, setStep] = useState('request') // request | reset
+	const [lastVia, setLastVia] = useState('link')
+	const [code, setCode] = useState('')
+	const [token, setToken] = useState('')
+	const [newPassword, setNewPassword] = useState('')
+	const [confirmPassword, setConfirmPassword] = useState('')
 	const [isSubmitting, setIsSubmitting] = useState(false)
 	const [feedback, setFeedback] = useState(null)
 	const [feedbackVariant, setFeedbackVariant] = useState('info') // info | success | error
 
 	const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001'
 
+	useEffect(() => {
+		const t = searchParams.get('token')
+		if (t) {
+			setToken(String(t))
+			setStep('reset')
+			setLastVia('link')
+			setFeedback(null)
+			setFeedbackVariant('info')
+		}
+	}, [searchParams])
+
 	const requestPasswordReset = async (via) => {
 		if (!email) return
 		setIsSubmitting(true)
 		setFeedback(null)
 		setFeedbackVariant('info')
+		setLastVia(via === 'code' ? 'code' : 'link')
 
 		try {
 			const response = await fetch(
@@ -54,11 +73,76 @@ export default function Recuperarpass() {
 				'Se existir uma conta com esse e-mail, enviamos as instruções de recuperação.'
 			if (data?.debugCode) {
 				message += ` (Código de teste: ${data.debugCode})`
+				setCode(String(data.debugCode))
 			}
 
 			setFeedback(message)
 			setFeedbackVariant('success')
+
+			// Se pediu via código, avançar para o passo de redefinição
+			if (via === 'code') {
+				setStep('reset')
+			}
 		} catch (err) {
+			setFeedback('Erro de rede ao contactar o servidor.')
+			setFeedbackVariant('error')
+		} finally {
+			setIsSubmitting(false)
+		}
+	}
+
+	const confirmPasswordReset = async () => {
+		// via link: token
+		if (lastVia === 'link') {
+			if (!token) {
+				setFeedback('Link inválido ou em falta. Peça um novo link.')
+				setFeedbackVariant('error')
+				return
+			}
+		} else {
+			// via código
+			if (!email) return
+			if (!code) {
+				setFeedback('Introduza o código recebido.')
+				setFeedbackVariant('error')
+				return
+			}
+		}
+		if (!newPassword || newPassword.length < 6) {
+			setFeedback('A palavra-passe deve ter pelo menos 6 caracteres.')
+			setFeedbackVariant('error')
+			return
+		}
+		if (newPassword !== confirmPassword) {
+			setFeedback('As palavras-passe não coincidem.')
+			setFeedbackVariant('error')
+			return
+		}
+
+		setIsSubmitting(true)
+		setFeedback(null)
+		setFeedbackVariant('info')
+		try {
+			const body = lastVia === 'link'
+				? { token, newPassword }
+				: { email, code, newPassword }
+
+			const response = await fetch(`${API_BASE_URL}/utilizadores/password-reset/confirm`, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify(body),
+			})
+
+			const data = await response.json().catch(() => null)
+			if (!response.ok) {
+				setFeedback(data?.message || 'Não foi possível redefinir a palavra-passe.')
+				setFeedbackVariant('error')
+				return
+			}
+
+			setFeedback(data?.message || 'Palavra-passe atualizada com sucesso.')
+			setFeedbackVariant('success')
+		} catch {
 			setFeedback('Erro de rede ao contactar o servidor.')
 			setFeedbackVariant('error')
 		} finally {
@@ -68,6 +152,10 @@ export default function Recuperarpass() {
 
 	const handleSubmit = (e) => {
 		e.preventDefault()
+		if (step === 'reset') {
+			confirmPasswordReset()
+			return
+		}
 		requestPasswordReset('link')
 	}
 
@@ -146,33 +234,125 @@ export default function Recuperarpass() {
 								<div className="d-flex align-items-start gap-2 text-muted small fw-semibold mb-3">
 									<Info style={{ width: 16, height: 16, marginTop: 1, opacity: 0.85 }} aria-hidden="true" />
 									<p className="mb-0" style={{ lineHeight: 1.4 }}>
-										Introduza o seu e-mail para receber um link de redefinição.
+										{step === 'reset'
+											? lastVia === 'link'
+												? 'Defina uma nova palavra-passe para a sua conta.'
+												: 'Introduza o código e defina uma nova palavra-passe.'
+											: 'Introduza o seu e-mail para receber um link de redefinição.'}
 									</p>
 								</div>
 
-								<label className="form-label fw-bold" htmlFor="recover-email">
-									E-mail associado à conta
-								</label>
-								<div className="input-group mb-3">
-									<span className="input-group-text bg-white">
-										<Mail style={{ width: 18, height: 18, opacity: 0.85 }} aria-hidden="true" />
-									</span>
-									<input
-										id="recover-email"
-										type="email"
-										className="form-control"
-										placeholder="nome@exemplo.com"
-										value={email}
-										onChange={(e) => setEmail(e.target.value)}
-										autoComplete="email"
-										required
-									/>
-								</div>
+								{step === 'request' || lastVia === 'code' ? (
+									<>
+										<label className="form-label fw-bold" htmlFor="recover-email">
+											E-mail associado à conta
+										</label>
+										<div className="input-group mb-3">
+											<span className="input-group-text bg-white">
+												<Mail style={{ width: 18, height: 18, opacity: 0.85 }} aria-hidden="true" />
+											</span>
+											<input
+												id="recover-email"
+												type="email"
+												className="form-control"
+												placeholder="nome@exemplo.com"
+												value={email}
+												onChange={(e) => setEmail(e.target.value)}
+												autoComplete="email"
+												required
+											/>
+										</div>
+									</>
+								) : null}
+
+								{step === 'reset' && lastVia === 'code' ? (
+									<>
+										<label className="form-label fw-bold" htmlFor="recover-code">
+											Código
+										</label>
+										<div className="input-group mb-3">
+											<span className="input-group-text bg-white">
+												<KeyRound style={{ width: 18, height: 18, opacity: 0.85 }} aria-hidden="true" />
+											</span>
+											<input
+												id="recover-code"
+												type="text"
+												inputMode="numeric"
+												className="form-control"
+												placeholder="000000"
+												value={code}
+												onChange={(e) => setCode(e.target.value)}
+												autoComplete="one-time-code"
+												required
+											/>
+										</div>
+
+										<label className="form-label fw-bold" htmlFor="recover-new-pass">
+											Nova palavra-passe
+										</label>
+										<input
+											id="recover-new-pass"
+											type="password"
+											className="form-control mb-3"
+											value={newPassword}
+											onChange={(e) => setNewPassword(e.target.value)}
+											autoComplete="new-password"
+											required
+										/>
+
+										<label className="form-label fw-bold" htmlFor="recover-confirm-pass">
+											Confirmar palavra-passe
+										</label>
+										<input
+											id="recover-confirm-pass"
+											type="password"
+											className="form-control mb-3"
+											value={confirmPassword}
+											onChange={(e) => setConfirmPassword(e.target.value)}
+											autoComplete="new-password"
+											required
+										/>
+									</>
+								) : null}
+
+								{step === 'reset' ? (
+									<>
+										<label className="form-label fw-bold" htmlFor="recover-new-pass">
+											Nova palavra-passe
+										</label>
+										<input
+											id="recover-new-pass"
+											type="password"
+											className="form-control mb-3"
+											value={newPassword}
+											onChange={(e) => setNewPassword(e.target.value)}
+											autoComplete="new-password"
+											required
+										/>
+
+										<label className="form-label fw-bold" htmlFor="recover-confirm-pass">
+											Confirmar palavra-passe
+										</label>
+										<input
+											id="recover-confirm-pass"
+											type="password"
+											className="form-control mb-3"
+											value={confirmPassword}
+											onChange={(e) => setConfirmPassword(e.target.value)}
+											autoComplete="new-password"
+											required
+										/>
+									</>
+								) : null}
 
 								<div className="alert alert-light border d-flex align-items-start gap-2" role="note">
 									<Info style={{ width: 18, height: 18, marginTop: 1, opacity: 0.85 }} aria-hidden="true" />
 									<div className="small fw-semibold text-muted">
-										O link expira em 30 minutos. Verifique também a pasta de spam.
+										{step === 'reset'
+											? lastVia === 'link'
+												? 'O link expira em 30 minutos. Se reiniciar o backend, o link perde-se (modo dev).'
+												: 'O código expira em 30 minutos. Se reiniciar o backend, o código perde-se (modo dev).'
+											: 'O link expira em 30 minutos. Verifique também a pasta de spam.'}
 									</div>
 								</div>
 
@@ -185,20 +365,38 @@ export default function Recuperarpass() {
 									<div className="d-flex align-items-center gap-2 flex-wrap">
 										<button className="btn btn-primary" type="submit" disabled={isSubmitting}>
 											<Send style={{ width: 16, height: 16 }} aria-hidden="true" />
-											{isSubmitting ? 'A enviar…' : 'Enviar link'}
+											{step === 'reset'
+												? isSubmitting ? 'A redefinir…' : 'Redefinir palavra-passe'
+												: isSubmitting ? 'A enviar…' : 'Enviar link'}
 										</button>
 
-										<button
-											type="button"
-											className="btn btn-light"
-											disabled={isSubmitting}
-											onClick={() => {
-												requestPasswordReset('code')
+										{step === 'reset' && lastVia !== 'link' ? (
+											<button
+												type="button"
+												className="btn btn-light"
+												disabled={isSubmitting}
+												onClick={() => {
+													setStep('request')
+													setFeedback(null)
+													setFeedbackVariant('info')
+												}}
+											>
+												<ArrowLeft style={{ width: 16, height: 16 }} aria-hidden="true" />
+												Pedir novo código
+											</button>
+										) : (
+											<button
+												type="button"
+												className="btn btn-light"
+												disabled={isSubmitting}
+												onClick={() => {
+													requestPasswordReset('code')
 											}}
-										>
-											<KeyRound style={{ width: 16, height: 16 }} aria-hidden="true" />
-											{isSubmitting ? 'A enviar…' : 'Redefinir via código'}
-										</button>
+											>
+												<KeyRound style={{ width: 16, height: 16 }} aria-hidden="true" />
+												{isSubmitting ? 'A enviar…' : 'Redefinir via código'}
+											</button>
+										)}
 									</div>
 								</div>
 

@@ -14,6 +14,12 @@ const PASSWORD_RESET_TTL_MS = 30 * 60 * 1000;
 // Nota: perde-se ao reiniciar o servidor (ok para dev).
 const passwordResetCodes = new Map();
 
+// In-memory store: tokenHash -> { email, expiresAt }
+// Nota: perde-se ao reiniciar o servidor (ok para dev).
+const passwordResetTokens = new Map();
+
+const { sendMail, isMailConfigured } = require('../utils/mailer');
+
 function generate6DigitCode() {
   return String(Math.floor(100000 + Math.random() * 900000));
 }
@@ -31,6 +37,19 @@ function cleanupExpiredResetCodes() {
   }
 }
 
+function cleanupExpiredResetTokens() {
+  const now = nowMs();
+  for (const [tokenHash, entry] of passwordResetTokens.entries()) {
+    if (!entry || !entry.expiresAt || entry.expiresAt <= now) {
+      passwordResetTokens.delete(tokenHash);
+    }
+  }
+}
+
+function generateResetToken() {
+  return crypto.randomBytes(32).toString('hex');
+}
+
 // Pedir recuperação de password (link/código)
 controller.password_reset_request = async (req, res) => {
   try {
@@ -44,6 +63,7 @@ controller.password_reset_request = async (req, res) => {
     const mode = via === 'code' ? 'code' : 'link';
 
     cleanupExpiredResetCodes();
+    cleanupExpiredResetTokens();
 
     const user = await User.findOne({ where: { email: normalizedEmail } });
 
@@ -68,6 +88,38 @@ controller.password_reset_request = async (req, res) => {
       }
     }
 
+    if (user && mode === 'link') {
+      // Gera token de link e guarda hash em memória
+      const token = generateResetToken();
+      const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+      passwordResetTokens.set(tokenHash, {
+        email: normalizedEmail,
+        expiresAt: nowMs() + PASSWORD_RESET_TTL_MS,
+      });
+
+      const frontendUrl = String(process.env.FRONTEND_URL || 'http://localhost:5173').replace(/\/$/, '');
+      const resetLink = `${frontendUrl}/recuperar-palavra-passe?token=${encodeURIComponent(token)}`;
+
+      if (isMailConfigured()) {
+        const subject = 'Recuperação de palavra-passe';
+        const text = `Recebemos um pedido para redefinir a sua palavra-passe.\n\nAbra este link para definir uma nova palavra-passe (expira em 30 minutos):\n${resetLink}\n\nSe não pediu esta alteração, ignore este email.`;
+        const html = `
+          <p>Recebemos um pedido para redefinir a sua palavra-passe.</p>
+          <p><a href="${resetLink}">Clique aqui para definir uma nova palavra-passe</a> (expira em 30 minutos).</p>
+          <p>Se não pediu esta alteração, ignore este email.</p>
+        `;
+        await sendMail({
+          to: normalizedEmail,
+          subject,
+          text,
+          html,
+        });
+      } else if (process.env.NODE_ENV !== 'production') {
+        // Em dev, ajuda a testar mesmo sem SMTP
+        response.debugLink = resetLink;
+      }
+    }
+
     return res.status(200).json(response);
   } catch (error) {
     console.error('Erro ao pedir recuperação de password:', error);
@@ -75,6 +127,80 @@ controller.password_reset_request = async (req, res) => {
       message: 'Erro do servidor',
       error: error.message,
     });
+  }
+};
+
+// Confirmar redefinição de password via código
+controller.password_reset_confirm = async (req, res) => {
+  try {
+    const { email, code, token, newPassword } = req.body || {};
+
+    if (!newPassword || typeof newPassword !== 'string') {
+      return res.status(400).json({ message: 'Nova palavra-passe é obrigatória' });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({ message: 'A palavra-passe deve ter pelo menos 6 caracteres.' });
+    }
+
+    // Confirmar via token (link)
+    if (token && typeof token === 'string') {
+      cleanupExpiredResetTokens();
+      const tokenHash = crypto.createHash('sha256').update(token.trim()).digest('hex');
+      const entry = passwordResetTokens.get(tokenHash);
+      if (!entry?.email) {
+        return res.status(400).json({ message: 'Link inválido ou expirado. Pede um novo link.' });
+      }
+
+      const user = await User.findOne({ where: { email: String(entry.email).trim().toLowerCase() } });
+      if (user) {
+        const hashed = await bcrypt.hash(String(newPassword), 10);
+        await user.update({ senha: hashed });
+      }
+
+      // consumiu o token
+      passwordResetTokens.delete(tokenHash);
+      return res.status(200).json({ message: 'Palavra-passe atualizada com sucesso. Já pode iniciar sessão.' });
+    }
+
+    // Confirmar via código
+    if (!email || typeof email !== 'string') {
+      return res.status(400).json({ message: 'Email é obrigatório' });
+    }
+    if (!code || typeof code !== 'string') {
+      return res.status(400).json({ message: 'Código é obrigatório' });
+    }
+
+    const normalizedEmail = email.trim().toLowerCase();
+    const cleanCode = code.trim();
+
+    cleanupExpiredResetCodes();
+    const entry = passwordResetCodes.get(normalizedEmail);
+    if (!entry) {
+      return res.status(400).json({ message: 'Código inválido ou expirado. Pede um novo código.' });
+    }
+
+    const codeHash = crypto.createHash('sha256').update(cleanCode).digest('hex');
+    if (!entry.codeHash || entry.codeHash !== codeHash) {
+      return res.status(400).json({ message: 'Código inválido. Verifica e tenta novamente.' });
+    }
+
+    const user = await User.findOne({ where: { email: normalizedEmail } });
+    if (!user) {
+      // Não revelar existência; mas também não faz sentido continuar.
+      return res.status(200).json({ message: 'Se a conta existir, a palavra-passe foi atualizada.' });
+    }
+
+    const hashed = await bcrypt.hash(String(newPassword), 10);
+    await user.update({ senha: hashed });
+
+    // consumiu o código
+    passwordResetCodes.delete(normalizedEmail);
+
+    return res.status(200).json({ message: 'Palavra-passe atualizada com sucesso. Já pode iniciar sessão.' });
+  } catch (error) {
+    console.error('Erro ao confirmar recuperação de password:', error);
+    return res.status(500).json({ message: 'Erro do servidor' });
   }
 };
 
@@ -116,7 +242,8 @@ controller.criar_utilizador = async (req, res) => {
       });
     }
 
-    const hashedPassword = await bcrypt.hash(senha, 10);
+    const rawPassword = String(senha);
+    const hashedPassword = await bcrypt.hash(rawPassword, 10);
 
     // Criar o utilizador 
     const novoUtilizador = await User.create({

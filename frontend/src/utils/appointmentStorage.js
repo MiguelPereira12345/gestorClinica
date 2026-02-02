@@ -10,7 +10,7 @@ function safeParse(json) {
 }
 
 export const DEFAULT_CLINIC_HOURS = [
-	{ start: '08:00', end: '13:00' },
+	{ start: '09:00', end: '13:00' },
 	{ start: '14:00', end: '19:00' },
 ]
 

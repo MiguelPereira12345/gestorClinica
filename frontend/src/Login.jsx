@@ -4,6 +4,8 @@ import { useNavigate } from 'react-router-dom'
 import { Info, LogIn, Lock, Mail, RefreshCcw, UserPlus } from 'lucide-react'
 
 import logoClinimolelos from './assets/Logo-CliniMolelos.png'
+import { syncAllFromApi } from './utils/dataSync'
+import { getApiBaseUrl } from './utils/apiClient'
 
 export default function Login() {
 	const navigate = useNavigate()
@@ -12,15 +14,14 @@ export default function Login() {
 	const [isSubmitting, setIsSubmitting] = useState(false)
 	const [error, setError] = useState('')
 
-	const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001'
-
 	const handleSubmit = async (e) => {
 		e.preventDefault()
 		setError('')
 		setIsSubmitting(true)
 
 		try {
-			const response = await fetch(`${API_BASE_URL}/login`, {
+			const apiBase = getApiBaseUrl()
+			const response = await fetch(`${apiBase}/auth/admin/login`, {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json',
@@ -34,8 +35,14 @@ export default function Login() {
 				return
 			}
 
-			// Guarda sessão simples em localStorage (sem JWT por agora)
+			// Guarda sessão em localStorage (token + refreshToken)
 			localStorage.setItem('auth_user', JSON.stringify(data))
+			// Preenche caches locais com dados reais da API
+			try {
+				await syncAllFromApi()
+			} catch {
+				// ignore
+			}
 			navigate('/pagina-inicial', { replace: true })
 		} catch (err) {
 			console.error('Erro no login:', err)

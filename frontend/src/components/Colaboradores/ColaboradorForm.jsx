@@ -1,21 +1,61 @@
 import React, { useState } from 'react'
 
+function normalizeCargoValue(value) {
+	const v = String(value || '').trim().toLowerCase()
+	if (!v) return ''
+	if (v === 'admin') return 'admin'
+	if (v === 'medico' || v === 'médico') return 'medico'
+	if (v === 'secretaria') return 'secretaria'
+	if (v === 'recepcionista' || v === 'recepcionista(a)' || v === 'receção' || v === 'rececao') return 'secretaria'
+	// labels stored in cache
+	if (v === 'médico' || v === 'medico') return 'medico'
+	if (v === 'admin') return 'admin'
+	if (v === 'secretaria') return 'secretaria'
+	return ''
+}
+
 export default function ColaboradorForm({ initial, submitLabel, onCancel, onSubmit }) {
+	const isEdit = Boolean(initial?.id)
 	const [form, setForm] = useState(initial || {
 		name: '',
 		email: '',
 		phone: '',
 		cargo: '',
+		password: '',
+		confirmPassword: '',
 		status: 'ativo',
 	})
 
 	const handleChange = (e) => {
 		const { name, value } = e.target
+		if (name === 'cargo') {
+			setForm((prev) => ({ ...prev, cargo: normalizeCargoValue(value) }))
+			return
+		}
 		setForm(prev => ({ ...prev, [name]: value }))
 	}
 
 	const handleSubmit = (e) => {
 		e.preventDefault()
+		if (!String(form.cargo || '').trim()) {
+			window.alert('Cargo em falta')
+			return
+		}
+		if (!isEdit) {
+			const pw = String(form.password || '')
+			if (!pw.trim()) {
+				window.alert('Password em falta')
+				return
+			}
+			if (pw.length < 6) {
+				window.alert('A password deve ter pelo menos 6 caracteres')
+				return
+			}
+			if (String(form.confirmPassword || '') !== pw) {
+				window.alert('As passwords não coincidem')
+				return
+			}
+		}
 		onSubmit(form)
 	}
 
@@ -54,6 +94,7 @@ export default function ColaboradorForm({ initial, submitLabel, onCancel, onSubm
 						value={form.phone}
 						onChange={handleChange}
 						className="form-control"
+						required
 					/>
 				</div>
 
@@ -61,16 +102,47 @@ export default function ColaboradorForm({ initial, submitLabel, onCancel, onSubm
 					<label className="form-label">Cargo</label>
 					<select
 						name="cargo"
-						value={form.cargo}
+						value={normalizeCargoValue(form.cargo)}
 						onChange={handleChange}
 						className="form-select"
+						required
 					>
 						<option value="">Selecione um cargo</option>
 						<option value="admin">Admin</option>
 						<option value="medico">Médico</option>
-						<option value="recepcionista">Recepcionista</option>
+						<option value="secretaria">Secretaria</option>
 					</select>
 				</div>
+
+				{!isEdit ? (
+					<>
+						<div className="col-12 col-md-6">
+							<label className="form-label">Password</label>
+							<input
+								type="password"
+								name="password"
+								value={form.password}
+								onChange={handleChange}
+								className="form-control"
+								autoComplete="new-password"
+								required
+							/>
+						</div>
+
+						<div className="col-12 col-md-6">
+							<label className="form-label">Confirmar password</label>
+							<input
+								type="password"
+								name="confirmPassword"
+								value={form.confirmPassword}
+								onChange={handleChange}
+								className="form-control"
+								autoComplete="new-password"
+								required
+							/>
+						</div>
+					</>
+				) : null}
 
 				<div className="col-12 col-md-6">
 					<label className="form-label">Estado</label>

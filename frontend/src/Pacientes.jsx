@@ -1,8 +1,9 @@
-import React, { useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import './App.css'
 import { useNavigate } from 'react-router-dom'
 import AppLayout from './components/Layout/AppLayout'
 import {
+	ClipboardList,
 	Eye,
 	Pencil,
 	Plus,
@@ -13,20 +14,24 @@ import {
 import Button from './components/UI/Button'
 import PageHeader from './components/UI/PageHeader'
 import StatusBadge from './components/UI/StatusBadge'
+import { useConfirm } from './components/UI/ConfirmProvider'
 
 import {
-	buildPatientRecordFromForm,
-	createEmptyPatientForm,
 	loadPatients,
 	getDependentsOf,
 	getEffectivePhone,
 	matchesNameOrPhone,
+	isDependentPatientId,
+	deletePacienteApi,
+	deleteDependenteApi,
 	removePatient,
-	upsertPatient,
 } from './utils/patientStorage'
+
+import { syncPatientsFromApi } from './utils/dataSync'
 
 export default function Pacientes() {
 	const navigate = useNavigate()
+	const confirm = useConfirm()
 	const [query, setQuery] = useState('')
 	const [storedRows, setStoredRows] = useState(() => {
 		const parsed = loadPatients()
@@ -41,39 +46,21 @@ export default function Pacientes() {
 
 	const storedIds = useMemo(() => new Set(storedRows.map((r) => r.id)), [storedRows])
 
-	const rows = useMemo(
-		() => [
-			{
-				id: 'P001',
-				nome: 'Maria Gonzalez',
-				telefone: '912 345 678',
-				estado: 'Ativo',
-				responsavelId: null,
-			},
-			{
-				id: 'P002',
-				nome: 'Liam Chen',
-				telefone: '913 222 111',
-				estado: 'Inativo',
-				responsavelId: null,
-			},
-			{
-				id: 'P003',
-				nome: 'Sofia Martins',
-				telefone: '914 000 999',
-				estado: 'Ativo',
-				responsavelId: null,
-			},
-			{
-				id: 'P004',
-				nome: 'Noah Patel',
-				telefone: '915 123 456',
-				estado: 'Ativo',
-				responsavelId: null,
-			},
-		],
-		[],
-	)
+	useEffect(() => {
+		let mounted = true
+		;(async () => {
+			try {
+				await syncPatientsFromApi()
+			} catch {
+				// ignore
+			} finally {
+				if (mounted) refreshStored()
+			}
+		})()
+		return () => {
+			mounted = false
+		}
+	}, [])
 
 	function refreshStored() {
 		const parsed = loadPatients()
@@ -94,36 +81,15 @@ export default function Pacientes() {
 
 	function ensurePatientExists(row) {
 		if (canOpenDetails(row.id)) return true
-		const ok = window.confirm(
-			'Este paciente é um exemplo. Queres criar a ficha dele agora para poderes ver/editar?'
-		)
-		if (!ok) return false
-
-		const form = createEmptyPatientForm()
-		form.nomeCompleto = row.nome
-		form.contactoTelefone = row.telefone || ''
-		form.contactoEmail = ''
-
-		const patient = buildPatientRecordFromForm({
-			id: row.id,
-			estado: row.estado || 'Ativo',
-			form,
-			anexosClinicos: [],
-		})
-		upsertPatient(patient)
-		refreshStored()
-		return true
+		window.alert('Paciente não encontrado na base de dados/cache. Faça sync (login) ou crie um novo paciente.')
+		return false
 	}
 
 	const allRows = useMemo(() => {
-		// coloca os criados recentemente no topo e evita duplicados por id
 		const map = new Map()
 		for (const r of storedRows) map.set(r.id, r)
-		for (const r of rows) {
-			if (!map.has(r.id)) map.set(r.id, r)
-		}
 		return Array.from(map.values())
-	}, [storedRows, rows])
+	}, [storedRows])
 
 	const filtered = useMemo(() => {
 		const q = query.trim()
@@ -220,6 +186,20 @@ export default function Pacientes() {
 													className="btn btn-light btn-sm"
 													onClick={() => {
 														if (!ensurePatientExists(r)) return
+														const baseId = r.responsavelId || r.id
+														navigate(`/pacientes/${baseId}/planos`)
+													}}
+													disabled={!!r.responsavelId}
+													title={r.responsavelId ? 'Planos disponíveis no responsável' : 'Ver planos de tratamento'}
+												>
+													<ClipboardList size={14} aria-hidden="true" />
+													Planos
+												</button>
+												<button
+													type="button"
+													className="btn btn-light btn-sm"
+													onClick={() => {
+														if (!ensurePatientExists(r)) return
 														navigate(`/pacientes/${r.id}/editar`)
 													}}
 												>
@@ -231,10 +211,29 @@ export default function Pacientes() {
 													className="btn btn-light btn-sm"
 													onClick={() => {
 														if (!ensurePatientExists(r)) return
-														const ok = window.confirm('Eliminar este paciente?')
-														if (!ok) return
-														removePatient(r.id)
-														refreshStored()
+														void (async () => {
+															const label = r.responsavelId ? 'dependente' : 'paciente'
+															const ok = await confirm({
+																title: `Eliminar ${label}`,
+																message: `Deseja realmente eliminar este ${label}?\n\nEsta ação não pode ser desfeita.`,
+																confirmText: 'Eliminar',
+																confirmVariant: 'danger',
+															})
+															if (!ok) return
+															try {
+																if (isDependentPatientId(r.id)) {
+																	await deleteDependenteApi(r.id)
+																} else {
+																	await deletePacienteApi(r.id)
+																}
+																removePatient(r.id)
+																await syncPatientsFromApi().catch(() => {})
+																refreshStored()
+															} catch (e) {
+																console.error(e)
+																window.alert(e?.message || 'Erro ao eliminar paciente')
+															}
+														})()
 													}}
 												>
 													<Trash2 size={14} aria-hidden="true" />

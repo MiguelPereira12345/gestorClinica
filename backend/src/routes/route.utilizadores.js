@@ -1,11 +1,21 @@
 const express = require('express');
 const router = express.Router();
 const utilizadoresController = require('../controllers/controller.utilizadores');
+const { verificarToken, requireRole } = require('../middleware/authMiddleware');
 
 console.log('route.utilizadores loaded');
 
 // POST pedir link/código de recuperação
 router.post('/password-reset/request', utilizadoresController.password_reset_request);
+
+// POST confirmar redefinição via código
+router.post('/password-reset/confirm', utilizadoresController.password_reset_confirm);
+
+// POST criar utilizador (público: registo)
+router.post('/', utilizadoresController.criar_utilizador);
+
+// Rotas protegidas (admin)
+router.use(verificarToken, requireRole('admin'));
 
 // GET todos (apenas tipo 'user' ativos)
 router.get('/', utilizadoresController.get_utilizadores);
@@ -18,9 +28,6 @@ router.get('/procurar', utilizadoresController.procurar_utilizadores);
 
 // GET utilizador por ID
 router.get('/:id', utilizadoresController.get_utilizador_by_id);
-
-// POST criar utilizador
-router.post('/', utilizadoresController.criar_utilizador);
 
 // PUT/PATCH
 router.put('/:id', utilizadoresController.atualizar_utilizador);

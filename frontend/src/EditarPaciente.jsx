@@ -12,10 +12,17 @@ import AnexarExames from './components/EditarPaciente/AnexarExames'
 import ObservacoesAdicionais from './components/EditarPaciente/ObservacoesAdicionais'
 import {
 	buildPatientRecordFromForm,
+	isDependentPatientId,
 	getPatientById,
 	patientToForm,
 	updatePatient,
+	updatePacienteApi,
+	updateDependenteApi,
 } from './utils/patientStorage'
+
+import { uploadClinicalFile } from './utils/clinicalFilesApi'
+
+import { syncPatientsFromApi } from './utils/dataSync'
 
 export default function EditarPaciente() {
 	const navigate = useNavigate()
@@ -45,7 +52,7 @@ export default function EditarPaciente() {
 		})
 	}
 
-	function onSubmit(e) {
+	async function onSubmit(e) {
 		e.preventDefault()
 		if (saving) return
 		if (!patient || !id) return
@@ -58,6 +65,13 @@ export default function EditarPaciente() {
 
 		setSaving(true)
 		try {
+			const pickedFiles = files.filter((f) => typeof File !== 'undefined' && f instanceof File)
+			if (pickedFiles.length) {
+				await Promise.allSettled(
+					pickedFiles.map((file) => uploadClinicalFile({ patientId: patient.id, file, kind: 'anexo_clinico' }))
+				)
+			}
+
 			const anexosClinicos = files.map((f) => f.name)
 			const next = buildPatientRecordFromForm({
 				id: patient.id,
@@ -68,7 +82,23 @@ export default function EditarPaciente() {
 			})
 
 			updatePatient(patient.id, () => next)
+
+			if (isDependentPatientId(patient.id)) {
+				await updateDependenteApi({ dependentId: patient.id, form })
+			} else {
+				await updatePacienteApi({ id: patient.id, form })
+			}
+
+			try {
+				await syncPatientsFromApi()
+			} catch {
+				// ignore
+			}
+
 			navigate(`/pacientes/${patient.id}`)
+		} catch (e) {
+			console.error(e)
+			alert(e?.message || 'Erro ao guardar paciente')
 		} finally {
 			setSaving(false)
 		}
