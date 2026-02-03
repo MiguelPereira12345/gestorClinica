@@ -114,6 +114,14 @@ export default function ConsultaForm({
 		return [{ id: selectedId, name: fallbackName }, ...base]
 	}, [form.medicoId, form.medicoName, professionalOptions])
 
+	const specialtyOptions = useMemo(() => {
+		const base = Array.isArray(ESPECIALIDADES) ? ESPECIALIDADES : []
+		const current = String(form.specialty || '').trim()
+		if (!current) return base
+		if (base.includes(current)) return base
+		return [current, ...base]
+	}, [form.specialty])
+
 	const patients = useMemo(() => {
 		const stored = loadPatients().map(normalizePatient)
 		const map = new Map()
@@ -464,7 +472,7 @@ export default function ConsultaForm({
 						value={form.specialty}
 						onChange={(e) => update({ specialty: e.target.value })}
 					>
-						{ESPECIALIDADES.map((s) => (
+						{specialtyOptions.map((s) => (
 							<option key={s} value={s}>
 								{s}
 							</option>

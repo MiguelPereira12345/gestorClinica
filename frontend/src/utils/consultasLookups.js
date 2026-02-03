@@ -7,11 +7,15 @@ export const PROFESSIONALS = [
 
 export const ESPECIALIDADES = [
 	'Clínica Geral',
-	'Ortodontia',
-	'Endodontia',
-	'Cirurgia Oral',
 	'Higiene Oral',
-	'Dermatologia',
-	'Ortopedia',
-	'Cardiologia',
+	'Dentisteria',
+	'Endodontia',
+	'Periodontologia',
+	'Ortodontia',
+	'Cirurgia Oral',
+	'Implantologia',
+	'Prótese Dentária',
+	'Odontopediatria',
+	'Estética Dentária',
+	'Outra',
 ]

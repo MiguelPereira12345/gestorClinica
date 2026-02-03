@@ -24,6 +24,21 @@ No diretório `backend`:
 
 Servidor por defeito: `http://localhost:3001`
 
+## Mobile (Flutter)
+
+O backend é o mesmo para a web (React) e para o mobile (Flutter). O que muda é apenas o **endereço** (base URL) que o frontend usa para chamar a API.
+
+- Em desenvolvimento (backend a correr no teu PC):
+	- **Android Emulator**: usa `http://10.0.2.2:3001` (porque `localhost` no emulador aponta para o próprio emulador, não para o teu PC)
+	- **Dispositivo físico (Android/iOS)**: usa `http://<IP_DO_TEU_PC>:3001` (PC e telemóvel na mesma rede Wi‑Fi)
+	- **iOS Simulator**: normalmente `http://localhost:3001` funciona
+
+- Em produção:
+	- Tens de ter o backend + base de dados online (Render/Railway/Fly.io/Azure/AWS/etc.) e usar `https://...`
+	- No Flutter, aponta o `baseUrl` para esse domínio.
+
+Nota: CORS só afeta browser (React / Flutter web). Flutter mobile não precisa de CORS.
+
 ## Autenticação (base PI4)
 
 - `POST /login` devolve `{ token, user }`

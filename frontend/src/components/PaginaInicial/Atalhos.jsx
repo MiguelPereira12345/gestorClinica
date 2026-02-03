@@ -49,9 +49,9 @@ export default function Atalhos() {
 						type="button"
 						className="btn btn-light w-100 text-start"
 						style={{ background: '#f7f6f4', borderColor: '#d8d5d1', color: '#2f2f2f' }}
-						onClick={() => navigate('/editar-detalhes')}
+						onClick={() => navigate('/notificacoes')}
 					>
-						Abrir ficha
+						Notificações
 					</button>
 				</div>
 			</div>
