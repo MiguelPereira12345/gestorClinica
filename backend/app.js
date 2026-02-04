@@ -40,6 +40,19 @@ app.get('/health', (req, res) => {
   res.status(200).json({ ok: true });
 });
 
+// Diagnóstico de ligação à BD (útil no Render)
+app.get('/health/db', async (_req, res) => {
+  try {
+    await sequelize.authenticate();
+    const [rows] = await sequelize.query('SELECT 1 AS ok;');
+    const ok = Array.isArray(rows) && rows[0] && (rows[0].ok === 1 || rows[0].ok === '1');
+    return res.status(200).json({ ok: Boolean(ok) });
+  } catch (err) {
+    console.error('[health/db] erro:', err);
+    return res.status(500).json({ ok: false, message: err?.message || 'DB error' });
+  }
+});
+
 const models = initModels(sequelize);
 
 async function ensureDatabaseSchema() {
