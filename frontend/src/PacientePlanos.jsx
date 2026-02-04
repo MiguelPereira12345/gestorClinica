@@ -60,7 +60,7 @@ export default function PacientePlanos() {
 										<th>ID</th>
 										<th>Início</th>
 										<th>Fim</th>
-										<th>Descrição</th>
+										<th>Nome</th>
 										<th>Estado</th>
 										<th className="ui-actions-col">Ações</th>
 									</tr>
@@ -71,7 +71,7 @@ export default function PacientePlanos() {
 											<td style={{ fontWeight: 700 }}>{p.id_tratamento}</td>
 											<td>{p.data_inicio || '—'}</td>
 											<td>{p.data_fim || '—'}</td>
-											<td style={{ maxWidth: 520, whiteSpace: 'pre-wrap' }}>{p.descricao || '—'}</td>
+											<td style={{ maxWidth: 520, whiteSpace: 'pre-wrap' }}>{p.nome || p.descricao || '—'}</td>
 											<td>{p.status || '—'}</td>
 											<td className="ui-actions-col">
 												<button
@@ -107,7 +107,7 @@ export default function PacientePlanos() {
 										<th>Dependente</th>
 										<th>Início</th>
 										<th>Fim</th>
-										<th>Descrição</th>
+										<th>Nome</th>
 										<th>Estado</th>
 										<th className="ui-actions-col">Ações</th>
 									</tr>
@@ -119,7 +119,7 @@ export default function PacientePlanos() {
 											<td>{p.dependente_nome || '—'}</td>
 											<td>{p.data_inicio || '—'}</td>
 											<td>{p.data_fim || '—'}</td>
-											<td style={{ maxWidth: 520, whiteSpace: 'pre-wrap' }}>{p.descricao || '—'}</td>
+											<td style={{ maxWidth: 520, whiteSpace: 'pre-wrap' }}>{p.nome || p.descricao || '—'}</td>
 											<td>{p.status || '—'}</td>
 											<td className="ui-actions-col">
 												<button

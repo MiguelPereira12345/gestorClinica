@@ -70,6 +70,7 @@ export default function PlanosTratamento() {
 	const [expandedPlanId, setExpandedPlanId] = useState('')
 	const [noteText, setNoteText] = useState('')
 	const [form, setForm] = useState({
+		nome: '',
 		data_inicio: '',
 		data_fim: '',
 		descricao: '',
@@ -116,14 +117,14 @@ export default function PlanosTratamento() {
 
 	function resetForm() {
 		setEditingId('')
-		setForm({ data_inicio: '', data_fim: '', descricao: '', status: 'ativo' })
+		setForm({ nome: '', data_inicio: '', data_fim: '', descricao: '', status: 'ativo' })
 		setError('')
 		setShowForm(false)
 	}
 
 	function openCreate() {
 		setEditingId('')
-		setForm({ data_inicio: '', data_fim: '', descricao: '', status: 'ativo' })
+		setForm({ nome: '', data_inicio: '', data_fim: '', descricao: '', status: 'ativo' })
 		setError('')
 		setShowForm(true)
 	}
@@ -131,6 +132,7 @@ export default function PlanosTratamento() {
 	function openEdit(plan) {
 		setEditingId(plan?.id || '')
 		setForm({
+			nome: plan?.nome || '',
 			data_inicio: plan?.data_inicio || '',
 			data_fim: plan?.data_fim || '',
 			descricao: plan?.descricao || '',
@@ -146,8 +148,8 @@ export default function PlanosTratamento() {
 			setError('Seleciona um paciente.')
 			return
 		}
-		if (!String(form.descricao || '').trim()) {
-			setError('Escreve uma descrição do plano.')
+		if (!String(form.nome || '').trim()) {
+			setError('Escreve um nome (título) para o plano.')
 			return
 		}
 
@@ -292,7 +294,7 @@ export default function PlanosTratamento() {
 						<div className="d-flex align-items-start justify-content-between gap-2 mb-2">
 							<div>
 								<div className="fw-bold">{editingId ? 'Editar plano' : 'Novo plano'}</div>
-								<div className="text-muted small">Define datas, estado e descrição.</div>
+								<div className="text-muted small">Define o nome, datas, estado e (opcionalmente) a descrição.</div>
 							</div>
 							<Button variant="light" onClick={resetForm}>
 								Fechar
@@ -300,6 +302,16 @@ export default function PlanosTratamento() {
 						</div>
 
 						<div className="row g-3">
+							<div className="col-12">
+								<label className="form-label">Nome</label>
+								<input
+									type="text"
+									className="form-control"
+									placeholder="Ex: Ortodontia — alinhadores"
+									value={form.nome}
+									onChange={(e) => setForm((p) => ({ ...p, nome: e.target.value }))}
+								/>
+							</div>
 							<div className="col-12 col-md-6">
 								<label className="form-label">Data início</label>
 								<input
@@ -334,11 +346,11 @@ export default function PlanosTratamento() {
 								</select>
 							</div>
 							<div className="col-12 col-md-8">
-								<label className="form-label">Descrição</label>
+								<label className="form-label">Descrição (opcional)</label>
 								<textarea
 									className="form-control"
 									rows={2}
-									placeholder="Ex: Ortodontia — alinhadores (12 sessões)"
+									placeholder="Ex: 12 sessões previstas, objetivos, observações..."
 									value={form.descricao}
 									onChange={(e) => setForm((p) => ({ ...p, descricao: e.target.value }))}
 								/>
@@ -378,7 +390,7 @@ export default function PlanosTratamento() {
 									<th>ID</th>
 									<th>Início</th>
 									<th>Fim</th>
-									<th>Descrição</th>
+									<th>Nome</th>
 									<th>Estado</th>
 									<th className="ui-actions-col">Ações</th>
 								</tr>
@@ -391,7 +403,7 @@ export default function PlanosTratamento() {
 											<td>{p.data_inicio || '—'}</td>
 											<td>{p.data_fim || '—'}</td>
 											<td style={{ maxWidth: 520, whiteSpace: 'pre-wrap', overflowWrap: 'anywhere', wordBreak: 'break-word' }}>
-												{p.descricao || '—'}
+												{p.nome || p.descricao || '—'}
 											</td>
 											<td>{planoStatusLabel(p.status) || '—'}</td>
 											<td className="ui-actions-col">

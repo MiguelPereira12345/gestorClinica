@@ -17,8 +17,15 @@ function ensureUploadsDir() {
 }
 
 function parseId(value) {
-  const n = Number(value);
-  return Number.isFinite(n) ? n : null;
+
+  if (value == null) return null;
+  const raw = String(value).trim();
+  if (!raw) return null;
+  const n = Number(raw);
+  if (!Number.isFinite(n)) return null;
+  if (!Number.isInteger(n)) return null;
+  if (n <= 0) return null;
+  return n;
 }
 
 function normalizeRole(value) {

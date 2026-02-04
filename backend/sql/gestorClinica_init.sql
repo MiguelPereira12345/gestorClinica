@@ -51,6 +51,7 @@ CREATE TABLE IF NOT EXISTS plano_tratamento (
   id_tratamento INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   data_inicio   DATE,
   data_fim      DATE,
+  nome          VARCHAR(255),
   descricao     TEXT,
   status        VARCHAR(50),
   -- responsável (paciente) em utilizador.id
@@ -208,6 +209,7 @@ DO $$
 BEGIN
   IF to_regclass('public.plano_tratamento') IS NOT NULL THEN
     ALTER TABLE plano_tratamento ADD COLUMN IF NOT EXISTS dependent_id INTEGER;
+    ALTER TABLE plano_tratamento ADD COLUMN IF NOT EXISTS nome VARCHAR(255);
 
     IF to_regclass('public.dependentes') IS NOT NULL THEN
       BEGIN

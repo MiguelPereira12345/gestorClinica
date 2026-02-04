@@ -72,7 +72,7 @@ controller.obter_plano = async (req, res) => {
 //PLANO POST
 controller.criar_plano = async (req, res) => {
   try {
-    const { id, data_inicio, data_fim, descricao, status, dependent_id } = req.body;
+    const { id, data_inicio, data_fim, nome, descricao, status, dependent_id } = req.body;
 
     if (!id) {
       return res.status(400).json({ message: 'Campo id (FK para utilizador) em falta' });
@@ -91,11 +91,14 @@ controller.criar_plano = async (req, res) => {
       safeDependentId = depIdNum;
     }
 
+    const safeNome = nome != null ? String(nome).trim() : null;
+
     const newPlano = await Plano.create({
       id,
       dependent_id: safeDependentId,
       data_inicio: data_inicio || null,
       data_fim: data_fim || null,
+      nome: safeNome || null,
       descricao: descricao || null,
       status: status || null,
     });
@@ -126,7 +129,7 @@ controller.editar_plano = async (req, res) => {
       return res.status(404).json({ message: 'Plano não encontrado' });
     }
 
-    const { id, data_inicio, data_fim, descricao, status, dependent_id } = req.body;
+    const { id, data_inicio, data_fim, nome, descricao, status, dependent_id } = req.body;
 
     const updatedData = {};
     if (id !== undefined) updatedData.id = id;
@@ -148,6 +151,10 @@ controller.editar_plano = async (req, res) => {
     }
     if (data_inicio !== undefined) updatedData.data_inicio = data_inicio;
     if (data_fim !== undefined) updatedData.data_fim = data_fim;
+    if (nome !== undefined) {
+      const safeNome = nome != null ? String(nome).trim() : null;
+      updatedData.nome = safeNome || null;
+    }
     if (descricao !== undefined) updatedData.descricao = descricao;
     if (status !== undefined) updatedData.status = status;
 

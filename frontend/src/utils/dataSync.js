@@ -290,6 +290,7 @@ export async function syncTreatmentPlansFromApi() {
 			dependentName: depId ? pMap.get(depId)?.nome || '' : '',
 			data_inicio: p.data_inicio ? String(p.data_inicio).slice(0, 10) : '',
 			data_fim: p.data_fim ? String(p.data_fim).slice(0, 10) : '',
+			nome: p.nome || '',
 			descricao: p.descricao || '',
 			status: String(p.status || 'ativo').toLowerCase(),
 			history: Array.isArray(prev?.history) ? prev.history : [],

@@ -248,6 +248,23 @@ controller.criar_consulta = async (req, res) => {
       });
     }
 
+    // Em criações feitas por staff (/consultas), a duração deve ser sempre indicada.
+    // Para pedidos do paciente existe o endpoint /patients/:id/consultas/request.
+    if (duracao == null || String(duracao).trim() === '') {
+      return res.status(400).json({
+        message: 'Campo obrigatório: duracao (minutos)'
+      });
+    }
+
+    let duracaoNum = Number(duracao);
+    if (!Number.isFinite(duracaoNum)) {
+      return res.status(400).json({ message: 'duracao inválida' });
+    }
+    duracaoNum = Math.trunc(duracaoNum);
+    if (duracaoNum <= 0 || duracaoNum > 240) {
+      return res.status(400).json({ message: 'duracao inválida (1-240)' });
+    }
+
     // Valida se o paciente existe para evitar erro FK (500)
     const paciente = await User.findByPk(id);
     if (!paciente) {
@@ -306,9 +323,10 @@ controller.criar_consulta = async (req, res) => {
 
     const newConsulta = await Consulta.create({
       id_medico: safeMedicoId,
-      duracao: duracao || null,
+      duracao: duracaoNum,
       tipo_de_marcacao: tipo_de_marcacao || null,
-      status: status || 'Pendente',
+      // Consultas criadas por staff devem ficar confirmadas.
+      status: 'Confirmado',
       data_consulta,
       id,
       id_tratamento: safePlanoId,

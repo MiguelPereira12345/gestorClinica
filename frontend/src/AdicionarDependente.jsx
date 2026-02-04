@@ -11,6 +11,8 @@ import {
 	createDependenteApi,
 } from './utils/patientStorage'
 
+import { uploadDependentFile } from './utils/clinicalFilesApi'
+
 import { syncPatientsFromApi } from './utils/dataSync'
 import {
 	sanitizeDigits,
@@ -99,6 +101,19 @@ export default function AdicionarDependente() {
 			const depId = created?.id_dependente
 			if (!depId) throw new Error('Resposta inválida do servidor ao criar dependente')
 			const depIdStr = `D${depId}`
+
+			const pickedFiles = files.filter((f) => typeof File !== 'undefined' && f instanceof File)
+			if (pickedFiles.length) {
+				const results = await Promise.allSettled(
+					pickedFiles.map((file) => uploadDependentFile({ dependentId: depId, file, kind: 'anexo_dependente' }))
+				)
+				const failed = results.filter((r) => r.status === 'rejected')
+				if (failed.length) {
+					alert(
+						`Dependente criado, mas falhou o upload de ${failed.length} anexo(s). Os nomes foram guardados, mas os ficheiros podem não estar disponíveis no portal/app.`
+					)
+				}
+			}
 
 			const next = buildPatientRecordFromForm({
 				id: depIdStr,

@@ -452,6 +452,9 @@ exports.download_plano_pdf = async (req, res) => {
     doc.text(`Início: ${toPTDate(plano.data_inicio)}`);
     doc.text(`Fim: ${toPTDate(plano.data_fim)}`);
     doc.text(`Estado: ${plano.status || '—'}`);
+    if (plano?.nome) {
+      doc.text(`Nome: ${String(plano.nome)}`);
+    }
     doc.moveDown(1);
 
     doc.fontSize(11).text('Descrição:', { underline: true });

@@ -60,6 +60,7 @@ export function getTreatmentPlanById(id) {
 export function createTreatmentPlan({
 	patientId,
 	patientName = '',
+	nome = '',
 	data_inicio = '',
 	data_fim = '',
 	descricao = '',
@@ -73,6 +74,7 @@ export function createTreatmentPlan({
 		id: `T${Date.now()}`,
 		patientId: pid,
 		patientName: String(patientName || '').trim(),
+		nome: String(nome || '').trim(),
 		data_inicio: data_inicio || '',
 		data_fim: data_fim || '',
 		descricao: String(descricao || '').trim(),
@@ -158,6 +160,7 @@ function normalizeApiStatus(value) {
 export async function createTreatmentPlanApi({
 	patientId,
 	dependentId = '',
+	nome = '',
 	data_inicio = '',
 	data_fim = '',
 	descricao = '',
@@ -165,7 +168,8 @@ export async function createTreatmentPlanApi({
 } = {}) {
 	const pid = Number(String(patientId || '').trim())
 	if (!Number.isFinite(pid) || !pid) throw new Error('patientId inválido')
-	if (!String(descricao || '').trim()) throw new Error('Descrição em falta')
+	const safeNome = String(nome || '').trim()
+	const safeDescricao = String(descricao || '').trim()
 	const depIdNum = dependentId != null && String(dependentId).trim() !== '' ? Number(String(dependentId).trim()) : null
 	if (depIdNum != null && (!Number.isFinite(depIdNum) || depIdNum <= 0)) throw new Error('dependentId inválido')
 
@@ -177,7 +181,8 @@ export async function createTreatmentPlanApi({
 			dependent_id: depIdNum,
 			data_inicio: data_inicio || null,
 			data_fim: data_fim || null,
-			descricao: String(descricao || '').trim(),
+			nome: safeNome || null,
+			descricao: safeDescricao || null,
 			status: normalizeApiStatus(status),
 		}),
 	})
@@ -200,6 +205,7 @@ export async function updateTreatmentPlanApi(id, patch = {}) {
 		dependent_id: depIdNum,
 		data_inicio: patch.data_inicio !== undefined ? patch.data_inicio : undefined,
 		data_fim: patch.data_fim !== undefined ? patch.data_fim : undefined,
+		nome: patch.nome !== undefined ? String(patch.nome || '').trim() : undefined,
 		descricao: patch.descricao !== undefined ? String(patch.descricao || '').trim() : undefined,
 		status: patch.status !== undefined ? normalizeApiStatus(patch.status) : undefined,
 	}

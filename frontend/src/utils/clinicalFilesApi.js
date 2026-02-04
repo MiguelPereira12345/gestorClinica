@@ -32,6 +32,24 @@ export async function uploadClinicalFile({ patientId, file, kind = 'anexo_clinic
 	return res?.file || null
 }
 
+export async function uploadDependentFile({ dependentId, file, kind = 'anexo_dependente' }) {
+	const did = Number(String(dependentId || '').trim())
+	if (!Number.isFinite(did) || !did) throw new Error('dependentId inválido')
+	if (!file) throw new Error('file em falta')
+
+	const body = new FormData()
+	body.append('file', file)
+	body.append('dependent_id', String(did))
+	if (kind) body.append('kind', String(kind))
+
+	const res = await apiFetch('/files/upload', {
+		method: 'POST',
+		body,
+	})
+
+	return res?.file || null
+}
+
 export async function listConsultaFiles(consultaId) {
 	const cid = Number(String(consultaId || '').trim())
 	if (!Number.isFinite(cid) || !cid) throw new Error('consultaId inválido')

@@ -67,7 +67,7 @@ export default function PacienteVerPlano() {
 			<div className="ui-page">
 				<PageHeader
 					title="Detalhes do tratamento"
-					subtitle={plano ? `Tratamento #${plano.id_tratamento}` : '—'}
+					subtitle={plano ? (plano.nome ? `${plano.nome} • #${plano.id_tratamento}` : `Tratamento #${plano.id_tratamento}`) : '—'}
 					actions={
 						<button type="button" className="btn btn-secondary" onClick={() => navigate('/portal/planos')}>
 							<ArrowLeft size={16} aria-hidden="true" />
@@ -116,6 +116,12 @@ export default function PacienteVerPlano() {
 									<div className="col-5 col-md-4"><div className="ui-meta">Estado</div></div>
 									<div className="col"><div className="fw-semibold">{plano.status || '—'}</div></div>
 								</div>
+								{plano.nome ? (
+									<div className="row g-2 align-items-baseline py-2 border-top">
+										<div className="col-5 col-md-4"><div className="ui-meta">Nome</div></div>
+										<div className="col"><div className="fw-semibold" style={{ whiteSpace: 'pre-wrap' }}>{plano.nome}</div></div>
+									</div>
+								) : null}
 								<div className="row g-2 align-items-baseline py-2 border-top">
 									<div className="col-5 col-md-4"><div className="ui-meta">Descrição</div></div>
 									<div className="col"><div className="fw-semibold" style={{ whiteSpace: 'pre-wrap' }}>{plano.descricao || '—'}</div></div>

@@ -492,7 +492,7 @@ export default function ConsultaForm({
 							<option value="">— Sem tratamento —</option>
 							{filteredTreatmentPlans.map((p) => (
 								<option key={p.id_tratamento} value={String(p.id_tratamento)}>
-									{p.id_tratamento} — {p.descricao ? String(p.descricao).slice(0, 40) : 'Tratamento'}
+									{p.id_tratamento} — {p.nome ? String(p.nome).slice(0, 60) : (p.descricao ? String(p.descricao).slice(0, 60) : 'Tratamento')}
 								</option>
 							))}
 						</select>

@@ -18,9 +18,10 @@ import {
 	updatePatient,
 	updatePacienteApi,
 	updateDependenteApi,
+	dependentNumericId,
 } from './utils/patientStorage'
 
-import { uploadClinicalFile } from './utils/clinicalFilesApi'
+import { uploadClinicalFile, uploadDependentFile } from './utils/clinicalFilesApi'
 
 import { isValidName, isValidNif, isValidNumeroUtente, isValidPhone, sanitizeDigits, sanitizeName, sanitizePhone } from './utils/validation'
 
@@ -91,9 +92,17 @@ export default function EditarPaciente() {
 		try {
 			const pickedFiles = files.filter((f) => typeof File !== 'undefined' && f instanceof File)
 			if (pickedFiles.length) {
-				await Promise.allSettled(
-					pickedFiles.map((file) => uploadClinicalFile({ patientId: patient.id, file, kind: 'anexo_clinico' }))
-				)
+				const uploads = isDependentPatientId(patient.id)
+					? pickedFiles.map((file) =>
+						uploadDependentFile({ dependentId: dependentNumericId(patient.id), file, kind: 'anexo_dependente' })
+					)
+					: pickedFiles.map((file) => uploadClinicalFile({ patientId: patient.id, file, kind: 'anexo_clinico' }))
+
+				const results = await Promise.allSettled(uploads)
+				const failed = results.filter((r) => r.status === 'rejected')
+				if (failed.length) {
+					alert(`Falha ao enviar ${failed.length} anexo(s). Os nomes foram guardados, mas os ficheiros podem não estar disponíveis no portal/app.`)
+				}
 			}
 
 			const anexosClinicos = files.map((f) => f.name)

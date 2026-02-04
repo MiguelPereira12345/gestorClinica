@@ -90,6 +90,11 @@ const connectDB = async () => {
         `);
 
         await sequelize.query(`
+          ALTER TABLE plano_tratamento
+            ADD COLUMN IF NOT EXISTS nome VARCHAR(255);
+        `);
+
+        await sequelize.query(`
           DO $$
           BEGIN
             IF to_regclass('public.plano_tratamento') IS NOT NULL AND to_regclass('public.dependentes') IS NOT NULL THEN
@@ -112,7 +117,7 @@ const connectDB = async () => {
           CREATE INDEX IF NOT EXISTS idx_plano_dependente ON plano_tratamento (dependent_id);
         `);
       } catch (planoMigrationErr) {
-        console.error('Aviso: migração automática (plano_tratamento.dependent_id) falhou:', planoMigrationErr);
+        console.error('Aviso: migração automática (plano_tratamento.dependent_id/nome) falhou:', planoMigrationErr);
       }
 
       // Consulta: permitir associação a plano de tratamento (coluna opcional)

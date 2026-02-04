@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import { useLocation, useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, BookOpen, Pencil, Trash2 } from 'lucide-react'
 import AppLayout from './components/Layout/AppLayout'
 import PageHeader from './components/UI/PageHeader'
@@ -37,7 +37,6 @@ function mapStaffStatusToBadge(status) {
 
 export default function VerPlanoTratamento() {
 	const navigate = useNavigate()
-	const location = useLocation()
 	const confirm = useConfirm()
 	const { id: patientIdParam, planId } = useParams()
 
@@ -203,6 +202,10 @@ export default function VerPlanoTratamento() {
 								<div className="row g-2 align-items-baseline py-2 border-top">
 									<div className="col-5 col-md-4"><div className="ui-meta">Estado</div></div>
 									<div className="col"><div className="fw-semibold">{planoStatusLabel(plan.status) || '—'}</div></div>
+								</div>
+								<div className="row g-2 align-items-baseline py-2 border-top">
+									<div className="col-5 col-md-4"><div className="ui-meta">Nome</div></div>
+									<div className="col"><div className="fw-semibold" style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere', wordBreak: 'break-word' }}>{plan.nome || '—'}</div></div>
 								</div>
 								<div className="row g-2 align-items-baseline py-2 border-top">
 									<div className="col-5 col-md-4"><div className="ui-meta">Descrição</div></div>
