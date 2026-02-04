@@ -1,12 +1,29 @@
 import axios from 'axios'
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001'
+function resolveApiBaseUrl() {
+	const fromEnv = import.meta.env.VITE_API_URL
+	if (fromEnv && String(fromEnv).trim()) return String(fromEnv).trim()
+
+	// Sem VITE_API_URL, usa sempre same-origin.
+	// - Produção (Render): funciona se o backend servir o frontend no mesmo domínio.
+	// - Dev (Vite): funciona com proxy (ver vite.config.js) e evita CORS.
+	if (typeof window !== 'undefined' && window.location) {
+		return window.location.origin
+	}
+
+	// fallback (SSR/testes)
+	return ''
+}
+
+const API_BASE_URL = resolveApiBaseUrl()
 
 export function isApiUrlLikelyMisconfigured() {
 	const fromEnv = import.meta.env.VITE_API_URL
 	if (fromEnv && String(fromEnv).trim()) return false
 	if (typeof window === 'undefined' || !window.location) return false
 	const host = String(window.location.hostname || '').trim().toLowerCase()
+	// Em produção, se não houver VITE_API_URL, é provável estar mal configurado
+	// (a menos que o backend esteja a servir o frontend no mesmo domínio).
 	return host !== 'localhost' && host !== '127.0.0.1'
 }
 

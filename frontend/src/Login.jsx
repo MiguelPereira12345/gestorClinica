@@ -5,7 +5,7 @@ import { Info, LogIn, Lock, Mail, RefreshCcw } from 'lucide-react'
 
 import logoClinimolelos from './assets/Logo-CliniMolelos.png'
 import { syncAllFromApi } from './utils/dataSync'
-import { apiFetch, isApiUrlLikelyMisconfigured } from './utils/apiClient'
+import { apiFetch, getApiBaseUrl, isApiUrlLikelyMisconfigured } from './utils/apiClient'
 
 export default function Login() {
 	const navigate = useNavigate()
@@ -50,8 +50,10 @@ export default function Login() {
 			return
 		} catch (err) {
 			console.error('Erro no login:', err)
-			if (isApiUrlLikelyMisconfigured()) {
-				setError('API não configurada no Render. Define VITE_API_URL no Static Site (frontend) com o URL do backend e faz rebuild.')
+			const status = err?.status
+			const looksLikeConnectionIssue = !status || status === 404 || status >= 500
+			if (looksLikeConnectionIssue && isApiUrlLikelyMisconfigured()) {
+				setError(`API possivelmente mal configurada. Se o backend NÃO estiver no mesmo domínio do frontend, define VITE_API_URL no Render (Static Site) com o URL do backend e faz rebuild. API atual: ${getApiBaseUrl()}`)
 			} else {
 				setError(err?.message || 'Erro no login')
 			}
@@ -59,6 +61,7 @@ export default function Login() {
 			setIsSubmitting(false)
 		}
 	}
+
 
 	return (
 		<div
