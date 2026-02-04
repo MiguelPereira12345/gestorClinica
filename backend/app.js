@@ -40,6 +40,18 @@ app.get('/health', (req, res) => {
   res.status(200).json({ ok: true });
 });
 
+// Diagnóstico de JWT (sem expor segredos)
+app.get('/health/jwt', (_req, res) => {
+  const secret = process.env.JWT_SECRET;
+  const hasSecret = secret != null && String(secret).trim() !== '';
+  const expiresIn = process.env.JWT_EXPIRES_IN || '8h';
+  return res.status(hasSecret ? 200 : 500).json({
+    ok: hasSecret,
+    expiresIn,
+    secretLength: hasSecret ? String(secret).trim().length : 0,
+  });
+});
+
 // Diagnóstico de ligação à BD (útil no Render)
 app.get('/health/db', async (_req, res) => {
   try {
