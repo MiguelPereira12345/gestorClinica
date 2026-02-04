@@ -1,5 +1,7 @@
 require('dotenv').config();
 const express = require('express');
+const fs = require('fs');
+const path = require('path');
 const app = express();
 const cors = require('cors'); 
 const route = require("./src/routes/route");
@@ -83,6 +85,15 @@ app.use('/audit', verificarToken, requireRole('admin'), auditRoute);
 
 // Rotas de histórico médico
 app.use('/api', verificarToken, requireRole('admin'), historicoRoute);
+
+// Serve frontend (build) quando disponível
+const frontendDist = path.join(__dirname, '..', 'frontend', 'dist');
+if (fs.existsSync(frontendDist)) {
+  app.use(express.static(frontendDist));
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(frontendDist, 'index.html'));
+  });
+}
 
 app.use((req, res) => {
   res.status(404).json({ message: 'Rota não encontrada' });
