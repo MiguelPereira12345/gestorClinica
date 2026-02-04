@@ -44,9 +44,33 @@ app.get('/health', (req, res) => {
 app.get('/health/db', async (_req, res) => {
   try {
     await sequelize.authenticate();
-    const [rows] = await sequelize.query('SELECT 1 AS ok;');
-    const ok = Array.isArray(rows) && rows[0] && (rows[0].ok === 1 || rows[0].ok === '1');
-    return res.status(200).json({ ok: Boolean(ok) });
+
+    const [metaRows] = await sequelize.query(
+      'SELECT 1 AS ok, current_database() AS db, current_user AS db_user;'
+    );
+    const meta = Array.isArray(metaRows) && metaRows[0] ? metaRows[0] : {};
+
+    const [regRows] = await sequelize.query(
+      "SELECT to_regclass('public.utilizador') AS utilizador;"
+    );
+    const utilizadorExists = Boolean(Array.isArray(regRows) && regRows[0] && regRows[0].utilizador);
+
+    let counts = null;
+    if (utilizadorExists) {
+      const [countRows] = await sequelize.query(
+        "SELECT COUNT(*)::int AS total, SUM(CASE WHEN tipo IN ('admin','medico') THEN 1 ELSE 0 END)::int AS staff FROM utilizador;"
+      );
+      counts = Array.isArray(countRows) && countRows[0] ? countRows[0] : null;
+    }
+
+    const ok = meta.ok === 1 || meta.ok === '1';
+    return res.status(200).json({
+      ok: Boolean(ok),
+      db: meta.db,
+      db_user: meta.db_user,
+      utilizadorExists,
+      counts,
+    });
   } catch (err) {
     console.error('[health/db] erro:', err);
     return res.status(500).json({ ok: false, message: err?.message || 'DB error' });
@@ -94,6 +118,30 @@ async function ensureDatabaseSchema() {
           senha: senhaHash,
         });
         console.log('[db] Admin inicial criado.');
+      }
+    }
+
+    // Reset opcional de password via env (útil quando os emails são fictícios).
+    // Define no Render (Backend) e faz restart/redeploy:
+    // RESET_PASSWORD_EMAIL, RESET_PASSWORD_NEW
+    const resetEmail = process.env.RESET_PASSWORD_EMAIL;
+    const resetNewPassword = process.env.RESET_PASSWORD_NEW;
+    if (resetEmail && resetNewPassword && models?.User) {
+      const emailNorm = String(resetEmail).trim().toLowerCase();
+      const user = await models.User.findOne({
+        where: sequelize.where(
+          sequelize.fn('lower', sequelize.fn('trim', sequelize.col('email'))),
+          emailNorm
+        ),
+      });
+
+      if (!user) {
+        console.warn(`[db] RESET_PASSWORD_EMAIL: utilizador não encontrado (${emailNorm})`);
+      } else {
+        console.log(`[db] A atualizar password (reset via env) para ${emailNorm}...`);
+        const senhaHash = await bcrypt.hash(String(resetNewPassword), 10);
+        await user.update({ senha: senhaHash });
+        console.log('[db] Password atualizada (reset via env).');
       }
     }
   } catch (err) {
