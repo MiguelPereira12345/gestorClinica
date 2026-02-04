@@ -46,9 +46,8 @@ export default function ColaboradoresFilters({ filters, onChange, onClear }) {
 						className="form-select form-select-sm"
 					>
 						<option value="">Todos</option>
-						<option value="admin">Admin</option>
-						<option value="medico">Médico</option>
-						<option value="recepcionista">Recepcionista</option>
+						<option value="admin">Secretário/a</option>
+						<option value="medico">Médico/a</option>
 					</select>
 				</div>
 

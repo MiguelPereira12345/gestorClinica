@@ -76,7 +76,7 @@ export default function EditarDetalhes(){
   }
 
   return (
-    <AppLayout breadcrumb="Pacientes > João Pedro da Silva > Detalhes" userName="Dra. Sofia Lima">
+    <AppLayout breadcrumb="Utentes > João Pedro da Silva > Detalhes" userName="Dra. Sofia Lima">
       <div className="ui-page" style={{ padding: '20px 40px' }}>
         <div className="mb-3">
           <button className="btn btn-light" type="button" onClick={() => navigate('/pacientes')}>
@@ -85,7 +85,7 @@ export default function EditarDetalhes(){
         </div>
 
         <PageHeader
-          title="Ficha do Paciente"
+          title="Ficha do Utente"
           actions={
             <>
               <button className="btn btn-secondary" type="button" onClick={() => navigate('/pacientes')}>
@@ -93,7 +93,7 @@ export default function EditarDetalhes(){
               </button>
               {!isEditing ? (
                 <button className="btn btn-primary" type="button" onClick={handleEdit}>
-                  Editar Paciente
+                  Editar Utente
                 </button>
               ) : (
                 <>

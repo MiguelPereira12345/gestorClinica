@@ -37,7 +37,7 @@ export default function TarefasAlertas({ tasks }) {
 			<div className="d-flex align-items-center justify-content-between gap-2 mb-3">
 				<h3 className="h6 fw-semibold text-dark mb-0">Tarefas / Alertas</h3>
 				<button type="button" className="btn btn-light btn-sm" onClick={() => navigate('/pacientes')}>
-					Ver pacientes
+					Ver utentes
 				</button>
 			</div>
 

@@ -5,7 +5,7 @@ export default function CardExames({ exam }) {
     <div className="exam-card">
       <div className="exam-title">{exam.title}</div>
       <div className="exam-meta">Data da consulta: {exam.date}</div>
-      <div className="exam-meta">ID do paciente: {exam.patientId}</div>
+      <div className="exam-meta">ID do utente: {exam.patientId}</div>
       <div className="exam-actions">
         <button className="link-btn">Ver mais</button>
         <div className="right-actions">

@@ -58,7 +58,7 @@ export default function PrivacyPolicyModal({ open, onClose }) {
 					<div className="policy-section">
 						<div className="policy-section-title">2) Finalidade</div>
 						<div className="muted">
-							Gestão de consultas, comunicação com o paciente e cumprimento de obrigações legais.
+							Gestão de consultas, comunicação com o utente e cumprimento de obrigações legais.
 						</div>
 					</div>
 

@@ -189,7 +189,7 @@ export default function WeeklyCalendar({ weekStart, appointments = [], resources
                                   }
                                 : undefined
                             }
-                            title={`${appt.paciente_nome} — ${startStr}–${endStr}${appt.tipo_consulta ? ` • ${appt.tipo_consulta}` : ''}${doctorName ? ` • ${doctorName}` : ''}`}
+                            title={`${appt.utente_nome} — ${startStr}–${endStr}${appt.tipo_consulta ? ` • ${appt.tipo_consulta}` : ''}${doctorName ? ` • ${doctorName}` : ''}`}
                             style={{
                               top: `${top}px`,
                               height: `${Math.max(40, height)}px`,
@@ -202,7 +202,7 @@ export default function WeeklyCalendar({ weekStart, appointments = [], resources
                             }}
                           >
                             <div className="fw-semibold text-truncate" style={{ fontSize: 13, lineHeight: 1.15 }}>
-                              {appt.paciente_nome}
+                              {appt.utente_nome}
                             </div>
                             <div className="text-muted text-truncate" style={{ fontSize: 11, lineHeight: 1.15, marginTop: 2 }}>
                               {startStr}–{endStr}
@@ -240,7 +240,7 @@ export default function WeeklyCalendar({ weekStart, appointments = [], resources
                         <div
                           key={appt.id}
                           className="agenda-appt position-absolute start-0 end-0 mx-1 rounded-3 shadow-sm p-2 overflow-hidden border"
-                          title={`${appt.paciente_nome} — ${startStr}–${endStr}${appt.tipo_consulta ? ` • ${appt.tipo_consulta}` : ''}`}
+                          title={`${appt.utente_nome} — ${startStr}–${endStr}${appt.tipo_consulta ? ` • ${appt.tipo_consulta}` : ''}`}
                           style={{
                             top: `${top}px`,
                             height: `${Math.max(40, height)}px`,
@@ -250,7 +250,7 @@ export default function WeeklyCalendar({ weekStart, appointments = [], resources
                           }}
                         >
                           <div className="fw-semibold text-truncate" style={{ fontSize: 13, lineHeight: 1.15 }}>
-                            {appt.paciente_nome}
+                            {appt.utente_nome}
                           </div>
                           <div className="text-muted text-truncate" style={{ fontSize: 11, lineHeight: 1.15, marginTop: 2 }}>
                             {startStr}–{endStr}

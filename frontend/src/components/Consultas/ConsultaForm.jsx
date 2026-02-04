@@ -263,11 +263,11 @@ export default function ConsultaForm({
 	}, [])
 
 	function validate() {
-		if (!String(form.patientName || '').trim()) return 'Indica o paciente.'
+		if (!String(form.patientName || '').trim()) return 'Indica o utente.'
 		if (!String(form.medicoId || '').trim()) return 'Seleciona um profissional.'
 		if (!String(form.specialty || '').trim()) return 'Seleciona a especialidade.'
 		if (form.forDependent) {
-			if (!String(form.patientId || '').trim()) return 'Seleciona um paciente da lista para poderes escolher o dependente.'
+			if (!String(form.patientId || '').trim()) return 'Seleciona um utente da lista para poderes escolher o dependente.'
 			if (!String(form.dependentId || '').trim()) return 'Seleciona o dependente.'
 		}
 		if (!form.date) return 'Seleciona a data.'
@@ -352,7 +352,7 @@ export default function ConsultaForm({
 			<div className="row g-3">
 				{hidePatient ? null : (
 					<div className="col-12">
-						<label className="form-label">Paciente</label>
+						<label className="form-label">Utente</label>
 						<div className="position-relative">
 							<input
 								ref={patientInputRef}
@@ -416,11 +416,11 @@ export default function ConsultaForm({
 							<label className="form-label">Dependente</label>
 							{!String(form.patientId || '').trim() ? (
 								<div className="alert alert-warning py-2 mb-0" role="alert">
-									Seleciona primeiro um paciente na pesquisa para listar os dependentes.
+									Seleciona primeiro um utente na pesquisa para listar os dependentes.
 								</div>
 							) : dependentsForSelectedPatient.length === 0 ? (
 								<div className="alert alert-warning py-2 mb-0" role="alert">
-									Este paciente não tem dependentes registados.
+									Este utente não tem dependentes registados.
 								</div>
 							) : (
 								<select
@@ -497,7 +497,7 @@ export default function ConsultaForm({
 							))}
 						</select>
 						{!String(form.patientId || '').trim() ? (
-							<div className="form-text">Seleciona um paciente para listar os tratamentos.</div>
+							<div className="form-text">Seleciona um utente para listar os tratamentos.</div>
 						) : treatmentPlansLoading ? (
 							<div className="form-text">A carregar tratamentos…</div>
 						) : filteredTreatmentPlans.length === 0 ? (

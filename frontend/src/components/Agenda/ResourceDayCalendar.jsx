@@ -203,7 +203,7 @@ export default function ResourceDayCalendar({ date, resources = [], appointments
 												}
 												: undefined
 										}
-											title={`${appt.paciente_nome} — ${startStr}–${endStr}${appt.tipo_consulta ? ` • ${appt.tipo_consulta}` : ''}`}
+											title={`${appt.utente_nome} — ${startStr}–${endStr}${appt.tipo_consulta ? ` • ${appt.tipo_consulta}` : ''}`}
 											style={{
 												top: `${top}px`,
 												height: `${Math.max(42, height)}px`,
@@ -216,7 +216,7 @@ export default function ResourceDayCalendar({ date, resources = [], appointments
 											}}
 										>
 											<div className="fw-bold text-truncate" style={{ fontSize: 13, lineHeight: 1.15 }}>
-												{appt.paciente_nome}
+												{appt.utente_nome}
 											</div>
 											<div className="text-truncate" style={{ fontSize: 11, marginTop: 2, opacity: 0.9, lineHeight: 1.15 }}>
 												{startStr}–{endStr}

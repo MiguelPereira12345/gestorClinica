@@ -22,7 +22,7 @@ export default function PatientAppLayout({
 		authDisplayName = ''
 	}
 
-	const displayName = authDisplayName || (userName || '').trim() || 'Paciente'
+	const displayName = authDisplayName || (userName || '').trim() || 'Utente'
 
 	return (
 		<div className="app-shell">

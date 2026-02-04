@@ -37,6 +37,7 @@ import PacienteDependentes from './PacienteDependentes'
 import PacienteVerDependente from './PacienteVerDependente'
 import PacientePerfil from './PacientePerfil'
 import PacienteMarcarConsulta from './PacienteMarcarConsulta'
+import PacienteDocsDeclaracoes from './PacienteDocsDeclaracoes'
 
 import Notificacoes from './Notificacoes'
 
@@ -134,7 +135,7 @@ function App() {
 					<Route path="/registar" element={<Navigate to="/login" replace />} />
 					<Route path="/recuperar-palavra-passe" element={<Recuperarpass />} />
 
-					{/* Portal do paciente */}
+					{/* Portal do utente */}
 					<Route element={<RequirePatientOutlet />}>
 						<Route path="/portal" element={<PacienteDashboard />} />
 						<Route path="/portal/consultas" element={<PacienteConsultas />} />
@@ -144,6 +145,7 @@ function App() {
 						<Route path="/portal/dependentes" element={<PacienteDependentes />} />
 						<Route path="/portal/dependentes/:id" element={<PacienteVerDependente />} />
 						<Route path="/portal/perfil" element={<PacientePerfil />} />
+						<Route path="/portal/docs" element={<PacienteDocsDeclaracoes />} />
 						<Route path="/portal/marcar-consulta" element={<PacienteMarcarConsulta />} />
 					</Route>
 

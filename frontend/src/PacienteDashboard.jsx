@@ -66,7 +66,7 @@ export default function PacienteDashboard() {
 		<PatientAppLayout breadcrumb="Portal / Início">
 			<div className="ui-page">
 				<PageHeader
-					title="Portal do paciente"
+					title="Portal do utente"
 					subtitle="Consultas e pedidos"
 					actions={
 						<button className="btn btn-light" type="button" onClick={() => navigate('/portal/consultas')}>

@@ -25,28 +25,15 @@ function isMedico(req) {
   return role === 'medico';
 }
 
-function isSecretaria(req) {
-  const role = String(req.user?.tipo || '')
-    .trim()
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/\p{Diacritic}/gu, '');
-  return role === 'secretaria';
-}
-
 function canViewConsulta(req, consulta) {
   if (isAdmin(req)) return true;
   // Requisito: médico pode ver todas as consultas
   if (isMedico(req)) return true;
-  // Secretaria pode ver consultas
-  if (isSecretaria(req)) return true;
   return false;
 }
 
 function canManageConsulta(req, consulta) {
   if (isAdmin(req)) return true;
-  // Secretaria pode gerir consultas
-  if (isSecretaria(req)) return true;
   // Médico só pode alterar consultas atribuídas a si
   if (isMedico(req)) {
     const uid = req.user?.id;
@@ -57,7 +44,6 @@ function canManageConsulta(req, consulta) {
 
 function canApproveRequest(req, consulta) {
   if (isAdmin(req)) return true;
-  if (isSecretaria(req)) return true;
   if (isMedico(req)) {
     const uid = req.user?.id;
     if (uid == null) return false;

@@ -9,6 +9,7 @@ const patientMenu = [
 	{ label: 'Tratamentos', path: '/portal/planos' },
 	{ label: 'Dependentes', path: '/portal/dependentes' },
 	{ label: 'Perfil', path: '/portal/perfil' },
+	{ label: 'Docs/Declarações', path: '/portal/docs' },
 	{ label: 'Marcar consulta', path: '/portal/marcar-consulta' },
 ]
 
@@ -47,6 +48,14 @@ function iconFor(path) {
 				<svg className="sidebar-icon" width="20" height="20" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
 					<path d="M20 21a8 8 0 0 0-16 0" stroke="currentColor" strokeWidth="1.2" fill="none" />
 					<path d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4z" stroke="currentColor" strokeWidth="1.2" fill="none" />
+				</svg>
+			)
+		case '/portal/docs':
+			return (
+				<svg className="sidebar-icon" width="20" height="20" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+					<path d="M7 3h7l3 3v15a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z" stroke="currentColor" strokeWidth="1.2" fill="none" />
+					<path d="M14 3v4a1 1 0 0 0 1 1h4" stroke="currentColor" strokeWidth="1.2" fill="none" />
+					<path d="M9 11h6M9 15h6" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
 				</svg>
 			)
 		case '/portal/marcar-consulta':

@@ -51,7 +51,7 @@ export default function PaginaInicial() {
 
 				return {
 					id: c.id,
-					paciente: c.dependentName || c.patientName || c.patientId || 'Paciente',
+					utente: c.dependentName || c.patientName || c.patientId || 'Utente',
 					medico: c.medicoName || 'Profissional',
 					tipo: c.specialty || 'Consulta',
 					inicio,

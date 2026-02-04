@@ -1,5 +1,5 @@
 import React from 'react'
-import { Eye, Edit, Trash2 } from 'lucide-react'
+import { Eye, Pencil, Trash2 } from 'lucide-react'
 import StatusBadge from '../UI/StatusBadge'
 
 export default function ColaboradoresTable({ rows, onView, onEdit, onDelete }) {
@@ -55,7 +55,7 @@ export default function ColaboradoresTable({ rows, onView, onEdit, onDelete }) {
 													onClick={() => onEdit(colaborador)}
 													title="Editar"
 												>
-													<Edit size={14} aria-hidden="true" />
+													<Pencil size={14} aria-hidden="true" />
 													Editar
 												</button>
 											) : null}

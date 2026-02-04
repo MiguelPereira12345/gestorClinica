@@ -187,7 +187,7 @@ export default function VerPlanoTratamento() {
 								</div>
 
 								<div className="row g-2 align-items-baseline py-2 border-top">
-									<div className="col-5 col-md-4"><div className="ui-meta">Paciente</div></div>
+											<div className="col-5 col-md-4"><div className="ui-meta">Utente</div></div>
 									<div className="col"><div className="fw-semibold">{patient?.nome || patient?.data?.nomeCompleto || patientId || '—'}</div></div>
 								</div>
 

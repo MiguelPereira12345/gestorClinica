@@ -18,7 +18,7 @@ export default function Informacao({ isEditing, data, onChange }) {
         Informações Gerais
       </h2>
       <p className="mt-1 mb-3" style={{ fontSize: 13, color: '#999' }}>
-        {isEditing ? 'Editar dados do paciente' : 'Dados principais do paciente (modo leitura)'}
+        {isEditing ? 'Editar dados do utente' : 'Dados principais do utente (modo leitura)'}
       </p>
 
       <div className="border rounded-2 overflow-hidden" style={{ borderColor: '#ddd' }}>

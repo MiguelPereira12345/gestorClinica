@@ -31,7 +31,7 @@ export default function Atalhos() {
 						style={{ background: '#f7f6f4', borderColor: '#d8d5d1', color: '#2f2f2f' }}
 						onClick={() => navigate('/pacientes/novo')}
 					>
-						Novo paciente
+						Novo utente
 					</button>
 				</div>
 				<div className="col-12 col-md-6">
@@ -41,7 +41,7 @@ export default function Atalhos() {
 						style={{ background: '#f7f6f4', borderColor: '#d8d5d1', color: '#2f2f2f' }}
 						onClick={() => navigate('/pacientes')}
 					>
-						Pesquisar pacientes
+						Pesquisar utentes
 					</button>
 				</div>
 				<div className="col-12 col-md-6">

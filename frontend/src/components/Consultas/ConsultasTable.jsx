@@ -61,7 +61,7 @@ export default function ConsultasTable({ rows, onView, onEdit, onSetStatus, onDe
 				<table className="table ui-table">
 					<thead>
 						<tr>
-							<th>Paciente</th>
+							<th>Utente</th>
 							<th>Profissional</th>
 							<th>Especialidade</th>
 							<th>Data &amp; Hora</th>

@@ -1,7 +1,7 @@
 import React from 'react'
 import '../App.css'
 
-export default function Header({ userName = 'Pedro Saraiva', actionText = 'Editar Pacientes' }) {
+export default function Header({ userName = 'Pedro Saraiva', actionText = 'Editar Utentes' }) {
 	return (
 		<header className="top-bar">
 			<div className="top-bar-left">

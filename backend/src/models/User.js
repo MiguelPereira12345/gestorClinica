@@ -22,8 +22,12 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: false,
         unique: true,
       },
+      omd: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
       tipo: {
-        type: DataTypes.ENUM('admin', 'secretaria', 'medico', 'user'),
+        type: DataTypes.ENUM('admin', 'medico', 'user'),
         allowNull: false,
         defaultValue: 'user',
       },

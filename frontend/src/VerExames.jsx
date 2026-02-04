@@ -19,7 +19,7 @@ const sampleDental = [
 
 export default function VerExames() {
   return (
-    <AppLayout breadcrumb="Pacientes > Joana Oliveira > Exames" userName="Dra. Sofia Lima">
+    <AppLayout breadcrumb="Utentes > Joana Oliveira > Exames" userName="Dra. Sofia Lima">
       <div className="ver-exames-page">
         <main className="ve-main">
           <div className="user-row">

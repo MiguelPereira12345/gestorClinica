@@ -1,17 +1,22 @@
 import React, { useState } from 'react'
 import { isValidName, isValidPhone, sanitizeName, sanitizePhone } from '../../utils/validation'
 
+function sanitizeOmd(value) {
+	return String(value || '')
+		.replace(/\D/g, '')
+		.slice(0, 5)
+}
+
 function normalizeCargoValue(value) {
 	const v = String(value || '').trim().toLowerCase()
 	if (!v) return ''
 	if (v === 'admin') return 'admin'
+	if (v === 'secretario/a' || v === 'secretário/a' || v === 'secretario' || v === 'secretário') return 'admin'
 	if (v === 'medico' || v === 'médico') return 'medico'
-	if (v === 'secretaria') return 'secretaria'
-	if (v === 'recepcionista' || v === 'recepcionista(a)' || v === 'receção' || v === 'rececao') return 'secretaria'
+	if (v === 'medico/a' || v === 'médico/a' || v === 'medica/o' || v === 'médica/o' || v === 'medica' || v === 'médica') return 'medico'
 	// labels stored in cache
-	if (v === 'médico' || v === 'medico') return 'medico'
-	if (v === 'admin') return 'admin'
-	if (v === 'secretaria') return 'secretaria'
+	if (v === 'médico/a' || v === 'médico' || v === 'medico/a' || v === 'medico') return 'medico'
+	if (v === 'secretário/a' || v === 'secretario/a' || v === 'admin') return 'admin'
 	return ''
 }
 
@@ -22,10 +27,14 @@ export default function ColaboradorForm({ initial, submitLabel, onCancel, onSubm
 		email: '',
 		phone: '',
 		cargo: '',
+		omd: '',
 		password: '',
 		confirmPassword: '',
 		status: 'ativo',
 	})
+
+	const cargoNorm = normalizeCargoValue(form.cargo)
+	const isMedico = cargoNorm === 'medico'
 
 	const handleChange = (e) => {
 		const { name, value } = e.target
@@ -39,6 +48,10 @@ export default function ColaboradorForm({ initial, submitLabel, onCancel, onSubm
 		}
 		if (name === 'phone') {
 			setForm((prev) => ({ ...prev, phone: sanitizePhone(value) }))
+			return
+		}
+		if (name === 'omd') {
+			setForm((prev) => ({ ...prev, omd: sanitizeOmd(value) }))
 			return
 		}
 		setForm(prev => ({ ...prev, [name]: value }))
@@ -57,6 +70,17 @@ export default function ColaboradorForm({ initial, submitLabel, onCancel, onSubm
 		if (!String(form.cargo || '').trim()) {
 			window.alert('Cargo em falta')
 			return
+		}
+		if (isMedico) {
+			const omd = String(form.omd || '').trim()
+			if (!omd) {
+				window.alert('OMD em falta')
+				return
+			}
+			if (!/^\d{5}$/.test(omd)) {
+				window.alert('OMD inválido (tem de ter exatamente 5 números).')
+				return
+			}
 		}
 		if (!isEdit) {
 			const pw = String(form.password || '')
@@ -125,11 +149,27 @@ export default function ColaboradorForm({ initial, submitLabel, onCancel, onSubm
 						required
 					>
 						<option value="">Selecione um cargo</option>
-						<option value="admin">Admin</option>
-						<option value="medico">Médico</option>
-						<option value="secretaria">Secretaria</option>
+						<option value="admin">Secretário/a</option>
+						<option value="medico">Médico/a</option>
 					</select>
 				</div>
+
+				{isMedico ? (
+					<div className="col-12 col-md-6">
+						<label className="form-label">OMD</label>
+						<input
+							type="text"
+							name="omd"
+							value={form.omd || ''}
+							onChange={handleChange}
+							className="form-control"
+							inputMode="numeric"
+							pattern="\d{5}"
+							maxLength={5}
+							required
+						/>
+					</div>
+				) : null}
 
 				{!isEdit ? (
 					<>

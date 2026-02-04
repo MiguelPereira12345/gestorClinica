@@ -14,7 +14,7 @@ export default function ConsultasFilters({
 			<div className="d-flex align-items-start justify-content-between gap-3 flex-wrap mb-3">
 				<div>
 					<div className="fw-bold">Filtros</div>
-					<div className="ui-meta">Refine por paciente, profissional, data, estado e tipo.</div>
+					<div className="ui-meta">Refine por utente, profissional, data, estado e tipo.</div>
 				</div>
 				<div className="d-inline-flex gap-2">
 					<button type="button" className="btn btn-light btn-sm" onClick={onSaveView}>
@@ -28,7 +28,7 @@ export default function ConsultasFilters({
 
 			<div className="row row-cols-1 row-cols-md-2 row-cols-lg-5 g-2">
 				<div className="col">
-					<label className="form-label mb-1">Paciente</label>
+					<label className="form-label mb-1">Utente</label>
 					<div className="input-group input-group-sm">
 						<span className="input-group-text" aria-hidden="true">
 							<Search size={16} aria-hidden="true" />
@@ -36,7 +36,7 @@ export default function ConsultasFilters({
 						<input
 							type="text"
 							className="form-control form-control-sm"
-							placeholder="Nome do paciente"
+							placeholder="Nome do utente"
 							value={filters.patient}
 							onChange={(e) => onChange({ ...filters, patient: e.target.value })}
 						/>

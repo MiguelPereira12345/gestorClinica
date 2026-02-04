@@ -182,7 +182,7 @@ export default function Recuperarpass() {
 							/>
 
 							<p className="mt-4 mb-0 text-muted fw-semibold" style={{ fontSize: 15, lineHeight: 1.45 }}>
-								Aceda ao sistema clínico para gerir Horários, Consultas, Pacientes e Faturação.
+								Aceda ao sistema clínico para gerir Horários, Consultas, Utentes e Faturação.
 							</p>
 						</div>
 					</section>

@@ -121,14 +121,14 @@ export default function PacienteMarcarConsulta() {
 					topContent={
 						<div className="row g-2 align-items-end">
 							<div className="col-12 col-md-6">
-								<label className="form-label">Paciente</label>
+								<label className="form-label">Utente</label>
 								<select
 									className="form-select"
 									value={selectedDependentId}
 									onChange={(e) => setSelectedDependentId(e.target.value)}
 									disabled={dependentsLoading}
 								>
-									<option value="">{user?.nome || 'Paciente'}</option>
+									<option value="">{user?.nome || 'Utente'}</option>
 									{(dependents || []).map((d) => (
 										<option key={d.id_dependente} value={String(d.id_dependente)}>
 											{d.nome} (Dependente)

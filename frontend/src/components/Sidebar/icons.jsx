@@ -1,7 +1,7 @@
 import React from 'react'
 
-export const menuItems = [
-  {
+const menuItems = [
+	{
     label: 'Painel',
     icon: (
       <svg className="sidebar-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M3 13h8V3H3v10zM13 21h8v-6h-8v6zM13 3v6h8V3h-8zM3 21h8v-8H3v8z" fill="currentColor"/></svg>
@@ -26,7 +26,7 @@ export const menuItems = [
     )
   },
   {
-    label: 'Pacientes',
+    label: 'Utentes',
     path: '/pacientes',
     icon: (
       <svg className="sidebar-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><circle cx="8.5" cy="8" r="2.2" fill="currentColor"/><path d="M3 20c0-2.2 2.7-4 5.5-4s5.5 1.8 5.5 4" stroke="currentColor" strokeWidth="1.2" fill="none"/><circle cx="17" cy="9" r="1.8" fill="currentColor"/><path d="M13.5 20c0-1.6 1.8-3 4-3s4 1.4 4 3" stroke="currentColor" strokeWidth="1.2" fill="none"/></svg>

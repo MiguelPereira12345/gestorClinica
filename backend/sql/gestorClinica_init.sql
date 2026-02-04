@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS utilizador (
   nome            VARCHAR(255) NOT NULL,
   email           VARCHAR(255) NOT NULL UNIQUE,
   telefone        VARCHAR(50)  NOT NULL UNIQUE,
-  tipo            VARCHAR(20)  NOT NULL DEFAULT 'user' CHECK (tipo IN ('admin','secretaria','medico','user')),
+  tipo            VARCHAR(20)  NOT NULL DEFAULT 'user' CHECK (tipo IN ('admin','medico','user')),
   ativo           BOOLEAN      NOT NULL DEFAULT TRUE,
   data_inscricao  TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
   senha           VARCHAR(255) NOT NULL,
@@ -102,7 +102,7 @@ CREATE INDEX IF NOT EXISTS idx_historico_paciente ON historico_medico (id);
 -- Migrações idempotentes (para BD existentes)
 -- =========================================
 
--- Garantir que utilizador.tipo permite: admin, secretaria, medico, user
+-- Garantir que utilizador.tipo permite: admin, medico, user
 DO $$
 DECLARE
   c RECORD;
@@ -122,7 +122,7 @@ BEGIN
 
     ALTER TABLE utilizador
       ADD CONSTRAINT utilizador_tipo_check
-      CHECK (tipo IN ('admin','secretaria','medico','user'));
+      CHECK (tipo IN ('admin','medico','user'));
   END IF;
 END $$;
 

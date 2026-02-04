@@ -5,9 +5,8 @@ const STORAGE_KEY = 'gestorClinica.colaboradores'
 
 function cargoLabelFromKey(key) {
 	const v = String(key || '').trim().toLowerCase()
-	if (v === 'admin') return 'Admin'
-	if (v === 'medico' || v === 'médico') return 'Médico'
-	if (v === 'secretaria' || v === 'recepcionista') return 'Secretaria'
+	if (v === 'admin') return 'Secretário/a'
+	if (v === 'medico' || v === 'médico') return 'Médico/a'
 	return ''
 }
 
@@ -34,8 +33,15 @@ export function listColaboradores({ filters = {}, page = 1, pageSize = 10 }) {
 	if (filters.name) {
 		filtered = filtered.filter(c => c.name.toLowerCase().includes(filters.name.toLowerCase()))
 	}
-	if (filters.cargo) {
-		filtered = filtered.filter(c => c.cargo.toLowerCase().includes(filters.cargo.toLowerCase()))
+	{
+		const roleFilter = String(filters.specialty || filters.cargo || '').trim().toLowerCase()
+		if (roleFilter) {
+			filtered = filtered.filter((c) => {
+				const tipo = String(c?.tipo || '').trim().toLowerCase()
+				const cargo = String(c?.cargo || '').trim().toLowerCase()
+				return (tipo && tipo === roleFilter) || (cargo && cargo.includes(roleFilter))
+			})
+		}
 	}
 	if (filters.status) {
 		filtered = filtered.filter(c => c.status === filters.status)
@@ -108,20 +114,27 @@ export async function createColaboradorApi(payload = {}) {
 	const email = String(payload?.email || '').trim().toLowerCase()
 	const telefone = String(payload?.phone || '').trim()
 	const cargo = String(payload?.cargo || '').trim().toLowerCase()
+	const omdRaw = payload?.omd !== undefined ? String(payload.omd || '').trim() : ''
 	const senha = String(payload?.password || '').trim()
 	if (!nome) throw new Error('Nome em falta')
 	if (!email) throw new Error('Email em falta')
 	if (!telefone) throw new Error('Telefone em falta')
 	if (!cargo) throw new Error('Cargo em falta')
+	if (cargo === 'medico' || cargo === 'médico') {
+		if (!omdRaw) throw new Error('OMD em falta')
+		if (!/^\d{5}$/.test(omdRaw)) throw new Error('OMD inválido (tem de ter 5 números)')
+	}
 	if (!senha) throw new Error('Password em falta')
 	if (senha.length < 6) throw new Error('A password deve ter pelo menos 6 caracteres')
 
 	const ativo = String(payload?.status || '').toLowerCase() !== 'inativo'
 
+	const omd = (cargo === 'medico' || cargo === 'médico') ? omdRaw : undefined
+
 	const res = await apiFetch('/gestores', {
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json' },
-		body: JSON.stringify({ nome, email, telefone, senha, tipo: cargo, ativo }),
+		body: JSON.stringify({ nome, email, telefone, senha, tipo: cargo, ativo, omd }),
 	})
 
 	try {
@@ -141,11 +154,17 @@ export async function updateColaboradorApi(id, payload = {}) {
 	const ativo = payload?.status !== undefined ? String(payload?.status || '').toLowerCase() !== 'inativo' : undefined
 	const tipo = payload?.cargo !== undefined ? String(payload?.cargo || '').trim().toLowerCase() : undefined
 	const senha = payload?.password ? String(payload.password).trim() : undefined
+	const omdRaw = payload?.omd !== undefined ? String(payload.omd || '').trim() : undefined
+	if (tipo === 'medico' || tipo === 'médico') {
+		if (!omdRaw) throw new Error('OMD em falta')
+		if (!/^\d{5}$/.test(omdRaw)) throw new Error('OMD inválido (tem de ter 5 números)')
+	}
+	const omd = omdRaw === undefined ? undefined : omdRaw
 
 	const res = await apiFetch(`/gestores/${encodeURIComponent(String(id))}`, {
 		method: 'PATCH',
 		headers: { 'Content-Type': 'application/json' },
-		body: JSON.stringify({ nome, email, telefone, ativo, tipo, senha }),
+		body: JSON.stringify({ nome, email, telefone, ativo, tipo, senha, omd }),
 	})
 
 	try {

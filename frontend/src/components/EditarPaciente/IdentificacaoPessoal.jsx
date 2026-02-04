@@ -5,7 +5,7 @@ export default function IdentificacaoPessoal({ form, updateField, disabled = fal
 	return (
 		<details className="ui-card p-3 patient-details" open>
 			<summary className="fw-bold" style={{ color: 'rgba(30, 42, 53, 0.92)' }}>
-				Registo dos Pacientes — Identificação Pessoal
+				Registo dos Utentes — Identificação Pessoal
 			</summary>
 			<div className="row g-3 mt-2">
 				<div className="col-12 col-md-6">

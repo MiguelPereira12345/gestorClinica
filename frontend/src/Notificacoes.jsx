@@ -19,7 +19,7 @@ export default function Notificacoes() {
 	const [loading, setLoading] = useState(true)
 	const [rows, setRows] = useState([])
 	const [error, setError] = useState('')
-	const [showRead, setShowRead] = useState(false)
+	// const [showRead, setShowRead] = useState(false)
 	const [contactsByPatientId, setContactsByPatientId] = useState(() => ({}))
 	const [loadingContacts, setLoadingContacts] = useState(() => ({}))
 
@@ -27,7 +27,7 @@ export default function Notificacoes() {
 		setLoading(true)
 		setError('')
 		try {
-			const res = await apiFetch('/notifications')
+			const res = await apiFetch('/notifications?unreadOnly=true')
 			setRows(Array.isArray(res?.notifications) ? res.notifications : [])
 		} catch (e) {
 			setError(e?.message || 'Erro ao carregar notificações')
@@ -55,12 +55,10 @@ export default function Notificacoes() {
 			return { ...n, _meta: meta }
 		})
 
-		const filtered = showRead ? parsed : parsed.filter((n) => !n.read_at)
-
 		// Dedup pedidos de consulta pelo consultaId (mantém o mais recente)
 		const seen = new Set()
 		const deduped = []
-		for (const n of filtered) {
+		for (const n of parsed) {
 			const meta = n?._meta
 			const isRequest = n?.type === 'consulta_request' && meta?.consultaId
 			if (!isRequest) {
@@ -74,7 +72,7 @@ export default function Notificacoes() {
 			deduped.push(n)
 		}
 		return deduped
-	}, [rows, showRead])
+	}, [rows])
 
 	useEffect(() => {
 		const patientIds = new Set()
@@ -107,19 +105,21 @@ export default function Notificacoes() {
 
 	async function approve(consultaId) {
 		try {
-			await apiFetch(`/consultas/${consultaId}/aprovar`, { method: 'PATCH' })
-			await load()
+			if (consultaId == null || String(consultaId).trim() === '') throw new Error('consultaId inválido')
+			await apiFetch(`/consultas/${encodeURIComponent(String(consultaId))}/aprovar`, { method: 'PATCH' })
 		} catch (e) {
 			window.alert(e?.message ? `${e.message}${e.status ? ` (HTTP ${e.status})` : ''}` : 'Erro ao aprovar')
+			throw e
 		}
 	}
 
 	async function reject(consultaId) {
 		try {
-			await apiFetch(`/consultas/${consultaId}/rejeitar`, { method: 'PATCH' })
-			await load()
+			if (consultaId == null || String(consultaId).trim() === '') throw new Error('consultaId inválido')
+			await apiFetch(`/consultas/${encodeURIComponent(String(consultaId))}/rejeitar`, { method: 'PATCH' })
 		} catch (e) {
 			window.alert(e?.message ? `${e.message}${e.status ? ` (HTTP ${e.status})` : ''}` : 'Erro ao eliminar')
+			throw e
 		}
 	}
 
@@ -131,8 +131,8 @@ export default function Notificacoes() {
 					subtitle={null}
 					actions={
 						<div className="d-flex align-items-center gap-2">
-							<button type="button" className="btn btn-light" onClick={() => setShowRead((v) => !v)}>
-								{showRead ? 'Ocultar lidas' : 'Mostrar lidas'}
+							<button type="button" className="btn btn-light" onClick={() => setRows([])}>
+								Limpar
 							</button>
 							<button type="button" className="btn btn-light" onClick={load}>
 								Atualizar
@@ -164,7 +164,7 @@ export default function Notificacoes() {
 										</div>
 										{isRequest ? (
 											<div className="mt-2">
-												<div className="small"><span className="text-muted">Paciente:</span> {meta.patientName || meta.patientId || '-'}</div>
+												<div className="small"><span className="text-muted">Utente:</span> {meta.patientName || meta.patientId || '-'}</div>
 												<div className="small"><span className="text-muted">Contacto:</span> {isContactLoading ? 'a carregar…' : contact ? [contact.telefone, contact.email].filter(Boolean).join(' • ') || '-' : '-'}</div>
 												<div className="small"><span className="text-muted">Data/hora:</span> {meta.requestedAt ? new Date(meta.requestedAt).toLocaleString() : '-'}</div>
 												{meta.reason ? <div className="small"><span className="text-muted">Motivo:</span> {meta.reason}</div> : null}
@@ -197,10 +197,10 @@ export default function Notificacoes() {
 														await markRead(n.id_notification)
 														navigate(`/pacientes/${patientId}`)
 													}}
-														title="Ver paciente"
+														title="Ver utente"
 													>
 														<Eye size={14} aria-hidden="true" />
-														Ver paciente
+														Ver utente
 													</button>
 												) : null}
 												<button
@@ -209,7 +209,7 @@ export default function Notificacoes() {
 													onClick={async () => {
 														await approve(meta.consultaId)
 														await markRead(n.id_notification)
-														await load()
+														setRows((prev) => (prev || []).filter((r) => r.id_notification !== n.id_notification))
 													}}
 													title="Aprovar"
 												>
@@ -222,7 +222,7 @@ export default function Notificacoes() {
 													onClick={async () => {
 														await reject(meta.consultaId)
 														await markRead(n.id_notification)
-														await load()
+														setRows((prev) => (prev || []).filter((r) => r.id_notification !== n.id_notification))
 													}}
 													title="Eliminar"
 												>

@@ -100,7 +100,7 @@ export default function PacienteVerPlano() {
 								) : (
 									<div className="row g-2 align-items-baseline py-2 border-top">
 										<div className="col-5 col-md-4"><div className="ui-meta">Para</div></div>
-										<div className="col"><div className="fw-semibold">Paciente</div></div>
+										<div className="col"><div className="fw-semibold">Utente</div></div>
 									</div>
 								)}
 

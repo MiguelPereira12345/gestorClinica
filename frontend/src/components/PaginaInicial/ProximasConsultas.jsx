@@ -51,7 +51,7 @@ export default function ProximasConsultas({ appointments }) {
 						role="listitem"
 					>
 						<div className="min-w-0">
-							<div className="fw-bold" style={{ color: '#2f2f2f', fontSize: 13 }}>{a.paciente}</div>
+							<div className="fw-bold" style={{ color: '#2f2f2f', fontSize: 13 }}>{a.utente}</div>
 							<div className="small" style={{ color: '#7a7a7a' }}>
 								{a.inicio}–{a.fim} • {a.medico} • {a.tipo}
 							</div>

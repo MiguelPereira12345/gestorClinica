@@ -98,7 +98,7 @@ export default function AdicionarPaciente() {
 		try {
 			const created = await createPacienteApi({ form })
 			const createdId = created?.id != null ? String(created.id) : ''
-			if (!createdId) throw new Error('Resposta inválida do servidor ao criar paciente')
+			if (!createdId) throw new Error('Resposta inválida do servidor ao criar utente')
 
 			// Upload de anexos clínicos (se existirem). Nota: requer permissões no backend.
 			if (files.length) {
@@ -125,17 +125,17 @@ export default function AdicionarPaciente() {
 			navigate(`/pacientes/${createdId}`)
 		} catch (e) {
 			console.error(e)
-			alert(e?.message || 'Erro ao criar paciente')
+			alert(e?.message || 'Erro ao criar utente')
 		} finally {
 			setSaving(false)
 		}
 	}
 
 	return (
-		<AppLayout breadcrumb="Pacientes / Adicionar" userName="Dra. Sofia Lima">
+		<AppLayout breadcrumb="Utentes / Adicionar" userName="Dra. Sofia Lima">
 			<div className="ui-page">
 				<PageHeader
-					title="Adicionar paciente"
+					title="Adicionar utente"
 					actions={
 						<>
 							<button type="button" className="btn btn-secondary" onClick={() => navigate('/pacientes')}>
@@ -154,7 +154,7 @@ export default function AdicionarPaciente() {
 							className="fw-bold"
 							style={{ color: 'rgba(30, 42, 53, 0.92)' }}
 						>
-							Registo dos Pacientes — Identificação Pessoal
+							Registo dos Utentes — Identificação Pessoal
 						</summary>
 						<div className="row g-3 mt-2">
 							<div className="col-12 col-md-6">

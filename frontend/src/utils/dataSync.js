@@ -311,9 +311,8 @@ export async function syncColaboradoresFromApi() {
 	const gestores = Array.isArray(data?.gestores) ? data.gestores : []
 	const cargoLabel = (tipo) => {
 		const v = String(tipo || '').trim().toLowerCase()
-		if (v === 'admin') return 'Admin'
-		if (v === 'medico' || v === 'médico') return 'Médico'
-		if (v === 'secretaria' || v === 'recepcionista') return 'Secretaria'
+		if (v === 'admin') return 'Secretário/a'
+		if (v === 'medico' || v === 'médico') return 'Médico/a'
 		return 'Colaborador'
 	}
 	const mapped = gestores.map((g) => ({
@@ -321,6 +320,7 @@ export async function syncColaboradoresFromApi() {
 		name: g.nome,
 		email: g.email,
 		phone: g.telefone || '',
+		omd: g.omd || '',
 		tipo: String(g.tipo || '').trim().toLowerCase(),
 		cargo: cargoLabel(g.tipo),
 		status: g.ativo ? 'ativo' : 'inativo',

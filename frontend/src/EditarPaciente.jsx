@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react'
 import './App.css'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import AppLayout from './components/Layout/AppLayout'
 import PageHeader from './components/UI/PageHeader'
 import IdentificacaoPessoal from './components/EditarPaciente/IdentificacaoPessoal'
@@ -28,9 +28,12 @@ import { isValidName, isValidNif, isValidNumeroUtente, isValidPhone, sanitizeDig
 import { syncPatientsFromApi } from './utils/dataSync'
 
 export default function EditarPaciente() {
+	const location = useLocation()
 	const navigate = useNavigate()
 	const { id } = useParams()
 	const patient = useMemo(() => (id ? getPatientById(id) : null), [id])
+	const isDependent = useMemo(() => (patient ? isDependentPatientId(patient.id) : false), [patient])
+	const dependentId = useMemo(() => (isDependent && patient ? dependentNumericId(patient.id) : null), [isDependent, patient])
 
 	const [saving, setSaving] = useState(false)
 	const [files, setFiles] = useState(() => {
@@ -38,6 +41,14 @@ export default function EditarPaciente() {
 		return Array.isArray(initial) ? initial.map((n) => ({ name: n })) : []
 	})
 	const [form, setForm] = useState(() => patientToForm(patient))
+
+	React.useEffect(() => {
+		if (location?.hash !== '#docs') return
+		// Aguarda pelo layout do formulário
+		setTimeout(() => {
+			document.getElementById('docs')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+		}, 0)
+	}, [location?.hash])
 
 	function updateField(name, value) {
 		setForm((prev) => ({ ...prev, [name]: value }))
@@ -131,7 +142,7 @@ export default function EditarPaciente() {
 			navigate(`/pacientes/${patient.id}`)
 		} catch (e) {
 			console.error(e)
-			alert(e?.message || 'Erro ao guardar paciente')
+			alert(e?.message || 'Erro ao guardar utente')
 		} finally {
 			setSaving(false)
 		}
@@ -139,14 +150,14 @@ export default function EditarPaciente() {
 
 	if (!patient) {
 		return (
-			<AppLayout breadcrumb="Pacientes / Editar" userName="Dra. Sofia Lima">
+			<AppLayout breadcrumb="Utentes / Editar" userName="Dra. Sofia Lima">
 				<div className="ui-page">
 					<div className="ui-card p-3">
 						<h2 className="m-0" style={{ fontSize: 18, fontWeight: 800 }}>
-							Paciente não encontrado
+							Utente não encontrado
 						</h2>
 						<p className="mt-2 mb-3" style={{ color: 'rgba(122,130,138,0.95)' }}>
-							Este paciente ainda não existe no registo local.
+							Este utente ainda não existe no registo local.
 						</p>
 						<button className="btn btn-primary" type="button" onClick={() => navigate('/pacientes')}>
 							Voltar à lista
@@ -158,10 +169,10 @@ export default function EditarPaciente() {
 	}
 
 	return (
-		<AppLayout breadcrumb={`Pacientes / ${patient.nome} / Editar`} userName="Dra. Sofia Lima">
+		<AppLayout breadcrumb={`Utentes / ${patient.nome} / Editar`} userName="Dra. Sofia Lima">
 			<div className="ui-page">
 				<PageHeader
-					title="Editar paciente"
+					title="Editar utente"
 					subtitle={`${patient.nome} • ${patient.id}`}
 					actions={
 						<>
@@ -186,7 +197,15 @@ export default function EditarPaciente() {
 
 					<TratamentosResultados form={form} updateField={updateField} />
 
-					<AnexarExames files={files} onPickFiles={onPickFiles} />
+					<div id="docs">
+						<AnexarExames
+							files={files}
+							onPickFiles={onPickFiles}
+							autoOpen={location?.hash === '#docs'}
+							patientId={!isDependent ? patient.id : null}
+							dependentId={isDependent ? dependentId : null}
+						/>
+					</div>
 
 					<ObservacoesAdicionais form={form} updateField={updateField} />
 				</form>

@@ -21,7 +21,7 @@ function requireStaffOrSelf(paramName) {
       .normalize('NFD')
       .replace(/\p{Diacritic}/gu, '');
 
-    if (role === 'admin' || role === 'medico' || role === 'secretaria') return next();
+    if (role === 'admin' || role === 'medico') return next();
 
     const id = req.user?.id;
     const target = req.params?.[paramName];

@@ -147,7 +147,7 @@ exports.login_admin = async (req, res) => {
             emailNorm
           ),
         ],
-        tipo: { [Op.in]: ['admin', 'secretaria', 'medico'] },
+        tipo: { [Op.in]: ['admin', 'medico'] },
         ativo: true,
       },
     });

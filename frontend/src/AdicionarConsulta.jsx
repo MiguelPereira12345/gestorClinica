@@ -200,7 +200,7 @@ export default function AdicionarConsulta() {
 	}
 
 	function validate() {
-		if (!selectedPatient) return 'Seleciona um paciente.'
+		if (!selectedPatient) return 'Seleciona um utente.'
 		if (!selectedSlot) return 'Escolhe um horário (1 clique na lista).'
 		return ''
 	}
@@ -229,7 +229,7 @@ export default function AdicionarConsulta() {
 		const confirmText = [
 			'Confirmar marcação?',
 			'',
-			`Paciente: ${selectedPatient.nome} (${selectedPatient.id})`,
+			`Utente: ${selectedPatient.nome} (${selectedPatient.id})`,
 			`Motivo: ${selectedType.label} (${durationMin} min)`,
 			firstVisitReason ? `Razão: ${firstVisitReason}` : null,
 			`Quando: ${formatSlotLabel(selectedSlot.date, selectedSlot.hhmm)}`,
@@ -358,7 +358,7 @@ export default function AdicionarConsulta() {
 									<h5 className="card-title mb-3">Marcar consulta</h5>
 
 									<div className="mb-3">
-										<label className="form-label" htmlFor="patient-search">Paciente</label>
+										<label className="form-label" htmlFor="patient-search">Utente</label>
 										<div className="d-flex gap-2 align-items-start">
 										<div className="position-relative flex-grow-1">
 											<input
@@ -505,9 +505,9 @@ export default function AdicionarConsulta() {
 											Marcar consulta
 										</button>
 										<div className="text-muted small d-flex flex-wrap gap-2 mt-2">
-											<span>/ pesquisar paciente</span>
+											<span>/ pesquisar utente</span>
 											<span>Ctrl+Enter marcar</span>
-											<span>Alt+N novo paciente</span>
+											<span>Alt+N novo utente</span>
 										</div>
 									</div>
 								</div>

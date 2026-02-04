@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom'
 export default function Formulario({
   date = '22/10/26',
   patientId = '123',
-  info = 'Paciente compareceu para consulta de...',
+  info = 'Utente compareceu para consulta de...',
   professional = 'Dra. Sílvia Coimbra',
 }) {
   const navigate = useNavigate()
@@ -14,7 +14,7 @@ export default function Formulario({
         <label>Data da consulta:</label>
         <input type="text" placeholder={date} readOnly />
 
-        <label>ID do paciente:</label>
+        <label>ID do utente:</label>
         <input type="text" placeholder={patientId} />
 
         <label>Informação:</label>

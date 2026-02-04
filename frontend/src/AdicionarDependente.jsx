@@ -142,14 +142,14 @@ export default function AdicionarDependente() {
 
 	if (!responsavelId || !responsavel) {
 		return (
-			<AppLayout breadcrumb="Pacientes / Dependente" userName="Dra. Sofia Lima">
+			<AppLayout breadcrumb="Utentes / Dependente" userName="Dra. Sofia Lima">
 				<div className="ui-page">
 					<div className="ui-card p-3">
 						<h2 className="m-0" style={{ fontSize: 18, fontWeight: 800 }}>
 							Responsável não encontrado
 						</h2>
 						<p className="mt-2 mb-3" style={{ color: 'rgba(122,130,138,0.95)' }}>
-							Abre um paciente existente e usa “+ Dependente”.
+							Abre um utente existente e usa “+ Dependente”.
 						</p>
 						<button className="btn btn-primary" type="button" onClick={() => navigate('/pacientes')}>
 							Voltar à lista
@@ -161,7 +161,7 @@ export default function AdicionarDependente() {
 	}
 
 	return (
-		<AppLayout breadcrumb={`Pacientes / ${responsavel.nome} / Adicionar dependente`} userName="Dra. Sofia Lima">
+		<AppLayout breadcrumb={`Utentes / ${responsavel.nome} / Adicionar dependente`} userName="Dra. Sofia Lima">
 			<div className="ui-page">
 				<PageHeader
 					title="Adicionar dependente"
@@ -181,7 +181,7 @@ export default function AdicionarDependente() {
 				<form id="add-dependent-form" className="d-grid gap-3" onSubmit={onSubmit}>
 					<details className="ui-card p-3 patient-details" open>
 						<summary className="fw-bold" style={{ color: 'rgba(30, 42, 53, 0.92)' }}>
-							Registo dos Pacientes — Identificação Pessoal
+							Registo dos Utentes — Identificação Pessoal
 						</summary>
 						<div className="row g-3 mt-2">
 							<div className="col-12 col-md-6">

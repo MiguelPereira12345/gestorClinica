@@ -129,7 +129,7 @@ export default function Agenda() {
 
     const toCalendar = (a) => ({
       id: a.id,
-      paciente_nome: a.patientName || a.patientId || 'Paciente',
+        utente_nome: a.patientName || a.patientId || 'Utente',
       medico_id: Number(a.medicoId),
       data_inicio: a.startISO,
       data_fim: a.endISO,
@@ -427,7 +427,7 @@ export default function Agenda() {
 
               <div className="ui-card p-3">
                 <div className="fw-bold">Dica</div>
-                <div className="ui-meta mt-2">Passe o rato sobre um bloco para ver paciente, tempo de consulta, tipo e estado.</div>
+                <div className="ui-meta mt-2">Passe o rato sobre um bloco para ver utente, tempo de consulta, tipo e estado.</div>
           </div>
             </div>
           </aside>

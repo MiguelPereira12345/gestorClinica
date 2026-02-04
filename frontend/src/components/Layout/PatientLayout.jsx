@@ -37,14 +37,14 @@ export default function PatientLayout({ title = '', subtitle = '', children }) {
 				<div className="container py-3 d-flex align-items-center justify-content-between gap-3 flex-wrap">
 					<div>
 						<div className="fw-bold" style={{ fontSize: 16 }}>
-							{title || 'Portal do Paciente'}
+							{title || 'Portal do Utente'}
 						</div>
 						{subtitle ? <div className="text-muted" style={{ fontSize: 13 }}>{subtitle}</div> : null}
 					</div>
 
 					<div className="d-flex align-items-center gap-2">
 						<div className="text-muted" style={{ fontSize: 13 }}>
-							{user?.nome || user?.email || 'Paciente'}
+							{user?.nome || user?.email || 'Utente'}
 						</div>
 						<button type="button" className="btn btn-outline-secondary btn-sm" onClick={logout}>
 							Sair

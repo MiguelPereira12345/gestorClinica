@@ -145,7 +145,7 @@ export default function PlanosTratamento() {
 	function submitForm() {
 		setError('')
 		if (!String(selectedPatientId || '').trim()) {
-			setError('Seleciona um paciente.')
+			setError('Seleciona um utente.')
 			return
 		}
 		if (!String(form.nome || '').trim()) {
@@ -228,7 +228,7 @@ export default function PlanosTratamento() {
 			<div className="ui-page">
 				<PageHeader
 					title="Tratamentos"
-					subtitle={selectedPatient ? `${selectedPatient.nome} • ${selectedPatient.id}` : 'Selecione um paciente para ver/criar planos'}
+					subtitle={selectedPatient ? `${selectedPatient.nome} • ${selectedPatient.id}` : 'Selecione um utente para ver/criar planos'}
 					actions={
 						<>
 							<Button
@@ -243,10 +243,10 @@ export default function PlanosTratamento() {
 					}
 				/>
 
-				<section className="ui-card p-3 mb-3" aria-label="Selecionar paciente">
+				<section className="ui-card p-3 mb-3" aria-label="Selecionar utente">
 					<div className="row g-3 align-items-end">
 						<div className="col-12 col-md-8">
-							<label className="form-label">Paciente</label>
+							<label className="form-label">Utente</label>
 							{isPatientLocked ? (
 								<input
 									type="text"
@@ -278,11 +278,11 @@ export default function PlanosTratamento() {
 						<div className="col-12 col-md-4 d-flex justify-content-md-end gap-2">
 							{isPatientLocked ? (
 								<Button variant="light" onClick={() => navigate(`/pacientes/${encodeURIComponent(String(lockedPatientId))}`)}>
-									Voltar ao paciente
+									Voltar ao utente
 								</Button>
 							) : (
 								<Button variant="light" onClick={() => navigate('/pacientes')}>
-									Ver pacientes
+									Ver utentes
 								</Button>
 							)}
 						</div>
@@ -506,7 +506,7 @@ export default function PlanosTratamento() {
 								{!plans.length ? (
 									<tr>
 										<td colSpan={6} className="text-muted" style={{ padding: 16 }}>
-											{selectedPatientId ? 'Sem planos registados.' : 'Seleciona um paciente para ver os planos.'}
+											{selectedPatientId ? 'Sem planos registados.' : 'Seleciona um utente para ver os planos.'}
 										</td>
 									</tr>
 								) : null}

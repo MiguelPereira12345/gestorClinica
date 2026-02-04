@@ -65,7 +65,7 @@ function ContactosPage() {
 						<div>
 							<h1 className="display-6 mb-2">Contactos</h1>
 							<p className="muted mb-0">
-								Fale connosco para marcações, dúvidas sobre tratamentos ou apoio ao paciente.
+								Fale connosco para marcações, dúvidas sobre tratamentos ou apoio ao utente.
 							</p>
 						</div>
 

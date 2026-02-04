@@ -32,7 +32,7 @@ export default function Login() {
 				return { response, data }
 			}
 
-			// 1) Tenta como colaborador (admin/secretaria/médico)
+			// 1) Tenta como colaborador (admin/médico)
 			let out = await tryLogin('/auth/admin/login')
 			if (out.response.ok) {
 				localStorage.setItem('auth_user', JSON.stringify(out.data))
@@ -85,7 +85,7 @@ export default function Login() {
 							/>
 
 							<p className="mt-4 mb-0 text-muted fw-semibold" style={{ fontSize: 15, lineHeight: 1.45 }}>
-								Aceda ao sistema clínico para gerir Horários, Consultas, Pacientes e Faturação.
+								Aceda ao sistema clínico para gerir Horários, Consultas, Utentes e Faturação.
 							</p>
 						</div>
 					</section>

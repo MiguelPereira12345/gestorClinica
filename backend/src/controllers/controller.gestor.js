@@ -13,8 +13,15 @@ function normalizeStaffRole(input) {
   if (!v) return null;
   if (v === 'admin') return 'admin';
   if (v === 'medico' || v === 'médico') return 'medico';
-  if (v === 'secretaria' || v === 'recepcionista' || v === 'recepcionista(a)' || v === 'receção' || v === 'rececao') return 'secretaria';
   return null;
+}
+
+function normalizeOmd(input) {
+  const raw = input == null ? '' : String(input);
+  const digits = raw.replace(/\D/g, '');
+  if (!digits) return null;
+  if (/^\d{5}$/.test(digits)) return digits;
+  return '__invalid__';
 }
 
 controller.criar_gestor = async (req, res) => {
@@ -26,6 +33,7 @@ controller.criar_gestor = async (req, res) => {
       senha,
       tipo,
       cargo,
+      omd,
       ativo,
       sexo,
       endereco,
@@ -44,9 +52,19 @@ controller.criar_gestor = async (req, res) => {
     const wantedRole = normalizeStaffRole(tipo || cargo);
     if (!wantedRole) {
       return res.status(400).json({
-        message: 'Cargo/tipo inválido. Use: admin, secretaria ou medico',
+        message: 'Cargo/tipo inválido. Use: admin ou medico',
         received: { tipo, cargo },
       });
+    }
+
+    let normalizedOmd = null;
+    if (wantedRole === 'medico') {
+      normalizedOmd = normalizeOmd(omd);
+      if (normalizedOmd === null || normalizedOmd === '__invalid__') {
+        return res.status(400).json({
+          message: 'OMD inválido (tem de ter exatamente 5 números)',
+        });
+      }
     }
 
     console.log('[gestores] criar_gestor role:', { tipo, cargo, wantedRole });
@@ -78,6 +96,7 @@ controller.criar_gestor = async (req, res) => {
       senha: hashedPassword,
       tipo: wantedRole,
       ativo: typeof ativo === 'boolean' ? ativo : true,
+      omd: wantedRole === 'medico' ? normalizedOmd : null,
       sexo,
       endereco,
       nif,
@@ -92,6 +111,7 @@ controller.criar_gestor = async (req, res) => {
         nome: novoGestor.nome,
         email: novoGestor.email,
         telefone: novoGestor.telefone,
+        omd: novoGestor.omd,
         tipo: novoGestor.tipo,
         ativo: novoGestor.ativo
       }
@@ -109,10 +129,10 @@ controller.get_gestores = async (req, res) => {
   try {
     const gestores = await User.findAll({
       where: { 
-        tipo: ['admin', 'secretaria', 'medico'],
+        tipo: ['admin', 'medico'],
         ativo: true
       },
-      attributes: ['id', 'nome', 'email', 'telefone', 'tipo', 'ativo', 'data_inscricao'],
+      attributes: ['id', 'nome', 'email', 'telefone', 'omd', 'tipo', 'ativo', 'data_inscricao'],
       order: [['id', 'ASC']]
     });
 
@@ -137,10 +157,10 @@ controller.get_gestor = async (req, res) => {
     const gestor = await User.findOne({
       where: { 
         id,
-        tipo: ['admin', 'secretaria', 'medico'],
+        tipo: ['admin', 'medico'],
         ativo: true
       },
-      attributes: ['id', 'nome', 'email', 'telefone', 'tipo', 'ativo', 'sexo', 'endereco', 'nif', 'data_nascimento', 'numero_utente', 'data_inscricao']
+      attributes: ['id', 'nome', 'email', 'telefone', 'omd', 'tipo', 'ativo', 'sexo', 'endereco', 'nif', 'data_nascimento', 'numero_utente', 'data_inscricao']
     });
 
     if (!gestor) {
@@ -165,12 +185,12 @@ controller.get_gestor = async (req, res) => {
 controller.editar_gestor = async (req, res) => {
   try {
     const { id } = req.params;
-    const { nome, email, telefone, senha, sexo, endereco, nif, data_nascimento, numero_utente, tipo, cargo } = req.body;
+    const { nome, email, telefone, senha, sexo, endereco, nif, data_nascimento, numero_utente, tipo, cargo, omd } = req.body;
 
     const gestor = await User.findOne({
       where: { 
         id,
-        tipo: ['admin', 'secretaria', 'medico'],
+        tipo: ['admin', 'medico'],
         ativo: true
       }
     });
@@ -216,6 +236,22 @@ controller.editar_gestor = async (req, res) => {
     if (data_nascimento) gestor.data_nascimento = data_nascimento;
     if (numero_utente) gestor.numero_utente = numero_utente;
 
+    // OMD: opcional; só faz sentido para médicos
+    if (Object.prototype.hasOwnProperty.call(req.body, 'omd')) {
+      const isMedico = String(gestor.tipo || '').toLowerCase() === 'medico' || String(gestor.tipo || '').toLowerCase() === 'médico';
+      if (!isMedico) {
+        // ignora para outros cargos
+      } else {
+        const normalizedOmd = normalizeOmd(omd);
+        if (normalizedOmd === null || normalizedOmd === '__invalid__') {
+          return res.status(400).json({
+            message: 'OMD inválido (tem de ter exatamente 5 números)',
+          });
+        }
+        gestor.omd = normalizedOmd;
+      }
+    }
+
     await gestor.save();
 
     return res.status(200).json({ 
@@ -225,6 +261,7 @@ controller.editar_gestor = async (req, res) => {
         nome: gestor.nome,
         email: gestor.email,
         telefone: gestor.telefone,
+        omd: gestor.omd,
         tipo: gestor.tipo,
         ativo: gestor.ativo
       }
@@ -245,7 +282,7 @@ controller.deletar_gestor = async (req, res) => {
     const gestor = await User.findOne({
       where: { 
         id,
-        tipo: ['admin', 'secretaria', 'medico'],
+        tipo: ['admin', 'medico'],
         ativo: true
       }
     });

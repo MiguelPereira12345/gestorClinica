@@ -54,7 +54,7 @@ export default function PacientePlanos() {
 
 					{planosPaciente.length > 0 ? (
 						<div className="mt-3 ui-table-wrap">
-							<table className="table ui-table" aria-label="Tratamentos do paciente">
+							<table className="table ui-table" aria-label="Tratamentos do utente">
 								<thead>
 									<tr>
 										<th>ID</th>

@@ -2,14 +2,8 @@ import React, { useEffect, useMemo, useState } from 'react'
 import './App.css'
 import { useNavigate } from 'react-router-dom'
 import AppLayout from './components/Layout/AppLayout'
-import {
-	ClipboardList,
-	Eye,
-	Pencil,
-	Plus,
-	Search,
-	Trash2,
-} from 'lucide-react'
+import UtenteActionButtons from './components/Utentes/UtenteActionButtons'
+import { Plus, Search, Trash2 } from 'lucide-react'
 
 import Button from './components/UI/Button'
 import PageHeader from './components/UI/PageHeader'
@@ -81,7 +75,7 @@ export default function Pacientes() {
 
 	function ensurePatientExists(row) {
 		if (canOpenDetails(row.id)) return true
-		window.alert('Paciente não encontrado na base de dados/cache. Faça sync (login) ou crie um novo paciente.')
+		window.alert('Utente não encontrado na base de dados/cache. Faça sync (login) ou crie um novo utente.')
 		return false
 	}
 
@@ -107,14 +101,14 @@ export default function Pacientes() {
 	}
 
 	return (
-		<AppLayout breadcrumb="Pacientes" userName="Dra. Sofia Lima">
+		<AppLayout breadcrumb="Utentes" userName="Dra. Sofia Lima">
 			<div className="ui-page">
 				<PageHeader
-					title="Pacientes"
+					title="Utentes"
 					subtitle="Pesquisa rápida, estado e ações numa lista consistente."
 					actions={
 						<>
-							<div className="ui-search input-group" role="search" aria-label="Pesquisar pacientes">
+							<div className="ui-search input-group" role="search" aria-label="Pesquisar utentes">
 								<span className="input-group-text">
 									<Search size={16} aria-hidden="true" />
 								</span>
@@ -131,13 +125,13 @@ export default function Pacientes() {
 								leftIcon={<Plus size={16} aria-hidden="true" />}
 								onClick={() => navigate('/pacientes/novo')}
 							>
-								Adicionar paciente
+								Adicionar utente
 							</Button>
 						</>
 					}
 				/>
 
-				<section className="ui-card" aria-label="Lista de pacientes">
+				<section className="ui-card" aria-label="Lista de utentes">
 					<div className="ui-table-wrap">
 						<table className="table ui-table">
 							<thead>
@@ -156,61 +150,14 @@ export default function Pacientes() {
 										<td>{dependentsCountFor(r)}</td>
 										<td className="ui-actions-col">
 											<div className="ui-actions">
-												<button
-													type="button"
-													className="btn btn-light btn-sm"
-													onClick={() => {
-														if (!ensurePatientExists(r)) return
-														const baseId = r.responsavelId || r.id
-														navigate(`/pacientes/${baseId}/dependente/novo`)
-													}}
-													disabled={!!r.responsavelId}
-													title={r.responsavelId ? 'Adicionar dependentes no responsável' : 'Adicionar dependente'}
-												>
-													<Plus size={14} aria-hidden="true" />
-																	Dependente
-												</button>
-												<button
-													type="button"
-													className="btn btn-light btn-sm"
-													onClick={() => {
-														if (!ensurePatientExists(r)) return
-														navigate(`/pacientes/${r.id}`)
-													}}
-												>
-													<Eye size={14} aria-hidden="true" />
-													Ver
-												</button>
-												<button
-													type="button"
-													className="btn btn-light btn-sm"
-													onClick={() => {
-														if (!ensurePatientExists(r)) return
-														navigate(`/pacientes/${r.id}/planos`)
-													}}
-													title={r.responsavelId ? 'Ver planos do dependente' : 'Ver planos de tratamento'}
-												>
-													<ClipboardList size={14} aria-hidden="true" />
-													Planos
-												</button>
-												<button
-													type="button"
-													className="btn btn-light btn-sm"
-													onClick={() => {
-														if (!ensurePatientExists(r)) return
-														navigate(`/pacientes/${r.id}/editar`)
-													}}
-												>
-													<Pencil size={14} aria-hidden="true" />
-													Editar
-												</button>
+												<UtenteActionButtons patient={r} ensurePatientExists={ensurePatientExists} wrap={false} />
 												<button
 													type="button"
 													className="btn btn-light btn-sm"
 													onClick={() => {
 														if (!ensurePatientExists(r)) return
 														void (async () => {
-															const label = r.responsavelId ? 'dependente' : 'paciente'
+															const label = r.responsavelId ? 'dependente' : 'utente'
 															const ok = await confirm({
 																title: `Eliminar ${label}`,
 																message: `Deseja realmente eliminar este ${label}?\n\nEsta ação não pode ser desfeita.`,
@@ -229,17 +176,17 @@ export default function Pacientes() {
 																refreshStored()
 															} catch (e) {
 																console.error(e)
-																window.alert(e?.message || 'Erro ao eliminar paciente')
+																window.alert(e?.message || 'Erro ao eliminar utente')
 															}
-														})()
-													}}
+													})()
+												}}
 												>
 													<Trash2 size={14} aria-hidden="true" />
 													Eliminar
 												</button>
 											</div>
-									</td>
-								</tr>
+										</td>
+									</tr>
 								))}
 							</tbody>
 						</table>

@@ -1,12 +1,10 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, Download } from 'lucide-react'
+import { ArrowLeft } from 'lucide-react'
 import PatientAppLayout from './components/Layout/PatientAppLayout'
 import StatusBadge from './components/Consultas/StatusBadge'
 import { apiFetch, getCurrentUser } from './utils/apiClient'
-import { downloadClinicalFile, listConsultaFiles, openClinicalFileInNewTab } from './utils/clinicalFilesApi'
 import { formatDatePT, formatTimePT } from './utils/dateTime'
-import { downloadPresenceDeclarationByConsulta } from './utils/declarationsApi'
 
 function mapStatusFromApi(status) {
 	const s = String(status || '').trim().toLowerCase()
@@ -31,13 +29,6 @@ function buildStartISO(dateOnly, timeValue) {
 	return d.toISOString()
 }
 
-function buildStartDate(dateOnly, timeValue) {
-	if (!dateOnly || !timeValue) return null
-	const d = new Date(`${String(dateOnly).slice(0, 10)}T${hhmm(timeValue)}:00`)
-	if (Number.isNaN(d.getTime())) return null
-	return d
-}
-
 export default function PacienteVerConsulta() {
 	const user = getCurrentUser()
 	const navigate = useNavigate()
@@ -48,9 +39,6 @@ export default function PacienteVerConsulta() {
 	const [error, setError] = useState('')
 	const [dependents, setDependents] = useState([])
 
-	const [consultaFiles, setConsultaFiles] = useState([])
-	const [filesLoading, setFilesLoading] = useState(false)
-	const [filesError, setFilesError] = useState('')
 
 	useEffect(() => {
 		let mounted = true
@@ -106,37 +94,7 @@ export default function PacienteVerConsulta() {
 	}, [consulta?.dependente_nome, consulta?.id_dependente, dependentNameById, user?.nome])
 
 	const startISO = useMemo(() => buildStartISO(consulta?.data_consulta, consulta?.hora), [consulta?.data_consulta, consulta?.hora])
-	const startDate = useMemo(() => buildStartDate(consulta?.data_consulta, consulta?.hora), [consulta?.data_consulta, consulta?.hora])
-	const canDownloadPresenceDeclaration = useMemo(() => {
-		if (!startDate) return false
-		return Date.now() >= startDate.getTime()
-	}, [startDate])
 
-	const [declLoading, setDeclLoading] = useState(false)
-	const [declError, setDeclError] = useState('')
-
-	useEffect(() => {
-		let mounted = true
-		if (!consulta?.id_consulta) return
-		setFilesError('')
-		setFilesLoading(true)
-		;(async () => {
-			try {
-				const rows = await listConsultaFiles(consulta.id_consulta)
-				if (mounted) setConsultaFiles(rows)
-			} catch (e) {
-				if (mounted) {
-					setConsultaFiles([])
-					setFilesError(e?.message || 'Erro ao carregar anexos')
-				}
-			} finally {
-				if (mounted) setFilesLoading(false)
-			}
-		})()
-		return () => {
-			mounted = false
-		}
-	}, [consulta?.id_consulta])
 
 	return (
 		<PatientAppLayout breadcrumb="Portal / Consultas / Detalhes">
@@ -205,88 +163,6 @@ export default function PacienteVerConsulta() {
 						</div>
 
 						<div className="col-12 col-lg-5">
-							<section className="ui-card p-3" aria-label="Anexos">
-								<div className="fw-bold mb-1">Anexos</div>
-								<div className="ui-meta">Ficheiros associados à consulta</div>
-
-								{filesLoading ? <div className="form-text mt-2">A carregar anexos…</div> : null}
-								{filesError ? (
-									<div className="alert alert-warning mt-2 mb-0" role="alert">
-										{filesError}
-									</div>
-								) : null}
-
-								{!filesLoading && !filesError && consultaFiles.length === 0 ? (
-									<div className="form-text mt-2">Sem anexos.</div>
-								) : null}
-
-								{consultaFiles.length ? (
-									<div className="mt-2 ui-table-wrap">
-										<table className="table ui-table" aria-label="Anexos">
-											<thead>
-												<tr>
-													<th>Ficheiro</th>
-													<th className="ui-actions-col">Ações</th>
-												</tr>
-											</thead>
-											<tbody>
-												{consultaFiles.map((f) => (
-													<tr key={f.id_file}>
-														<td style={{ fontWeight: 700 }}>{f.file_name}</td>
-														<td className="ui-actions-col">
-															<button className="btn btn-light btn-sm" type="button" onClick={() => openClinicalFileInNewTab(f.id_file)}>
-																Abrir
-															</button>
-															<button className="btn btn-light btn-sm ms-2" type="button" onClick={() => downloadClinicalFile(f.id_file)}>
-																Download
-															</button>
-														</td>
-													</tr>
-												))}
-											</tbody>
-										</table>
-									</div>
-								) : null}
-							</section>
-
-							<section className="ui-card p-3 mt-3" aria-label="Declaração de presença">
-								<div className="d-flex align-items-start justify-content-between gap-2 flex-wrap mb-2">
-									<div>
-										<div className="fw-bold">Declaração de Presença</div>
-										<div className="ui-meta">Disponível após a hora da consulta</div>
-									</div>
-									<button
-										type="button"
-										className="btn btn-primary btn-sm"
-										disabled={!canDownloadPresenceDeclaration || declLoading}
-										onClick={async () => {
-											if (!consulta?.id_consulta) return
-											setDeclError('')
-											setDeclLoading(true)
-											try {
-												await downloadPresenceDeclarationByConsulta(consulta.id_consulta)
-											} catch (e) {
-												setDeclError(e?.message || 'Não foi possível descarregar a declaração')
-											} finally {
-											setDeclLoading(false)
-										}
-									}}
-									>
-										<Download size={16} aria-hidden="true" />
-										{declLoading ? 'A preparar…' : 'Download'}
-									</button>
-								</div>
-
-								{declError ? (
-									<div className="alert alert-warning mt-2 mb-0" role="alert">
-										{declError}
-									</div>
-								) : null}
-
-								{!canDownloadPresenceDeclaration ? (
-									<div className="form-text mt-2">A declaração fica disponível após a consulta.</div>
-								) : null}
-							</section>
 						</div>
 					</div>
 				) : null}

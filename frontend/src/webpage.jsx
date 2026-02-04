@@ -79,7 +79,7 @@ function Webpage() {
 				<div className="container py-5">
 					<div className="row align-items-center g-5">
 						<div className="col-12 col-lg-6">
-							<div className="hero-eyebrow mb-2">Portal do Paciente</div>
+							<div className="hero-eyebrow mb-2">Portal do Utente</div>
 							<h1 className="hero-title display-5 mb-3">
 								A SUA SAÚDE DENTÁRIA NA PALMA DA SUA MÃO
 							</h1>
@@ -102,7 +102,7 @@ function Webpage() {
 							<div className="rounded-4 overflow-hidden shadow-sm border">
 								<img
 									className="img-fluid"
-									alt="Médico dentista com paciente"
+									alt="Médico dentista com utente"
 									src="https://images.unsplash.com/photo-1588776814546-1ffcf47267a5?auto=format&fit=crop&w=1400&q=80"
 									loading="lazy"
 								/>

@@ -49,14 +49,14 @@ export default function VerPaciente() {
 
 	if (!patient) {
 		return (
-			<AppLayout breadcrumb="Pacientes / Ver" userName="Dra. Sofia Lima">
+			<AppLayout breadcrumb="Utentes / Ver" userName="Dra. Sofia Lima">
 				<div className="ui-page">
 					<div className="ui-card p-3">
 						<h2 className="m-0" style={{ fontSize: 18, fontWeight: 800 }}>
-							Paciente não encontrado
+							Utente não encontrado
 						</h2>
 						<p className="mt-2 mb-3" style={{ color: 'rgba(122,130,138,0.95)' }}>
-							Este paciente ainda não existe no registo local.
+							Este utente ainda não existe no registo local.
 						</p>
 						<button className="btn btn-primary" type="button" onClick={() => navigate('/pacientes')}>
 							Voltar à lista
@@ -68,10 +68,10 @@ export default function VerPaciente() {
 	}
 
 	return (
-		<AppLayout breadcrumb={`Pacientes / ${patient.nome}`} userName="Dra. Sofia Lima">
+		<AppLayout breadcrumb={`Utentes / ${patient.nome}`} userName="Dra. Sofia Lima">
 			<div className="ui-page">
 				<PageHeader
-					title="Ficha do paciente"
+					title="Ficha do utente"
 					subtitle={`${patient.nome} • ${patient.id}`}
 					actions={
 						<>
@@ -180,48 +180,6 @@ export default function VerPaciente() {
 					</section>
 				) : null}
 
-				<section className="ui-card p-3 mb-3" aria-label="Histórico médico geral">
-					<h2 className="m-0 mb-3" style={{ fontSize: 16, fontWeight: 900, color: 'rgba(30, 42, 53, 0.92)' }}>
-						Histórico Médico Geral
-					</h2>
-					<div className="row g-3">
-						<InfoField label="Condições pré-existentes" value={data.condicoesPreExistentes} />
-						<InfoField label="Medicamentos em uso" value={data.medicamentosEmUso} />
-						<InfoField label="Alergias conhecidas" value={data.alergiasConhecidas} />
-						<InfoField label="Histórico cirúrgico" value={data.historicoCirurgico} />
-						<InfoField label="Internações/tratamentos" value={data.internacoesTratamentos} />
-						<InfoField label="Gravidez (se aplicável)" value={data.gravidez} />
-					</div>
-				</section>
-
-				<section className="ui-card p-3 mb-3" aria-label="Histórico dentário">
-					<h2 className="m-0 mb-3" style={{ fontSize: 16, fontWeight: 900, color: 'rgba(30, 42, 53, 0.92)' }}>
-						Histórico Dentário
-					</h2>
-					<div className="row g-3">
-						<InfoField label="Motivo da consulta inicial" value={data.motivoConsultaInicial} />
-						<InfoField label="Condições dentárias" value={data.condicoesDentarias} />
-						<InfoField label="Tratamentos dentários passados" value={data.historicoTratamentosDentarios} />
-						<InfoField label="Experiência com anestesias" value={data.experienciaAnestesias} />
-						<InfoField label="Dor/desconforto/sensibilidade" value={data.historicoDorSensibilidade} />
-					</div>
-				</section>
-
-				<section className="ui-card p-3 mb-3" aria-label="Hábitos e estilo de vida">
-					<h2 className="m-0 mb-3" style={{ fontSize: 16, fontWeight: 900, color: 'rgba(30, 42, 53, 0.92)' }}>
-						Hábitos e Estilo de Vida
-					</h2>
-					<div className="row g-3">
-						<InfoField label="Higiene oral" value={data.habitosHigieneOral} />
-						<InfoField label="Hábitos alimentares" value={data.habitosAlimentares} />
-						<InfoField label="Tabaco" value={data.consumoTabaco} />
-						<InfoField label="Álcool" value={data.consumoAlcool} />
-						<InfoField label="Drogas" value={data.consumoDrogas} />
-						<InfoField label="Bruxismo" value={data.bruxismo ? 'Sim' : 'Não'} />
-						<InfoField label="Atividades desportivas" value={data.atividadesDesportivas} />
-					</div>
-				</section>
-
 				<section className="ui-card p-3 mb-3" aria-label="Anexos clínicos">
 					<h2 className="m-0 mb-3" style={{ fontSize: 16, fontWeight: 900, color: 'rgba(30, 42, 53, 0.92)' }}>
 						Anexos clínicos
@@ -271,24 +229,67 @@ export default function VerPaciente() {
 											</td>
 										</tr>
 									))}
-								</tbody>
-							</table>
-						</div>
-					) : Array.isArray(data.anexosClinicos) && data.anexosClinicos.length ? (
-						<div>
-							<div className="form-text mb-2">Anexos antigos (apenas nomes; sem ficheiro associado no servidor).</div>
-							<ul className="list-group" aria-label="Anexos (legacy)">
-								{data.anexosClinicos.map((name) => (
-									<li className="list-group-item py-2" key={name}>
-										{name}
-									</li>
-								))}
-							</ul>
-						</div>
-					) : (
-						<div className="form-text">Sem anexos.</div>
-					)}
+							</tbody>
+						</table>
+					</div>
+				) : Array.isArray(data.anexosClinicos) && data.anexosClinicos.length ? (
+					<div>
+						<div className="form-text mb-2">Anexos antigos (apenas nomes; sem ficheiro associado no servidor).</div>
+						<ul className="list-group" aria-label="Anexos (legacy)">
+							{data.anexosClinicos.map((name) => (
+								<li className="list-group-item py-2" key={name}>
+									{name}
+								</li>
+							))}
+						</ul>
+					</div>
+				) : (
+					<div className="form-text">Sem anexos.</div>
+				)}
 				</section>
+
+				<section className="ui-card p-3 mb-3" aria-label="Histórico médico geral">
+					<h2 className="m-0 mb-3" style={{ fontSize: 16, fontWeight: 900, color: 'rgba(30, 42, 53, 0.92)' }}>
+						Histórico Médico Geral
+					</h2>
+					<div className="row g-3">
+						<InfoField label="Condições pré-existentes" value={data.condicoesPreExistentes} />
+						<InfoField label="Medicamentos em uso" value={data.medicamentosEmUso} />
+						<InfoField label="Alergias conhecidas" value={data.alergiasConhecidas} />
+						<InfoField label="Histórico cirúrgico" value={data.historicoCirurgico} />
+						<InfoField label="Internações/tratamentos" value={data.internacoesTratamentos} />
+						<InfoField label="Gravidez (se aplicável)" value={data.gravidez} />
+					</div>
+				</section>
+
+				<section className="ui-card p-3 mb-3" aria-label="Histórico dentário">
+					<h2 className="m-0 mb-3" style={{ fontSize: 16, fontWeight: 900, color: 'rgba(30, 42, 53, 0.92)' }}>
+						Histórico Dentário
+					</h2>
+					<div className="row g-3">
+						<InfoField label="Motivo da consulta inicial" value={data.motivoConsultaInicial} />
+						<InfoField label="Condições dentárias" value={data.condicoesDentarias} />
+						<InfoField label="Tratamentos dentários passados" value={data.historicoTratamentosDentarios} />
+						<InfoField label="Experiência com anestesias" value={data.experienciaAnestesias} />
+						<InfoField label="Dor/desconforto/sensibilidade" value={data.historicoDorSensibilidade} />
+					</div>
+				</section>
+
+				<section className="ui-card p-3 mb-3" aria-label="Hábitos e estilo de vida">
+					<h2 className="m-0 mb-3" style={{ fontSize: 16, fontWeight: 900, color: 'rgba(30, 42, 53, 0.92)' }}>
+						Hábitos e Estilo de Vida
+					</h2>
+					<div className="row g-3">
+						<InfoField label="Higiene oral" value={data.habitosHigieneOral} />
+						<InfoField label="Hábitos alimentares" value={data.habitosAlimentares} />
+						<InfoField label="Tabaco" value={data.consumoTabaco} />
+						<InfoField label="Álcool" value={data.consumoAlcool} />
+						<InfoField label="Drogas" value={data.consumoDrogas} />
+						<InfoField label="Bruxismo" value={data.bruxismo ? 'Sim' : 'Não'} />
+						<InfoField label="Atividades desportivas" value={data.atividadesDesportivas} />
+					</div>
+				</section>
+
 
 				<section className="ui-card p-3 mb-3" aria-label="Tratamentos e resultados">
 					<h2 className="m-0 mb-3" style={{ fontSize: 16, fontWeight: 900, color: 'rgba(30, 42, 53, 0.92)' }}>
