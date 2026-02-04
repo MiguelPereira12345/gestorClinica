@@ -12,6 +12,7 @@ import {
 } from 'lucide-react'
 
 import logoClinimolelos from './assets/Logo-CliniMolelos.png'
+import { apiFetch } from './utils/apiClient'
 
 export default function Recuperarpass() {
 	const navigate = useNavigate()
@@ -26,8 +27,6 @@ export default function Recuperarpass() {
 	const [isSubmitting, setIsSubmitting] = useState(false)
 	const [feedback, setFeedback] = useState(null)
 	const [feedbackVariant, setFeedbackVariant] = useState('info') // info | success | error
-
-	const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001'
 
 	useEffect(() => {
 		const t = searchParams.get('token')
@@ -48,25 +47,13 @@ export default function Recuperarpass() {
 		setLastVia(via === 'code' ? 'code' : 'link')
 
 		try {
-			const response = await fetch(
-				`${API_BASE_URL}/utilizadores/password-reset/request`,
-				{
-					method: 'POST',
-					headers: {
-						'Content-Type': 'application/json',
-					},
-					body: JSON.stringify({ email, via }),
-				}
-			)
-
-			const data = await response.json().catch(() => null)
-			if (!response.ok) {
-				const message =
-					data?.message || 'Não foi possível pedir a recuperação. Tente novamente.'
-				setFeedback(message)
-				setFeedbackVariant('error')
-				return
-			}
+			const data = await apiFetch('/utilizadores/password-reset/request', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({ email, via }),
+			})
 
 			let message =
 				data?.message ||
@@ -84,7 +71,8 @@ export default function Recuperarpass() {
 				setStep('reset')
 			}
 		} catch (err) {
-			setFeedback('Erro de rede ao contactar o servidor.')
+			const message = err?.data?.message || err?.message || 'Erro de rede ao contactar o servidor.'
+			setFeedback(message)
 			setFeedbackVariant('error')
 		} finally {
 			setIsSubmitting(false)
@@ -126,24 +114,17 @@ export default function Recuperarpass() {
 			const body = lastVia === 'link'
 				? { token, newPassword }
 				: { email, code, newPassword }
-
-			const response = await fetch(`${API_BASE_URL}/utilizadores/password-reset/confirm`, {
+			const data = await apiFetch('/utilizadores/password-reset/confirm', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify(body),
 			})
 
-			const data = await response.json().catch(() => null)
-			if (!response.ok) {
-				setFeedback(data?.message || 'Não foi possível redefinir a palavra-passe.')
-				setFeedbackVariant('error')
-				return
-			}
-
 			setFeedback(data?.message || 'Palavra-passe atualizada com sucesso.')
 			setFeedbackVariant('success')
-		} catch {
-			setFeedback('Erro de rede ao contactar o servidor.')
+		} catch (err) {
+			const message = err?.data?.message || err?.message || 'Erro de rede ao contactar o servidor.'
+			setFeedback(message)
 			setFeedbackVariant('error')
 		} finally {
 			setIsSubmitting(false)
