@@ -33,6 +33,10 @@ app.use(
   })
 );
 
+app.get('/health', (req, res) => {
+  res.status(200).json({ ok: true });
+});
+
 initModels(sequelize);
 
 //Login
@@ -84,7 +88,7 @@ app.use((req, res) => {
   res.status(404).json({ message: 'Rota não encontrada' });
 });
 
-app.listen(app.get('port'), () => {
+app.listen(app.get('port'), '0.0.0.0', () => {
   console.log(`Porto: ${app.get('port')}`);
 });
 
