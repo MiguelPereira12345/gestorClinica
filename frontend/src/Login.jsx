@@ -5,7 +5,7 @@ import { Info, LogIn, Lock, Mail, RefreshCcw } from 'lucide-react'
 
 import logoClinimolelos from './assets/Logo-CliniMolelos.png'
 import { syncAllFromApi } from './utils/dataSync'
-import { getApiBaseUrl } from './utils/apiClient'
+import { apiFetch, isApiUrlLikelyMisconfigured } from './utils/apiClient'
 
 export default function Login() {
 	const navigate = useNavigate()
@@ -20,22 +20,14 @@ export default function Login() {
 		setIsSubmitting(true)
 
 		try {
-			const apiBase = getApiBaseUrl()
-
-			async function tryLogin(path) {
-				const response = await fetch(`${apiBase}${path}`, {
+			// 1) Tenta como colaborador (admin/médico)
+			try {
+				const data = await apiFetch('/auth/admin/login', {
 					method: 'POST',
 					headers: { 'Content-Type': 'application/json' },
 					body: JSON.stringify({ email, senha: password }),
 				})
-				const data = await response.json().catch(() => null)
-				return { response, data }
-			}
-
-			// 1) Tenta como colaborador (admin/médico)
-			let out = await tryLogin('/auth/admin/login')
-			if (out.response.ok) {
-				localStorage.setItem('auth_user', JSON.stringify(out.data))
+				localStorage.setItem('auth_user', JSON.stringify(data))
 				try {
 					await syncAllFromApi()
 				} catch {
@@ -43,20 +35,26 @@ export default function Login() {
 				}
 				navigate('/pagina-inicial', { replace: true })
 				return
+			} catch {
+				// ignore: tenta como paciente
 			}
 
 			// 2) Se falhou, tenta como paciente
-			out = await tryLogin('/auth/paciente/login')
-			if (out.response.ok) {
-				localStorage.setItem('auth_user', JSON.stringify(out.data))
-				navigate('/portal', { replace: true })
-				return
-			}
-
-			setError(out.data?.message || 'Credenciais inválidas')
+			const data = await apiFetch('/auth/paciente/login', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ email, senha: password }),
+			})
+			localStorage.setItem('auth_user', JSON.stringify(data))
+			navigate('/portal', { replace: true })
+			return
 		} catch (err) {
 			console.error('Erro no login:', err)
-			setError('Erro de conexão. Verifique se o servidor está ativo.')
+			if (isApiUrlLikelyMisconfigured()) {
+				setError('API não configurada no Render. Define VITE_API_URL no Static Site (frontend) com o URL do backend e faz rebuild.')
+			} else {
+				setError(err?.message || 'Erro no login')
+			}
 		} finally {
 			setIsSubmitting(false)
 		}

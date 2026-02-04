@@ -1,4 +1,14 @@
+import axios from 'axios'
+
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001'
+
+export function isApiUrlLikelyMisconfigured() {
+	const fromEnv = import.meta.env.VITE_API_URL
+	if (fromEnv && String(fromEnv).trim()) return false
+	if (typeof window === 'undefined' || !window.location) return false
+	const host = String(window.location.hostname || '').trim().toLowerCase()
+	return host !== 'localhost' && host !== '127.0.0.1'
+}
 
 function safeParse(json) {
 	try {
@@ -49,27 +59,72 @@ export function getRefreshToken() {
 	return session?.refreshToken || null
 }
 
-async function rawJsonFetch(url, options) {
-	const res = await fetch(url, options)
-	const data = await res.json().catch(() => null)
-	return { res, data }
+const api = axios.create({
+	baseURL: API_BASE_URL,
+	// evita pendurar o UI em ligações mortas
+	timeout: 30_000,
+})
+
+// Cliente separado para refresh (evita loops de interceptors)
+const refreshClient = axios.create({
+	baseURL: API_BASE_URL,
+	timeout: 30_000,
+})
+
+function normalizeHeaders(headers) {
+	if (!headers) return {}
+	// suporta object literal e Headers-like
+	if (typeof headers.get === 'function') {
+		const out = {}
+		// não dá para enumerar facilmente; retorna vazio e deixa o caller passar object
+		return out
+	}
+	return { ...headers }
+}
+
+function shouldParseJsonBody(headers, body) {
+	if (body == null) return false
+	if (typeof body !== 'string') return false
+	const ct = String(headers?.['Content-Type'] || headers?.['content-type'] || '').toLowerCase()
+	return ct.includes('application/json')
+}
+
+function tryParseJsonBody(body) {
+	try {
+		return JSON.parse(body)
+	} catch {
+		return body
+	}
+}
+
+function toHeadersLike(axiosHeaders) {
+	const h = axiosHeaders || {}
+	return {
+		get(name) {
+			const key = String(name || '').toLowerCase()
+			return h[key] ?? h[name] ?? null
+		},
+	}
 }
 
 async function tryRefreshToken() {
 	const refreshToken = getRefreshToken()
 	if (!refreshToken) return null
 
-	const url = `${API_BASE_URL}/auth/refresh`
-	const { res, data } = await rawJsonFetch(url, {
-		method: 'POST',
-		headers: {
-			Accept: 'application/json',
-			'Content-Type': 'application/json',
-		},
-		body: JSON.stringify({ refreshToken }),
-	})
+	let data = null
+	try {
+		const res = await refreshClient.post('/auth/refresh', { refreshToken }, {
+			headers: {
+				Accept: 'application/json',
+				'Content-Type': 'application/json',
+			},
+		})
+		data = res?.data || null
+	} catch {
+		return null
+	}
 
-	if (!res.ok || !data?.token) return null
+	if (!data?.token) return null
 
 	// Atualiza sessão guardada
 	const prev = getAuthSession() || {}
@@ -85,85 +140,110 @@ async function tryRefreshToken() {
 	return data.token
 }
 
-export async function apiFetch(path, options = {}) {
-	const url = path.startsWith('http') ? path : `${API_BASE_URL}${path.startsWith('/') ? '' : '/'}${path}`
+api.interceptors.request.use((config) => {
 	const token = getAuthToken()
-
-	const headers = {
-		Accept: 'application/json',
-		...(options.headers || {}),
-	}
-
 	if (token) {
-		headers.Authorization = `Bearer ${token}`
-	}
-
-	let res = await fetch(url, { ...options, headers })
-	let data = await res.json().catch(() => null)
-
-	// Se token expirou e temos refreshToken, tenta refresh 1x e repete.
-	const isAuthPath = url.includes('/auth/refresh') || url.includes('/auth/admin/login') || url.includes('/auth/paciente/login')
-	if (!isAuthPath && (res.status === 401 || res.status === 403)) {
-		const newToken = await tryRefreshToken().catch(() => null)
-		if (newToken) {
-			const retryHeaders = {
-				...headers,
-				Authorization: `Bearer ${newToken}`,
-			}
-			res = await fetch(url, { ...options, headers: retryHeaders })
-			data = await res.json().catch(() => null)
+		config.headers = config.headers || {}
+		if (!config.headers.Authorization && !config.headers.authorization) {
+			config.headers.Authorization = `Bearer ${token}`
 		}
 	}
+	config.headers = config.headers || {}
+	if (!config.headers.Accept && !config.headers.accept) {
+		config.headers.Accept = 'application/json'
+	}
+	return config
+})
 
-	if (!res.ok) {
-		const err = new Error(data?.message || `API error ${res.status}`)
-		err.status = res.status
-		err.data = data
+api.interceptors.response.use(
+	(res) => res,
+	async (error) => {
+		const status = error?.response?.status
+		const config = error?.config
+		const url = String(config?.url || '')
+		const isAuthPath = url.includes('/auth/refresh') || url.includes('/auth/admin/login') || url.includes('/auth/paciente/login')
+
+		if (!config || isAuthPath) throw error
+		if (config._retry) throw error
+		if (status !== 401 && status !== 403) throw error
+
+		const newToken = await tryRefreshToken().catch(() => null)
+		if (!newToken) throw error
+
+		config._retry = true
+		config.headers = config.headers || {}
+		config.headers.Authorization = `Bearer ${newToken}`
+		return api(config)
+	}
+)
+
+export async function apiFetch(path, options = {}) {
+	const url = path.startsWith('http') ? path : `${path.startsWith('/') ? '' : '/'}${path}`
+	const method = String(options.method || 'GET').trim().toLowerCase()
+	const headers = normalizeHeaders(options.headers)
+
+	let data = options.body
+	if (shouldParseJsonBody(headers, data)) {
+		data = tryParseJsonBody(data)
+	}
+
+	// Se for FormData, não forçar content-type
+	if (typeof FormData !== 'undefined' && data instanceof FormData) {
+		delete headers['Content-Type']
+		delete headers['content-type']
+	}
+
+	try {
+		const res = await api.request({
+			url,
+			method,
+			headers,
+			data,
+			// Mantém compatibilidade com chamadas antigas que enviavam credentials, etc.
+			withCredentials: Boolean(options.credentials === 'include'),
+		})
+		return res?.data ?? null
+	} catch (e) {
+		const status = e?.response?.status
+		const payload = e?.response?.data ?? null
+		const err = new Error(payload?.message || e?.message || (status ? `API error ${status}` : 'API error'))
+		err.status = status
+		err.data = payload
 		throw err
 	}
-	return data
 }
 
 export async function apiFetchBlob(path, options = {}) {
-	const url = path.startsWith('http') ? path : `${API_BASE_URL}${path.startsWith('/') ? '' : '/'}${path}`
-	const token = getAuthToken()
+	const url = path.startsWith('http') ? path : `${path.startsWith('/') ? '' : '/'}${path}`
+	const method = String(options.method || 'GET').trim().toLowerCase()
+	const headers = normalizeHeaders(options.headers)
 
-	const headers = {
-		...(options.headers || {}),
+	let data = options.body
+	if (shouldParseJsonBody(headers, data)) {
+		data = tryParseJsonBody(data)
 	}
 
-	if (token) {
-		headers.Authorization = `Bearer ${token}`
+	if (typeof FormData !== 'undefined' && data instanceof FormData) {
+		delete headers['Content-Type']
+		delete headers['content-type']
 	}
 
-	let res = await fetch(url, { ...options, headers })
-
-	// Se token expirou e temos refreshToken, tenta refresh 1x e repete.
-	const isAuthPath = url.includes('/auth/refresh') || url.includes('/auth/admin/login') || url.includes('/auth/paciente/login')
-	if (!isAuthPath && (res.status === 401 || res.status === 403)) {
-		const newToken = await tryRefreshToken().catch(() => null)
-		if (newToken) {
-			const retryHeaders = {
-				...headers,
-				Authorization: `Bearer ${newToken}`,
-			}
-			res = await fetch(url, { ...options, headers: retryHeaders })
-		}
-	}
-
-	if (!res.ok) {
-		let data = null
-		try {
-			data = await res.json()
-		} catch {
-			// ignore
-		}
-		const err = new Error(data?.message || `API error ${res.status}`)
-		err.status = res.status
-		err.data = data
+	try {
+		const res = await api.request({
+			url,
+			method,
+			headers,
+			data,
+			responseType: 'blob',
+			withCredentials: Boolean(options.credentials === 'include'),
+		})
+		return { blob: res?.data, headers: toHeadersLike(res?.headers) }
+	} catch (e) {
+		const status = e?.response?.status
+		const payload = e?.response?.data ?? null
+		const err = new Error(payload?.message || e?.message || (status ? `API error ${status}` : 'API error'))
+		err.status = status
+		err.data = payload
 		throw err
 	}
-
-	const blob = await res.blob()
-	return { blob, headers: res.headers }
 }

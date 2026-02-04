@@ -22,8 +22,11 @@ function env(name, fallback = '') {
 
 function publicResetBaseUrl() {
   // URL pública do frontend (página Recuperarpass). Ajustável via env.
-  // Ex: http://localhost:5173/recuperarpass
-  return env('FRONTEND_RESET_URL', env('FRONTEND_BASE_URL', 'http://localhost:5173') + '/recuperarpass');
+  // Ex: http://localhost:5173/recuperar-palavra-passe
+  return env(
+    'FRONTEND_RESET_URL',
+    env('FRONTEND_BASE_URL', 'http://localhost:5173') + '/recuperar-palavra-passe'
+  );
 }
 
 function getJwtSecret() {
