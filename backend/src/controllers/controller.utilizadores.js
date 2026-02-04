@@ -20,13 +20,31 @@ function env(name, fallback = '') {
     : fallback;
 }
 
-function publicResetBaseUrl() {
+function inferPublicOrigin(req) {
+  if (!req) return '';
+  const xfProto = req.headers?.['x-forwarded-proto'];
+  const proto = (typeof xfProto === 'string' && xfProto.trim())
+    ? xfProto.split(',')[0].trim()
+    : (req.protocol || 'https');
+  const xfHost = req.headers?.['x-forwarded-host'];
+  const host = (typeof xfHost === 'string' && xfHost.trim())
+    ? xfHost.split(',')[0].trim()
+    : (typeof req.get === 'function' ? req.get('host') : '');
+  if (!host) return '';
+  return `${proto}://${host}`;
+}
+
+function publicResetBaseUrl(req) {
   // URL pública do frontend (página Recuperarpass). Ajustável via env.
-  // Ex: http://localhost:5173/recuperar-palavra-passe
-  return env(
-    'FRONTEND_RESET_URL',
-    env('FRONTEND_BASE_URL', 'http://localhost:5173') + '/recuperar-palavra-passe'
-  );
+  // 1) FRONTEND_RESET_URL (url completa)
+  // 2) FRONTEND_BASE_URL (origem do frontend)
+  // 3) inferido do request (origin/host)
+  const explicit = env('FRONTEND_RESET_URL', '');
+  if (explicit) return explicit;
+
+  const base = env('FRONTEND_BASE_URL', '') || inferPublicOrigin(req);
+  const clean = String(base || '').replace(/\/+$/, '');
+  return clean ? `${clean}/recuperar-palavra-passe` : '/recuperar-palavra-passe';
 }
 
 function getJwtSecret() {
@@ -165,7 +183,7 @@ controller.password_reset_request = async (req, res) => {
       { expiresIn: `${ttlMinutes}m` }
     );
 
-    const url = `${publicResetBaseUrl()}?token=${encodeURIComponent(token)}`;
+    const url = `${publicResetBaseUrl(req)}?token=${encodeURIComponent(token)}`;
 
     if (isMailConfigured()) {
       await sendMail({

@@ -2,6 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const fs = require('fs');
 const path = require('path');
+const bcrypt = require('bcryptjs');
 const app = express();
 const cors = require('cors'); 
 const route = require("./src/routes/route");
@@ -39,7 +40,55 @@ app.get('/health', (req, res) => {
   res.status(200).json({ ok: true });
 });
 
-initModels(sequelize);
+const models = initModels(sequelize);
+
+async function ensureDatabaseSchema() {
+  // Falha típica no Render: BD vazia sem as tabelas -> "relation 'utilizador' does not exist".
+  // Se a tabela principal não existir, cria o schema com Sequelize (não faz drop de dados).
+  try {
+    await sequelize.authenticate();
+
+    const [rows] = await sequelize.query(
+      "SELECT to_regclass('public.utilizador') AS regclass;"
+    );
+    const exists = Array.isArray(rows) && rows[0] && rows[0].regclass;
+    if (!exists) {
+      console.log('[db] Schema em falta. A criar tabelas...');
+      await sequelize.sync();
+      console.log('[db] Tabelas criadas.');
+    }
+
+    // Bootstrap opcional: cria um admin inicial numa BD vazia.
+    // Define estas env vars no Render (Backend):
+    // BOOTSTRAP_ADMIN_EMAIL, BOOTSTRAP_ADMIN_PASSWORD, BOOTSTRAP_ADMIN_TELEFONE, BOOTSTRAP_ADMIN_NOME
+    const bootstrapEmail = process.env.BOOTSTRAP_ADMIN_EMAIL;
+    const bootstrapPassword = process.env.BOOTSTRAP_ADMIN_PASSWORD;
+    const bootstrapTelefone = process.env.BOOTSTRAP_ADMIN_TELEFONE;
+    const bootstrapNome = process.env.BOOTSTRAP_ADMIN_NOME;
+
+    if (bootstrapEmail && bootstrapPassword && bootstrapTelefone && bootstrapNome && models?.User) {
+      const adminCount = await models.User.count({ where: { tipo: 'admin' } });
+      if (adminCount === 0) {
+        console.log('[db] A criar utilizador admin inicial (bootstrap)...');
+        const senhaHash = await bcrypt.hash(String(bootstrapPassword), 10);
+        await models.User.create({
+          nome: String(bootstrapNome),
+          email: String(bootstrapEmail).trim().toLowerCase(),
+          telefone: String(bootstrapTelefone),
+          omd: null,
+          tipo: 'admin',
+          ativo: true,
+          senha: senhaHash,
+        });
+        console.log('[db] Admin inicial criado.');
+      }
+    }
+  } catch (err) {
+    console.error('[db] Erro ao preparar BD:', err);
+    // Re-throw para impedir o servidor de arrancar em estado inválido
+    throw err;
+  }
+}
 
 //Login
 app.use("/login", route);
@@ -99,7 +148,13 @@ app.use((req, res) => {
   res.status(404).json({ message: 'Rota não encontrada' });
 });
 
-app.listen(app.get('port'), '0.0.0.0', () => {
-  console.log(`Porto: ${app.get('port')}`);
-});
+ensureDatabaseSchema()
+  .then(() => {
+    app.listen(app.get('port'), '0.0.0.0', () => {
+      console.log(`Porto: ${app.get('port')}`);
+    });
+  })
+  .catch(() => {
+    process.exitCode = 1;
+  });
 
