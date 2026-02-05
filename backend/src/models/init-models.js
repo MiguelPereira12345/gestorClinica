@@ -16,7 +16,7 @@ function initModels(sequelize) {
   const Declaration = require("./declaration")(sequelize, DataTypes);
   const AuditLog = require("./auditLog")(sequelize, DataTypes);
 
-  return {
+  const models = {
     User,
     Plano,
     Dependente,
@@ -32,6 +32,14 @@ function initModels(sequelize) {
     Declaration,
     AuditLog,
   };
+
+  Object.keys(models).forEach((modelName) => {
+    if (models[modelName].associate) {
+      models[modelName].associate(models);
+    }
+  });
+
+  return models;
 }
 
 module.exports = { initModels };

@@ -3,7 +3,7 @@ const { initModels } = require('../models/init-models');
 const { DataTypes } = require('sequelize');
 
 const models = initModels(sequelize);
-const { Plano, Dependente } = models;
+const { Plano, Dependente, Consulta } = models;
 
 const controller = {};
 
@@ -56,7 +56,14 @@ controller.obter_plano = async (req, res) => {
       return res.status(400).json({ message: 'ID inválido' });
     }
 
-    const plano = await Plano.findByPk(planoId);
+    const plano = await Plano.findByPk(planoId, {
+      include: [
+        {
+          model: Consulta,
+          as: 'consultas',
+        },
+      ],
+    });
 
     if (!plano) {
       return res.status(404).json({ message: 'Plano não encontrado' });

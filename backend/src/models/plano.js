@@ -52,6 +52,11 @@ module.exports = (sequelize, DataTypes) => {
       foreignKey: 'dependent_id',
       as: 'dependente',
     });
+
+    Plano.hasMany(models.Consulta, {
+      foreignKey: 'id_tratamento',
+      as: 'consultas',
+    });
   };
 
   return Plano;

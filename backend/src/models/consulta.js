@@ -82,6 +82,11 @@ module.exports = (sequelize, DataTypes) => {
       foreignKey: 'id',
       as: 'utilizador',
     });
+
+    Consulta.belongsTo(models.Plano, {
+      foreignKey: 'id_tratamento',
+      as: 'plano',
+    });
     // Se tiveres modelo Medico, adiciona:
     // Consulta.belongsTo(models.Medico, {
     //   foreignKey: 'id_medico',
