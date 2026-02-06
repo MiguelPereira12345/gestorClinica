@@ -160,11 +160,13 @@ controller.password_reset_request = async (req, res) => {
       setResetCode(emailNorm, code, ttlMs);
 
       if (isMailConfigured()) {
-        await sendMail({
+        // Envio assíncrono (não bloqueante) para evitar timeouts
+        sendMail({
           to: user.email,
           subject: 'Recuperação de palavra-passe',
           text: `O seu código de recuperação é: ${code}. Expira em ${ttlMinutes} minutos.`,
-        });
+        }).catch(err => console.error('[Recover] Erro envio email (código):', err));
+
         return res.status(200).json({ message: okMessage });
       }
 
@@ -186,11 +188,13 @@ controller.password_reset_request = async (req, res) => {
     const url = `${publicResetBaseUrl(req)}?token=${encodeURIComponent(token)}`;
 
     if (isMailConfigured()) {
-      await sendMail({
+      // Envio assíncrono (não bloqueante)
+      sendMail({
         to: user.email,
         subject: 'Recuperação de palavra-passe',
         text: `Para redefinir a sua palavra-passe, abra este link (expira em ${ttlMinutes} minutos): ${url}`,
-      });
+      }).catch(err => console.error('[Recover] Erro envio email (link):', err));
+
       return res.status(200).json({ message: okMessage });
     }
 
