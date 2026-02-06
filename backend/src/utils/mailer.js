@@ -44,8 +44,53 @@ function createTransport() {
 		port,
 		secure,
 		requireTLS: !secure,
+		// timeouts para não ficar “pendurado” em firewalls/egress bloqueado
+		connectionTimeout: Number(env('SMTP_CONNECTION_TIMEOUT_MS', '15000')) || 15000,
+		greetingTimeout: Number(env('SMTP_GREETING_TIMEOUT_MS', '15000')) || 15000,
+		socketTimeout: Number(env('SMTP_SOCKET_TIMEOUT_MS', '20000')) || 20000,
 		auth: { user, pass },
 	});
+}
+
+function isGmailHost(host) {
+	return host === 'smtp.gmail.com' || host.endsWith('.gmail.com');
+}
+
+function shouldRetryOnAltPort(err) {
+	const code = err?.code;
+	// problemas típicos de conectividade/egress
+	return code === 'ETIMEDOUT' || code === 'ESOCKET' || code === 'ECONNREFUSED' || code === 'ENOTFOUND';
+}
+
+async function sendWithOptionalGmailFallback({ from, to, subject, text, html }) {
+	const host = env('SMTP_HOST');
+	const port = Number(env('SMTP_PORT', '587'));
+
+	try {
+		const transport = getOrCreateTransport();
+		return await transport.sendMail({ from, to, subject, text, html });
+	} catch (err) {
+		// Se a porta 587 estiver bloqueada no host (muito comum em PaaS), tenta 465 (SSL)
+		if (isGmailHost(host) && port === 587 && shouldRetryOnAltPort(err)) {
+			const user = env('SMTP_USER');
+			let pass = env('SMTP_PASS');
+			pass = pass.replace(/\s+/g, '');
+
+			const fallbackTransport = nodemailer.createTransport({
+				host,
+				port: 465,
+				secure: true,
+				requireTLS: false,
+				connectionTimeout: Number(env('SMTP_CONNECTION_TIMEOUT_MS', '15000')) || 15000,
+				greetingTimeout: Number(env('SMTP_GREETING_TIMEOUT_MS', '15000')) || 15000,
+				socketTimeout: Number(env('SMTP_SOCKET_TIMEOUT_MS', '20000')) || 20000,
+				auth: { user, pass },
+			});
+
+			return fallbackTransport.sendMail({ from, to, subject, text, html });
+		}
+		throw err;
+	}
 }
 
 function getOrCreateTransport() {
@@ -64,8 +109,7 @@ async function sendMail({ to, subject, text, html }) {
 	}
 
 	const from = env('MAIL_FROM', env('SMTP_USER'));
-	const transport = getOrCreateTransport();
-	return transport.sendMail({ from, to, subject, text, html });
+	return sendWithOptionalGmailFallback({ from, to, subject, text, html });
 }
 
 async function sendPasswordResetEmail({ to, resetUrl, ttlMinutes }) {
