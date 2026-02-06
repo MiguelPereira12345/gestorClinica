@@ -25,6 +25,15 @@ const { verificarToken, requireRole } = require('./src/middleware/authMiddleware
 const sequelize = require('./src/models/database');  
 const { initModels } = require("./src/models/init-models");  
 
+// Captura erros inesperados do processo (útil em produção)
+process.on('unhandledRejection', (reason) => {
+  console.error('[process] unhandledRejection:', reason);
+});
+
+process.on('uncaughtException', (err) => {
+  console.error('[process] uncaughtException:', err);
+});
+
 app.set('port', process.env.PORT || 3001);
 
 app.use(express.json());
@@ -219,6 +228,18 @@ if (fs.existsSync(frontendDist)) {
 
 app.use((req, res) => {
   res.status(404).json({ message: 'Rota não encontrada' });
+});
+
+// Middleware de erro (deve ficar depois das rotas)
+app.use((err, req, res, _next) => {
+  console.error('[express] error:', {
+    method: req?.method,
+    url: req?.originalUrl || req?.url,
+    message: err?.message,
+    stack: err?.stack,
+  });
+  if (res.headersSent) return;
+  res.status(err?.status || 500).json({ message: err?.message || 'Erro do servidor.' });
 });
 
 ensureDatabaseSchema()
