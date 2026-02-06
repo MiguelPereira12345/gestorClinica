@@ -8,6 +8,34 @@
   </head>
   <body>
     <div id="root"></div>
+    <script>
+      // Captura erros o mais cedo possível (antes do Vite/React arrancar).
+      // Útil para erros de parsing/carregamento (ex: Unexpected token 'export').
+      window.addEventListener('error', function (event) {
+        try {
+          console.error('[EarlyGlobalError]', {
+            message: event && event.message,
+            source: event && event.filename,
+            line: event && event.lineno,
+            col: event && event.colno,
+            error: event && event.error,
+            stack: event && event.error && event.error.stack,
+          });
+        } catch (e) {
+          console.error('[EarlyGlobalError] (failed to serialize)', e);
+        }
+      });
+
+      window.addEventListener('unhandledrejection', function (event) {
+        try {
+          console.error('[EarlyUnhandledRejection]', {
+            reason: event && event.reason,
+          });
+        } catch (e) {
+          console.error('[EarlyUnhandledRejection] (failed to serialize)', e);
+        }
+      });
+    </script>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

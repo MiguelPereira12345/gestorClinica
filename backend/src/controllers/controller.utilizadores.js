@@ -4,7 +4,7 @@ const { Op } = require('sequelize');
 
 const sequelize = require('../models/database');
 const { initModels } = require('../models/init-models');
-const { sendMail, isMailConfigured } = require('../utils/mailer');
+const { sendPasswordResetEmail, isMailConfigured } = require('../utils/mailer');
 
 const models = initModels(sequelize);
 const { User } = models;
@@ -52,6 +52,29 @@ function publicResetBaseUrl(req) {
   const clean = String(base || '').replace(/\/+$/, '');
   // O frontend usa HashRouter, por isso a rota tem de incluir "#/" para abrir a página certa.
   return clean ? `${clean}/#/recuperar-palavra-passe` : '/#/recuperar-palavra-passe';
+}
+
+function appendHashQueryParam(url, key, value) {
+  const raw = String(url || '');
+  const [beforeHash, hashPart = ''] = raw.split('#');
+  if (!hashPart) {
+    // Sem hash: adiciona query normal
+    const sep = raw.includes('?') ? '&' : '?';
+    return `${raw}${sep}${encodeURIComponent(key)}=${encodeURIComponent(value)}`;
+  }
+
+  // Com hash (HashRouter): query dentro do hash
+  const hash = hashPart.startsWith('/') ? hashPart : hashPart;
+  const [hashPath, hashQuery = ''] = hash.split('?');
+  const params = new URLSearchParams(hashQuery);
+  params.set(String(key), String(value));
+  const qs = params.toString();
+  return `${beforeHash}#${hashPath}${qs ? `?${qs}` : ''}`;
+}
+
+function buildPasswordResetLink(req, token) {
+  const base = publicResetBaseUrl(req);
+  return appendHashQueryParam(base, 'token', token);
 }
 
 function getJwtSecret() {
@@ -142,15 +165,21 @@ controller.password_reset_request = async (req, res) => {
       { expiresIn: `${ttlMinutes}m` }
     );
 
-    const url = `${publicResetBaseUrl(req)}?token=${encodeURIComponent(token)}`;
+    const url = buildPasswordResetLink(req, token);
 
     if (isMailConfigured()) {
       // Envio assíncrono (não bloqueante)
-      sendMail({
+      sendPasswordResetEmail({
         to: user.email,
-        subject: 'Recuperação de palavra-passe',
-        text: `Para redefinir a sua palavra-passe, abra este link (expira em ${ttlMinutes} minutos): ${url}`,
-      }).catch(err => console.error('[Recover] Erro envio email (link):', err));
+        resetUrl: url,
+        ttlMinutes,
+      }).catch(err => {
+        console.error('[Recover] Erro envio email (link):', {
+          message: err?.message,
+          code: err?.code,
+          responseCode: err?.responseCode,
+        });
+      });
 
       return res.status(200).json({ message: okMessage });
     }
