@@ -22,6 +22,13 @@ function env(name, fallback = '') {
 
 function inferPublicOrigin(req) {
   if (!req) return '';
+  // Se o request veio do browser (CORS), o header Origin normalmente indica o frontend.
+  // Isto é útil quando o frontend e backend estão em domínios diferentes.
+  const origin = req.headers?.origin;
+  if (typeof origin === 'string') {
+    const o = origin.trim();
+    if (o.startsWith('http://') || o.startsWith('https://')) return o;
+  }
   const xfProto = req.headers?.['x-forwarded-proto'];
   const proto = (typeof xfProto === 'string' && xfProto.trim())
     ? xfProto.split(',')[0].trim()
@@ -44,7 +51,8 @@ function publicResetBaseUrl(req) {
 
   const base = env('FRONTEND_BASE_URL', '') || inferPublicOrigin(req);
   const clean = String(base || '').replace(/\/+$/, '');
-  return clean ? `${clean}/recuperar-palavra-passe` : '/recuperar-palavra-passe';
+  // O frontend usa HashRouter, por isso a rota tem de incluir "#/" para abrir a página certa.
+  return clean ? `${clean}/#/recuperar-palavra-passe` : '/#/recuperar-palavra-passe';
 }
 
 function getJwtSecret() {
