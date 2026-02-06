@@ -77,6 +77,9 @@ function ProfileModal({ open, profile, onClose }) {
 				</div>
 
 				<div className="profile-modal-body">
+					{profile.description ? (
+						<p className="muted mb-3">{profile.description}</p>
+					) : null}
 					{areas.length > 0 ? (
 						<>
 							<div className="profile-section-title">Áreas de atuação</div>

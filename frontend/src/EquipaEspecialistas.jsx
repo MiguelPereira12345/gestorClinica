@@ -95,9 +95,8 @@ function EquipaEspecialistas() {
 											/>
 											<div className="flex-grow-1">
 												<div className="fw-semibold">{p.name}</div>
-												<div className="small muted">{p.omd}</div>
-												<div className="small muted">{p.role}</div>
-													<button
+											<div className="small muted">{p.role}</div>
+											<button
 														type="button"
 														className="btn btn-link p-0 small text-gold text-decoration-none"
 														onClick={() => setSelectedProfile(p)}
