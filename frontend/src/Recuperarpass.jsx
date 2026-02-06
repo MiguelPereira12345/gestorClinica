@@ -381,9 +381,7 @@ export default function Recuperarpass() {
 									</div>
 								</div>
 
-								<p className="mt-3 mb-0 text-center small text-muted fw-semibold">
-									Sem acesso ao e-mail?
-								</p>
+
 							</form>
 						</div>
 					</section>

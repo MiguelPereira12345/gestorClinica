@@ -79,13 +79,13 @@ export function getRefreshToken() {
 const api = axios.create({
 	baseURL: API_BASE_URL,
 	// evita pendurar o UI em ligações mortas
-	timeout: 30_000,
+	timeout: 60_000,
 })
 
 // Cliente separado para refresh (evita loops de interceptors)
 const refreshClient = axios.create({
 	baseURL: API_BASE_URL,
-	timeout: 30_000,
+	timeout: 60_000,
 })
 
 function normalizeHeaders(headers) {
