@@ -2,7 +2,3 @@
 node_modules/
 
 # Env files (segredos)
-.env
-backend/.env
-frontend/.env
-frontend/.env.*
