@@ -11,7 +11,6 @@ import {
 } from 'lucide-react'
 
 import logoClinimolelos from './assets/Logo-CliniMolelos.png'
-import { apiFetch } from './utils/apiClient'
 
 export default function Recuperarpass() {
 	const navigate = useNavigate()
@@ -40,29 +39,10 @@ export default function Recuperarpass() {
 		setIsSubmitting(true)
 		setFeedback(null)
 		setFeedbackVariant('info')
-
-		try {
-			const data = await apiFetch('/utilizadores/password-reset/request', {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json',
-				},
-				body: JSON.stringify({ email }),
-			})
-
-			let message =
-				data?.message ||
-				'Se existir uma conta com esse e-mail, enviamos as instruções de recuperação.'
-
-			setFeedback(message)
-			setFeedbackVariant('success')
-		} catch (err) {
-			const message = err?.data?.message || err?.message || 'Erro de rede ao contactar o servidor.'
-			setFeedback(message)
-			setFeedbackVariant('error')
-		} finally {
-			setIsSubmitting(false)
-		}
+		// Frontend-only: lógica de recuperação desativada no backend.
+		setFeedback('Funcionalidade de recuperação de palavra-passe está desativada nesta versão.')
+		setFeedbackVariant('error')
+		setIsSubmitting(false)
 	}
 
 	const confirmPasswordReset = async () => {
@@ -85,23 +65,9 @@ export default function Recuperarpass() {
 		setIsSubmitting(true)
 		setFeedback(null)
 		setFeedbackVariant('info')
-		try {
-			const body = { token, newPassword }
-			const data = await apiFetch('/utilizadores/password-reset/confirm', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify(body),
-			})
-
-			setFeedback(data?.message || 'Palavra-passe atualizada com sucesso.')
-			setFeedbackVariant('success')
-		} catch (err) {
-			const message = err?.data?.message || err?.message || 'Erro de rede ao contactar o servidor.'
-			setFeedback(message)
-			setFeedbackVariant('error')
-		} finally {
-			setIsSubmitting(false)
-		}
+		setFeedback('Funcionalidade de redefinição de palavra-passe está desativada nesta versão.')
+		setFeedbackVariant('error')
+		setIsSubmitting(false)
 	}
 
 	const handleSubmit = (e) => {

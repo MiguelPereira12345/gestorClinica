@@ -6,12 +6,16 @@ function env(name, fallback = '') {
 		: fallback;
 }
 
-function isMailConfigured() {
+function isSmtpConfigured() {
 	const host = env('SMTP_HOST');
 	const port = env('SMTP_PORT');
 	const user = env('SMTP_USER');
 	const pass = env('SMTP_PASS');
 	return !!(host && port && user && pass);
+}
+
+function isMailConfigured() {
+	return isSmtpConfigured();
 }
 
 
@@ -62,6 +66,7 @@ function shouldRetryOnAltPort(err) {
 	return code === 'ETIMEDOUT' || code === 'ESOCKET' || code === 'ECONNREFUSED' || code === 'ENOTFOUND';
 }
 
+
 async function sendWithOptionalGmailFallback({ from, to, subject, text, html }) {
 	const host = env('SMTP_HOST');
 	const port = Number(env('SMTP_PORT', '587'));
@@ -69,7 +74,9 @@ async function sendWithOptionalGmailFallback({ from, to, subject, text, html }) 
 	try {
 		console.log('[mail] send attempt', { host, port, secure: port === 465 || env('SMTP_SECURE', '').toLowerCase() === 'true' });
 		const transport = getOrCreateTransport();
-		return await transport.sendMail({ from, to, subject, text, html });
+		const info = await transport.sendMail({ from, to, subject, text, html });
+		console.log('[mail] sent', { host, port, messageId: info?.messageId });
+		return info;
 	} catch (err) {
 		console.error('[mail] send failed', { host, port, code: err?.code, message: err?.message });
 		// Se a porta 587 estiver bloqueada no host (muito comum em PaaS), tenta 465 (SSL)
@@ -91,7 +98,9 @@ async function sendWithOptionalGmailFallback({ from, to, subject, text, html }) 
 			});
 
 			try {
-				return await fallbackTransport.sendMail({ from, to, subject, text, html });
+				const info2 = await fallbackTransport.sendMail({ from, to, subject, text, html });
+				console.log('[mail] sent (fallback 465)', { host, port: 465, messageId: info2?.messageId });
+				return info2;
 			} catch (err2) {
 				console.error('[mail] fallback 465 failed', { host, port: 465, code: err2?.code, message: err2?.message });
 				throw err2;
@@ -120,32 +129,7 @@ async function sendMail({ to, subject, text, html }) {
 	return sendWithOptionalGmailFallback({ from, to, subject, text, html });
 }
 
-async function sendPasswordResetEmail({ to, resetUrl, ttlMinutes }) {
-	const ttl = Number(ttlMinutes) || 15;
-	const subject = 'Recuperação de palavra-passe';
-	const text =
-		`Recebemos um pedido de recuperação de palavra-passe.\n\n` +
-		`Para redefinir a sua palavra-passe, abra este link (expira em ${ttl} minutos):\n` +
-		`${resetUrl}\n\n` +
-		`Se não foi você, pode ignorar este e-mail.`;
-
-	const html = `
-		<div style="font-family:Arial,Helvetica,sans-serif;line-height:1.5">
-			<p><strong>Recuperação de palavra-passe</strong></p>
-			<p>Recebemos um pedido de recuperação de palavra-passe.</p>
-			<p>
-				<a href="${resetUrl}" target="_blank" rel="noreferrer">Redefinir palavra-passe</a>
-			</p>
-			<p style="color:#555">Este link expira em ${ttl} minutos.</p>
-			<p style="color:#555">Se não foi você, pode ignorar este e-mail.</p>
-		</div>
-	`;
-
-	return sendMail({ to, subject, text, html });
-}
-
 module.exports = {
 	sendMail,
 	isMailConfigured,
-	sendPasswordResetEmail,
 };

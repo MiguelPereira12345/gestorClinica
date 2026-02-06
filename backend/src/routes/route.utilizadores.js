@@ -5,12 +5,6 @@ const { verificarToken, requireRole } = require('../middleware/authMiddleware');
 
 console.log('route.utilizadores loaded');
 
-// POST pedir link/código de recuperação
-router.post('/password-reset/request', utilizadoresController.password_reset_request);
-
-// POST confirmar redefinição via código
-router.post('/password-reset/confirm', utilizadoresController.password_reset_confirm);
-
 // POST criar utilizador (público: registo)
 router.post('/', utilizadoresController.criar_utilizador);
 
