@@ -188,7 +188,7 @@ function Webpage() {
 											/>
 											<div className="flex-grow-1">
 												<div className="fw-semibold">{p.name}</div>
-												<div className="small muted">{p.omd}</div>
+
 												<div className="small muted">{p.role}</div>
 												<button
 													type="button"
