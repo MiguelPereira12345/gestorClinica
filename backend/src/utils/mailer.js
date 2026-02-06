@@ -67,11 +67,14 @@ async function sendWithOptionalGmailFallback({ from, to, subject, text, html }) 
 	const port = Number(env('SMTP_PORT', '587'));
 
 	try {
+		console.log('[mail] send attempt', { host, port, secure: port === 465 || env('SMTP_SECURE', '').toLowerCase() === 'true' });
 		const transport = getOrCreateTransport();
 		return await transport.sendMail({ from, to, subject, text, html });
 	} catch (err) {
+		console.error('[mail] send failed', { host, port, code: err?.code, message: err?.message });
 		// Se a porta 587 estiver bloqueada no host (muito comum em PaaS), tenta 465 (SSL)
 		if (isGmailHost(host) && port === 587 && shouldRetryOnAltPort(err)) {
+			console.log('[mail] retrying with Gmail SSL port 465', { host, port: 465 });
 			const user = env('SMTP_USER');
 			let pass = env('SMTP_PASS');
 			pass = pass.replace(/\s+/g, '');
@@ -87,7 +90,12 @@ async function sendWithOptionalGmailFallback({ from, to, subject, text, html }) 
 				auth: { user, pass },
 			});
 
-			return fallbackTransport.sendMail({ from, to, subject, text, html });
+			try {
+				return await fallbackTransport.sendMail({ from, to, subject, text, html });
+			} catch (err2) {
+				console.error('[mail] fallback 465 failed', { host, port: 465, code: err2?.code, message: err2?.message });
+				throw err2;
+			}
 		}
 		throw err;
 	}
