@@ -1,5 +1,4 @@
 const bcrypt = require('bcryptjs');
-const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const { Op } = require('sequelize');
 
@@ -65,10 +64,6 @@ function getJwtSecret() {
   return secret;
 }
 
-function hash(value) {
-  return crypto.createHash('sha256').update(String(value)).digest('hex');
-}
-
 function safeUserJson(user) {
   if (!user) return null;
   const json = typeof user.toJSON === 'function' ? user.toJSON() : user;
@@ -77,28 +72,6 @@ function safeUserJson(user) {
   return rest;
 }
 
-// In-memory store para códigos de recuperação (dev-friendly).
-// Nota: perde-se ao reiniciar o servidor.
-const resetCodeStore = new Map();
-
-function setResetCode(email, code, ttlMs) {
-  resetCodeStore.set(email, {
-    codeHash: hash(code),
-    expiresAt: Date.now() + ttlMs,
-  });
-}
-
-function consumeResetCode(email, code) {
-  const rec = resetCodeStore.get(email);
-  if (!rec) return false;
-  if (Date.now() > rec.expiresAt) {
-    resetCodeStore.delete(email);
-    return false;
-  }
-  const ok = rec.codeHash === hash(code);
-  if (ok) resetCodeStore.delete(email);
-  return ok;
-}
 
 async function findUserByEmail(emailNorm) {
   return User.findOne({
@@ -143,7 +116,7 @@ const controller = {};
 
 controller.password_reset_request = async (req, res) => {
   try {
-    const { email, via } = req.body || {};
+    const { email } = req.body || {};
     const emailNorm = normalizeEmail(email);
 
     // Resposta neutra para evitar enumeração.
@@ -159,33 +132,9 @@ controller.password_reset_request = async (req, res) => {
       return res.status(200).json({ message: okMessage });
     }
 
-    const method = String(via || 'link').toLowerCase() === 'code' ? 'code' : 'link';
     const ttlMinutes = Number(env('PASSWORD_RESET_TTL_MIN', '15')) || 15;
-    const ttlMs = ttlMinutes * 60 * 1000;
 
-    if (method === 'code') {
-      const code = String(Math.floor(100000 + Math.random() * 900000));
-      setResetCode(emailNorm, code, ttlMs);
-
-      if (isMailConfigured()) {
-        // Envio assíncrono (não bloqueante) para evitar timeouts
-        sendMail({
-          to: user.email,
-          subject: 'Recuperação de palavra-passe',
-          text: `O seu código de recuperação é: ${code}. Expira em ${ttlMinutes} minutos.`,
-        }).catch(err => console.error('[Recover] Erro envio email (código):', err));
-
-        return res.status(200).json({ message: okMessage });
-      }
-
-      // Sem SMTP: devolver código apenas para ambiente de desenvolvimento/testes.
-      return res.status(200).json({
-        message: okMessage,
-        debugCode: code,
-      });
-    }
-
-    // via link
+    // via link (token)
     const secret = getJwtSecret();
     const token = jwt.sign(
       { purpose: 'password_reset', email: emailNorm },
@@ -221,30 +170,22 @@ controller.password_reset_request = async (req, res) => {
 
 controller.password_reset_confirm = async (req, res) => {
   try {
-    const { token, email, code, newPassword } = req.body || {};
+    const { token, newPassword } = req.body || {};
     const senha = String(newPassword || '').trim();
     if (!senha || senha.length < 6) {
       return res.status(400).json({ message: 'A palavra-passe deve ter pelo menos 6 caracteres.' });
     }
 
-    let emailNorm = '';
-    if (token) {
-      const secret = getJwtSecret();
-      const decoded = jwt.verify(String(token), secret);
-      if (!decoded || decoded.purpose !== 'password_reset' || !decoded.email) {
-        return res.status(400).json({ message: 'Token inválido.' });
-      }
-      emailNorm = normalizeEmail(decoded.email);
-    } else {
-      emailNorm = normalizeEmail(email);
-      if (!emailNorm || !code) {
-        return res.status(400).json({ message: 'Email e código são obrigatórios.' });
-      }
-      const ok = consumeResetCode(emailNorm, String(code).trim());
-      if (!ok) {
-        return res.status(400).json({ message: 'Código inválido ou expirado.' });
-      }
+    if (!token) {
+      return res.status(400).json({ message: 'Token em falta.' });
     }
+
+    const secret = getJwtSecret();
+    const decoded = jwt.verify(String(token), secret);
+    if (!decoded || decoded.purpose !== 'password_reset' || !decoded.email) {
+      return res.status(400).json({ message: 'Token inválido.' });
+    }
+    const emailNorm = normalizeEmail(decoded.email);
 
     const user = await findUserByEmail(emailNorm);
     if (!user || !user.ativo) {

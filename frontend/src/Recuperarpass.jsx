@@ -4,7 +4,6 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import {
 	ArrowLeft,
 	Info,
-	KeyRound,
 	Mail,
 	RefreshCcw,
 	Send,
@@ -19,8 +18,6 @@ export default function Recuperarpass() {
 	const [searchParams] = useSearchParams()
 	const [email, setEmail] = useState('')
 	const [step, setStep] = useState('request') // request | reset
-	const [lastVia, setLastVia] = useState('link')
-	const [code, setCode] = useState('')
 	const [token, setToken] = useState('')
 	const [newPassword, setNewPassword] = useState('')
 	const [confirmPassword, setConfirmPassword] = useState('')
@@ -33,18 +30,16 @@ export default function Recuperarpass() {
 		if (t) {
 			setToken(String(t))
 			setStep('reset')
-			setLastVia('link')
 			setFeedback(null)
 			setFeedbackVariant('info')
 		}
 	}, [searchParams])
 
-	const requestPasswordReset = async (via) => {
+	const requestPasswordReset = async () => {
 		if (!email) return
 		setIsSubmitting(true)
 		setFeedback(null)
 		setFeedbackVariant('info')
-		setLastVia(via === 'code' ? 'code' : 'link')
 
 		try {
 			const data = await apiFetch('/utilizadores/password-reset/request', {
@@ -52,24 +47,15 @@ export default function Recuperarpass() {
 				headers: {
 					'Content-Type': 'application/json',
 				},
-				body: JSON.stringify({ email, via }),
+				body: JSON.stringify({ email }),
 			})
 
 			let message =
 				data?.message ||
 				'Se existir uma conta com esse e-mail, enviamos as instruções de recuperação.'
-			if (data?.debugCode) {
-				message += ` (Código de teste: ${data.debugCode})`
-				setCode(String(data.debugCode))
-			}
 
 			setFeedback(message)
 			setFeedbackVariant('success')
-
-			// Se pediu via código, avançar para o passo de redefinição
-			if (via === 'code') {
-				setStep('reset')
-			}
 		} catch (err) {
 			const message = err?.data?.message || err?.message || 'Erro de rede ao contactar o servidor.'
 			setFeedback(message)
@@ -80,21 +66,10 @@ export default function Recuperarpass() {
 	}
 
 	const confirmPasswordReset = async () => {
-		// via link: token
-		if (lastVia === 'link') {
-			if (!token) {
-				setFeedback('Link inválido ou em falta. Peça um novo link.')
-				setFeedbackVariant('error')
-				return
-			}
-		} else {
-			// via código
-			if (!email) return
-			if (!code) {
-				setFeedback('Introduza o código recebido.')
-				setFeedbackVariant('error')
-				return
-			}
+		if (!token) {
+			setFeedback('Link inválido ou em falta. Peça um novo link.')
+			setFeedbackVariant('error')
+			return
 		}
 		if (!newPassword || newPassword.length < 6) {
 			setFeedback('A palavra-passe deve ter pelo menos 6 caracteres.')
@@ -111,9 +86,7 @@ export default function Recuperarpass() {
 		setFeedback(null)
 		setFeedbackVariant('info')
 		try {
-			const body = lastVia === 'link'
-				? { token, newPassword }
-				: { email, code, newPassword }
+			const body = { token, newPassword }
 			const data = await apiFetch('/utilizadores/password-reset/confirm', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
@@ -137,7 +110,7 @@ export default function Recuperarpass() {
 			confirmPasswordReset()
 			return
 		}
-		requestPasswordReset('link')
+		requestPasswordReset()
 	}
 
 	return (
@@ -216,14 +189,12 @@ export default function Recuperarpass() {
 									<Info style={{ width: 16, height: 16, marginTop: 1, opacity: 0.85 }} aria-hidden="true" />
 									<p className="mb-0" style={{ lineHeight: 1.4 }}>
 										{step === 'reset'
-											? lastVia === 'link'
-												? 'Defina uma nova palavra-passe para a sua conta.'
-												: 'Introduza o código e defina uma nova palavra-passe.'
+											? 'Defina uma nova palavra-passe para a sua conta.'
 											: 'Introduza o seu e-mail para receber um link de redefinição.'}
 									</p>
 								</div>
 
-								{step === 'request' || lastVia === 'code' ? (
+								{step === 'request' ? (
 									<>
 										<label className="form-label fw-bold" htmlFor="recover-email">
 											E-mail associado à conta
@@ -243,56 +214,6 @@ export default function Recuperarpass() {
 												required
 											/>
 										</div>
-									</>
-								) : null}
-
-								{step === 'reset' && lastVia === 'code' ? (
-									<>
-										<label className="form-label fw-bold" htmlFor="recover-code">
-											Código
-										</label>
-										<div className="input-group mb-3">
-											<span className="input-group-text bg-white">
-												<KeyRound style={{ width: 18, height: 18, opacity: 0.85 }} aria-hidden="true" />
-											</span>
-											<input
-												id="recover-code"
-												type="text"
-												inputMode="numeric"
-												className="form-control"
-												placeholder="000000"
-												value={code}
-												onChange={(e) => setCode(e.target.value)}
-												autoComplete="one-time-code"
-												required
-											/>
-										</div>
-
-										<label className="form-label fw-bold" htmlFor="recover-new-pass">
-											Nova palavra-passe
-										</label>
-										<input
-											id="recover-new-pass"
-											type="password"
-											className="form-control mb-3"
-											value={newPassword}
-											onChange={(e) => setNewPassword(e.target.value)}
-											autoComplete="new-password"
-											required
-										/>
-
-										<label className="form-label fw-bold" htmlFor="recover-confirm-pass">
-											Confirmar palavra-passe
-										</label>
-										<input
-											id="recover-confirm-pass"
-											type="password"
-											className="form-control mb-3"
-											value={confirmPassword}
-											onChange={(e) => setConfirmPassword(e.target.value)}
-											autoComplete="new-password"
-											required
-										/>
 									</>
 								) : null}
 
@@ -330,9 +251,7 @@ export default function Recuperarpass() {
 									<Info style={{ width: 18, height: 18, marginTop: 1, opacity: 0.85 }} aria-hidden="true" />
 									<div className="small fw-semibold text-muted">
 										{step === 'reset'
-											? lastVia === 'link'
-												? 'O link expira em 30 minutos. Se reiniciar o backend, o link perde-se (modo dev).'
-												: 'O código expira em 30 minutos. Se reiniciar o backend, o código perde-se (modo dev).'
+											? 'O link expira em 30 minutos. Se reiniciar o backend, o link perde-se (modo dev).'
 											: 'O link expira em 30 minutos. Verifique também a pasta de spam.'}
 									</div>
 								</div>
@@ -350,34 +269,6 @@ export default function Recuperarpass() {
 												? isSubmitting ? 'A redefinir…' : 'Redefinir palavra-passe'
 												: isSubmitting ? 'A enviar…' : 'Enviar link'}
 										</button>
-
-										{step === 'reset' && lastVia !== 'link' ? (
-											<button
-												type="button"
-												className="btn btn-light"
-												disabled={isSubmitting}
-												onClick={() => {
-													setStep('request')
-													setFeedback(null)
-													setFeedbackVariant('info')
-												}}
-											>
-												<ArrowLeft style={{ width: 16, height: 16 }} aria-hidden="true" />
-												Pedir novo código
-											</button>
-										) : (
-											<button
-												type="button"
-												className="btn btn-light"
-												disabled={isSubmitting}
-												onClick={() => {
-													requestPasswordReset('code')
-											}}
-											>
-												<KeyRound style={{ width: 16, height: 16 }} aria-hidden="true" />
-												{isSubmitting ? 'A enviar…' : 'Redefinir via código'}
-											</button>
-										)}
 									</div>
 								</div>
 
