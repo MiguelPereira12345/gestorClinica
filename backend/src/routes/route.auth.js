@@ -4,8 +4,6 @@ const router = express.Router();
 const authController = require('../controllers/controller.auth');
 const { verificarToken } = require('../middleware/authMiddleware');
 
-console.log('route.auth loaded');
-
 // Login (admin desktop)
 router.post('/admin/login', authController.login_admin);
 

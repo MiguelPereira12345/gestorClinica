@@ -2,8 +2,6 @@ const express = require('express');
 const router = express.Router();
 const registerController = require('../controllers/register.controller');
 
-console.log('register.route loaded');
-
 // Registar novo utilizador
 router.post('/register', registerController.register);
 

@@ -4,8 +4,6 @@ const router = express.Router();
 const controller = require('../controllers/controller.medicalRecord');
 const { verificarToken, requireRole } = require('../middleware/authMiddleware');
 
-console.log('route.medicalRecord loaded');
-
 router.use(verificarToken, requireRole('admin'));
 
 router.get('/:patientId', controller.get_by_patient);

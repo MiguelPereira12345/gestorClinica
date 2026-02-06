@@ -67,8 +67,6 @@ controller.criar_gestor = async (req, res) => {
       }
     }
 
-    console.log('[gestores] criar_gestor role:', { tipo, cargo, wantedRole });
-
     // Verificar se o email já existe
     const existingUser = await User.findOne({ where: { email } });
     if (existingUser) {

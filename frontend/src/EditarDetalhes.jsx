@@ -59,8 +59,6 @@ export default function EditarDetalhes(){
 
     setPatientData(cleaned)
     setIsEditing(false)
-    // Placeholder: esta página ainda é mock (sem backend). Mantemos o log só para debug.
-    console.log('Dados guardados:', cleaned)
   }
 
   const handleCancel = () => {
@@ -112,7 +110,6 @@ export default function EditarDetalhes(){
 
 
 
-          {/* Informações Gerais */}
           <Informacao 
             isEditing={isEditing}
             data={patientData}

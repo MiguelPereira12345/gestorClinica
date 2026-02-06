@@ -2,8 +2,6 @@ const express = require('express');
 const router = express.Router();
 const consultaController = require('../controllers/controller.consulta');
 
-console.log('route.consulta loaded');
-
 // GET lista todas as consultas
 router.get('/', consultaController.listar_consultas);
 

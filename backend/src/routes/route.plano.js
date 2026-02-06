@@ -2,8 +2,6 @@ const express = require('express');
 const router = express.Router();
 const planoController = require('../controllers/controller.plano');
 
-console.log('route.plano loaded');
-
 // Listar 
 router.get('/', planoController.listar_planos);
 

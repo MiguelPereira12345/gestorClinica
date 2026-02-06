@@ -2,8 +2,6 @@ const express = require('express');
 const router = express.Router();
 const dependentesController = require('../controllers/controller.dependentes');
 
-console.log('route.dependentes loaded');
-
 // GET /dependentes\
 router.get('/', dependentesController.get_dependentes);
 

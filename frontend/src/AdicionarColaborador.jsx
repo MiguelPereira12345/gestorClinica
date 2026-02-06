@@ -18,7 +18,7 @@ export default function AdicionarColaborador() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedColaborador, setSelectedColaborador] = useState(null);
   const [colaboradores, setColaboradores] = useState([]);
-  const [activeTab, setActiveTab] = useState('todos'); // Corrigir valor inicial
+  const [activeTab, setActiveTab] = useState('todos');
   const [error, setError] = useState('');
 
   const handleInputChange = (e) => {

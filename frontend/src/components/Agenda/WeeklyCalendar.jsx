@@ -126,7 +126,7 @@ export default function WeeklyCalendar({ weekStart, appointments = [], resources
               style={{ minWidth: 0 }}
             >
               <div className="position-relative" style={{ height: gridHeight }}>
-                {/* per-doctor lanes inside the day (prevents different doctors from shrinking each other) */}
+    					{/* per-doctor lanes inside the day (prevents different doctors from shrinking each other) */}
                 {resourceList.map((r, idx) => (
                   <div
                     key={r.id}
@@ -217,8 +217,7 @@ export default function WeeklyCalendar({ weekStart, appointments = [], resources
                         )
                       })
                     })}
-
-                {/* fallback if there are appointments but no resources list */}
+  					{/* fallback if there are appointments but no resources list */}
                 {resourceList.length === 0
                   ? layoutOverlaps(
                       appointments.filter((a) => {

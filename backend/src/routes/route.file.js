@@ -5,8 +5,6 @@ const path = require('path');
 const router = express.Router();
 const controller = require('../controllers/controller.file');
 
-console.log('route.file loaded');
-
 const tmpDir = path.join(__dirname, '..', '..', 'uploads_tmp');
 const upload = multer({ dest: tmpDir });
 

@@ -3,8 +3,6 @@ const router = express.Router();
 const utilizadoresController = require('../controllers/controller.utilizadores');
 const { verificarToken, requireRole } = require('../middleware/authMiddleware');
 
-console.log('route.utilizadores loaded');
-
 // POST criar utilizador (público: registo)
 router.post('/', utilizadoresController.criar_utilizador);
 

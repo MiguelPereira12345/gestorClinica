@@ -8,7 +8,6 @@ export default function LoginForm({ onSubmit }) {
     e.preventDefault()
     const payload = { email, pin }
     if (onSubmit) onSubmit(payload)
-    else console.log('Login submit', payload)
   }
 
   return (

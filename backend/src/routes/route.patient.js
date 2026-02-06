@@ -5,8 +5,6 @@ const patientController = require('../controllers/controller.patient');
 const { verificarToken } = require('../middleware/authMiddleware');
 const { requireAdminOrSelf, requireStaffOrSelf } = require('../middleware/accessControl');
 
-console.log('route.patient loaded');
-
 router.use(verificarToken);
 
 // contacto do paciente (para staff ou o próprio)

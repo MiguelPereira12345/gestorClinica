@@ -3,8 +3,6 @@ const router = express.Router();
 const gestorController = require('../controllers/controller.gestor');
 const { requireRole } = require('../middleware/authMiddleware');
 
-console.log('route.gestor loaded');
-
 // GET todos os gestores
 router.get('/', gestorController.get_gestores);
 

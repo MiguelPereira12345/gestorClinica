@@ -4,8 +4,6 @@ const router = express.Router();
 const controller = require('../controllers/controller.notification');
 const { requireRole } = require('../middleware/authMiddleware');
 
-console.log('route.notification loaded');
-
 // list: admin can filter by userId; patient sees own
 router.get('/', controller.list);
 
