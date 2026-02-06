@@ -19,7 +19,12 @@ function createTransport() {
 	const port = Number(env('SMTP_PORT', '587'));
 	const secure = env('SMTP_SECURE', '').toLowerCase() === 'true' || port === 465;
 	const user = env('SMTP_USER');
-	const pass = env('SMTP_PASS');
+	let pass = env('SMTP_PASS');
+
+	// Gmail app passwords are often shown with spaces; nodemailer expects the raw token.
+	if (host === 'smtp.gmail.com' || host.endsWith('.gmail.com')) {
+		pass = pass.replace(/\s+/g, '');
+	}
 
 	return nodemailer.createTransport({
 		host,
