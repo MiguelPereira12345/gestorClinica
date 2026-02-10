@@ -45,10 +45,14 @@ async function resolveMedicoNome(id_medico) {
   const mid = parseId(id_medico);
   if (!mid) return null;
 
-  // Prefer: utilizador (tipo='medico')
+  // Prefer: utilizador (tipo='medico' ou 'médico')
   try {
     const medicoUser = await User.findOne({
-      where: { id: mid, tipo: 'medico', ativo: true },
+      where: { 
+        id: mid, 
+        tipo: { [Op.in]: ['medico', 'médico', 'Medico', 'Médico'] },
+        ativo: true 
+      },
       attributes: ['nome'],
     });
     if (medicoUser?.nome) return medicoUser.nome;
